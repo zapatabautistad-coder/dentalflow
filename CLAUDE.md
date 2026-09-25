@@ -1,3 +1,5 @@
+> **Regla: responder siempre en español.**
+
 @AGENTS.md
 
 # DentalFlow
