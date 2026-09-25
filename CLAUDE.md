@@ -31,3 +31,4 @@ Sistema de gestión para clínicas dentales. Stack: Next.js (App Router, TypeScr
   `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
 - Clientes: `src/lib/supabase/client.ts` (navegador) y `src/lib/supabase/server.ts` (servidor).
 - En Next 16 `middleware` se llama `proxy`: el refresco de sesión del login irá en `src/proxy.ts`.
+- Toda tabla nueva necesita GRANT a `authenticated`, porque la exposición automática de tablas está desactivada.
