@@ -25,4 +25,7 @@ Sistema de gestión para clínicas dentales. Stack: Next.js (App Router, TypeScr
 - **Después:** Odontograma, Facturación, WhatsApp (y el resto de vistas del demo).
 
 ## Estado
-- Proyecto creado con create-next-app. Supabase **aún no conectado**.
+- Supabase conectado (sin tablas todavía). Claves en `.env.local` (ignorado por git):
+  `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
+- Clientes: `src/lib/supabase/client.ts` (navegador) y `src/lib/supabase/server.ts` (servidor).
+- En Next 16 `middleware` se llama `proxy`: el refresco de sesión del login irá en `src/proxy.ts`.
