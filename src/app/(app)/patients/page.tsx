@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { canManagePatients, requireProfile } from "@/lib/auth";
-import { formatDominicanPhone } from "@/lib/phone";
+import { formatDominicanDocumentId, formatDominicanPhone } from "@/lib/phone";
 import { PatientRow } from "./patient-row";
 import { SearchBox } from "./search-box";
 
