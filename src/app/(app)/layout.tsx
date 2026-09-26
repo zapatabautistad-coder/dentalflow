@@ -9,9 +9,9 @@ export default async function AppLayout({
   const profile = await requireProfile();
 
   return (
-    <div className="flex min-h-screen w-full flex-1">
+    <div className="flex min-h-screen w-full overflow-x-hidden">
       <Sidebar fullName={profile.fullName} roleLabel={ROLE_LABELS[profile.role]} />
-      <main className="flex-1 px-6 py-10 md:px-10">{children}</main>
+      <main className="min-w-0 flex-1 overflow-y-auto px-6 py-10 md:px-10">{children}</main>
     </div>
   );
 }

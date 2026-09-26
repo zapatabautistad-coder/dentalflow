@@ -1,12 +1,19 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { USER_EMAIL_HEADER, USER_ID_HEADER } from "@/lib/auth-headers";
 
 // Rutas accesibles sin sesión.
 const PUBLIC_PATHS = ["/login"];
 
 // Refresca la sesión de Supabase (cookies) y aplica la protección de rutas.
 export async function updateSession(request: NextRequest) {
-  let response = NextResponse.next({ request });
+  // Nunca reenviar estos headers tal cual llegaron del cliente: se
+  // sobrescriben siempre más abajo con el resultado de getUser().
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.delete(USER_ID_HEADER);
+  requestHeaders.delete(USER_EMAIL_HEADER);
+
+  let response = NextResponse.next({ request: { headers: requestHeaders } });
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -20,7 +27,9 @@ export async function updateSession(request: NextRequest) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           );
-          response = NextResponse.next({ request });
+          response = NextResponse.next({
+            request: { headers: requestHeaders },
+          });
           cookiesToSet.forEach(({ name, value, options }) =>
             response.cookies.set(name, value, options)
           );
@@ -48,7 +57,18 @@ export async function updateSession(request: NextRequest) {
     return redirectKeepingCookies(request, response, "/panel");
   }
 
-  return response;
+  // Usuario ya validado: lo exponemos al layout/páginas vía header interno
+  // para que no tengan que llamar a getUser() otra vez.
+  if (user) {
+    requestHeaders.set(USER_ID_HEADER, user.id);
+    if (user.email) requestHeaders.set(USER_EMAIL_HEADER, user.email);
+  }
+
+  const finalResponse = NextResponse.next({
+    request: { headers: requestHeaders },
+  });
+  response.cookies.getAll().forEach((cookie) => finalResponse.cookies.set(cookie));
+  return finalResponse;
 }
 
 // Redirige conservando las cookies de sesión que Supabase haya actualizado.

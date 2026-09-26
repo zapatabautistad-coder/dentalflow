@@ -1,5 +1,8 @@
+import { cache } from "react";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { USER_EMAIL_HEADER, USER_ID_HEADER } from "@/lib/auth-headers";
 
 export type Role = "doctor" | "recepcion" | "admin";
 
@@ -22,25 +25,44 @@ export function canManagePatients(role: Role) {
 }
 
 // Obtiene el perfil de la sesión actual o redirige a /login.
-// El proxy ya protege las rutas; esto es la comprobación definitiva.
-export async function requireProfile(): Promise<SessionProfile> {
+// El proxy ya protege las rutas y ya validó al usuario con getUser(); aquí
+// reutilizamos ese resultado (vía header interno) en vez de repetir la
+// llamada de red. cache() además deduplica entre el layout y la página
+// dentro de un mismo request.
+// Si el header no llega (p. ej. una ruta fuera del matcher del proxy),
+// caemos de vuelta a getUser() como comprobación definitiva.
+export const requireProfile = cache(async (): Promise<SessionProfile> => {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const headerList = await headers();
+  const validatedUserId = headerList.get(USER_ID_HEADER);
 
-  if (!user) redirect("/login");
+  let userId: string;
+  let email: string | null;
+
+  if (validatedUserId) {
+    userId = validatedUserId;
+    email = headerList.get(USER_EMAIL_HEADER);
+  } else {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) redirect("/login");
+
+    userId = user.id;
+    email = user.email ?? null;
+  }
 
   const { data: profile } = await supabase
     .from("profiles")
     .select("full_name, role")
-    .eq("id", user.id)
+    .eq("id", userId)
     .single();
 
   return {
-    userId: user.id,
-    email: user.email ?? null,
+    userId,
+    email,
     fullName: profile?.full_name || "Sin nombre",
     role: (profile?.role as Role) ?? "recepcion",
   };
-}
+});

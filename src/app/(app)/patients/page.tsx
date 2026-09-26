@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { canManagePatients, requireProfile } from "@/lib/auth";
+import { formatDominicanPhone } from "@/lib/phone";
 import { PatientRow } from "./patient-row";
 import { SearchBox } from "./search-box";
 
@@ -10,6 +11,7 @@ export const metadata: Metadata = { title: "Pacientes · DentalFlow" };
 type PatientRow = {
   id: string;
   full_name: string;
+  document_id: string | null;
   phone: string | null;
   created_at: string;
 };
@@ -32,12 +34,14 @@ export default async function PatientsPage({
   const supabase = await createClient();
   let query = supabase
     .from("patients")
-    .select("id, full_name, phone, created_at")
+    .select("id, full_name, document_id, phone, created_at")
     .order("created_at", { ascending: false });
 
   const search = sanitizeSearch(q ?? "");
   if (search) {
-    query = query.or(`full_name.ilike.%${search}%,phone.ilike.%${search}%`);
+    query = query.or(
+      `full_name.ilike.%${search}%,document_id.ilike.%${search}%,phone.ilike.%${search}%`
+    );
   }
 
   const { data: patients } = await query.returns<PatientRow[]>();
@@ -75,6 +79,7 @@ export default async function PatientsPage({
               <thead>
                 <tr className="border-b border-white/60 text-xs uppercase tracking-wide text-slate-500">
                   <th className="px-6 py-3 font-medium">Nombre</th>
+                  <th className="px-6 py-3 font-medium">Cédula</th>
                   <th className="px-6 py-3 font-medium">Teléfono</th>
                   <th className="px-6 py-3 font-medium">Registrado</th>
                 </tr>
@@ -88,7 +93,12 @@ export default async function PatientsPage({
                   >
                     <td className="px-6 py-3.5 font-medium">{patient.full_name}</td>
                     <td className="px-6 py-3.5 text-slate-600">
-                      {patient.phone || "—"}
+                      {patient.document_id
+                        ? formatDominicanDocumentId(patient.document_id)
+                        : "—"}
+                    </td>
+                    <td className="px-6 py-3.5 text-slate-600">
+                      {patient.phone ? formatDominicanPhone(patient.phone) : "—"}
                     </td>
                     <td className="px-6 py-3.5 text-slate-600">
                       {new Date(patient.created_at).toLocaleDateString("es", {
