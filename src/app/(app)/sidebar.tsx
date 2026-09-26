@@ -103,9 +103,9 @@ export function Sidebar({
             <Image
               src="/dentalflow-icon.png"
               alt="DentalFlow"
-              width={36}
-              height={36}
-              className="h-9 w-9 shrink-0 drop-shadow-md"
+              width={44}
+              height={44}
+              className="h-11 w-11 shrink-0 drop-shadow-[0_4px_12px_rgba(143,211,196,0.45)]"
             />
             <div>
               <div className="text-[9px] font-black uppercase tracking-[0.22em] text-white/70">Clínica</div>
@@ -132,9 +132,9 @@ export function Sidebar({
                   <Image
                     src="/dentalflow-icon.png"
                     alt="DentalFlow"
-                    width={32}
-                    height={32}
-                    className="h-8 w-8 shrink-0 drop-shadow-md"
+                    width={40}
+                    height={40}
+                    className="h-10 w-10 shrink-0 drop-shadow-[0_4px_12px_rgba(143,211,196,0.45)]"
                   />
                   <div>
                     <div className="text-[9px] font-black uppercase tracking-[0.22em] text-white/70">Clínica</div>
@@ -221,13 +221,13 @@ export function Sidebar({
             <Image
               src="/dentalflow-icon.png"
               alt="DentalFlow"
-              width={40}
-              height={40}
-              className="h-10 w-10 shrink-0 drop-shadow-md"
+              width={56}
+              height={56}
+              className="h-14 w-14 shrink-0 drop-shadow-[0_6px_18px_rgba(143,211,196,0.5)]"
             />
             <div>
               <div className="text-[10px] font-black uppercase tracking-[0.22em] text-white/70">Clínica</div>
-              <div className="text-lg font-black tracking-tight">DentalFlow</div>
+              <div className="text-xl font-black tracking-tight">DentalFlow</div>
             </div>
           </div>
 
