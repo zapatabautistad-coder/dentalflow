@@ -15,6 +15,10 @@ type PatientFormValues = {
   email: string;
   birth_date: string;
   notes: string;
+  record_number?: number | null;
+  insurance_type?: "ars" | "privado" | "";
+  insurance_provider?: string;
+  affiliate_number?: string;
 };
 
 type PatientFormProps = {
@@ -58,6 +62,9 @@ export function PatientForm({
     () => formatDominicanDocumentId(defaultValues?.document_id ?? "")
   );
   const [birthDate, setBirthDate] = useState(defaultValues?.birth_date ?? "");
+  const [insuranceType, setInsuranceType] = useState(
+    defaultValues?.insurance_type ?? ""
+  );
 
   // Si el formulario cambia de paciente (misma instancia, nuevas
   // defaultValues) sincronizamos el estado local durante el render en vez
@@ -94,6 +101,12 @@ export function PatientForm({
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
+      {defaultValues?.record_number != null && (
+        <p className="text-sm font-medium text-slate-600">
+          Expediente N.° {String(defaultValues.record_number).padStart(4, "0")}
+        </p>
+      )}
+
       <label className="flex flex-col gap-1.5 text-sm font-medium">
         Nombre completo
         <input
@@ -158,6 +171,47 @@ export function PatientForm({
           className="glass-input"
         />
       </label>
+
+      <label className="flex flex-col gap-1.5 text-sm font-medium">
+        Aseguradora
+        <select
+          name="insurance_type"
+          value={insuranceType}
+          onChange={(event) =>
+            setInsuranceType(event.target.value as "ars" | "privado" | "")
+          }
+          className="glass-input"
+        >
+          <option value="">Sin especificar</option>
+          <option value="ars">ARS</option>
+          <option value="privado">Privado</option>
+        </select>
+      </label>
+
+      {insuranceType === "ars" && (
+        <>
+          <label className="flex flex-col gap-1.5 text-sm font-medium">
+            Nombre de la ARS
+            <input
+              name="insurance_provider"
+              required
+              defaultValue={defaultValues?.insurance_provider}
+              placeholder="ARS Humano, ARS Universal…"
+              className="glass-input"
+            />
+          </label>
+
+          <label className="flex flex-col gap-1.5 text-sm font-medium">
+            Número de afiliado
+            <input
+              name="affiliate_number"
+              required
+              defaultValue={defaultValues?.affiliate_number}
+              className="glass-input"
+            />
+          </label>
+        </>
+      )}
 
       <label className="flex flex-col gap-1.5 text-sm font-medium">
         Notas (opcional)

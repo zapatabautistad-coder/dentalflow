@@ -19,7 +19,9 @@ export default async function EditPatientPage({
   const supabase = await createClient();
   const { data: patient } = await supabase
     .from("patients")
-    .select("id, full_name, document_id, phone, email, birth_date, notes")
+    .select(
+      "id, full_name, document_id, phone, email, birth_date, notes, record_number, insurance_type, insurance_provider, affiliate_number"
+    )
     .eq("id", id)
     .single();
 
@@ -43,6 +45,10 @@ export default async function EditPatientPage({
             email: patient.email ?? "",
             birth_date: patient.birth_date ?? "",
             notes: patient.notes ?? "",
+            record_number: patient.record_number,
+            insurance_type: patient.insurance_type ?? "",
+            insurance_provider: patient.insurance_provider ?? "",
+            affiliate_number: patient.affiliate_number ?? "",
           }}
           submitLabel="Guardar cambios"
           pendingLabel="Guardando…"

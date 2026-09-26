@@ -15,6 +15,9 @@ type PatientRow = {
   document_id: string | null;
   phone: string | null;
   created_at: string;
+  record_number: number;
+  insurance_type: "ars" | "privado" | null;
+  insurance_provider: string | null;
 };
 
 export default async function PatientsPage({
@@ -29,7 +32,9 @@ export default async function PatientsPage({
   const supabase = await createClient();
   let query = supabase
     .from("patients")
-    .select("id, full_name, document_id, phone, created_at")
+    .select(
+      "id, full_name, document_id, phone, created_at, record_number, insurance_type, insurance_provider"
+    )
     .order("created_at", { ascending: false });
 
   const searchFilter = buildPatientSearchFilter(q ?? "");
@@ -71,9 +76,11 @@ export default async function PatientsPage({
             <table className="w-full text-left text-sm">
               <thead>
                 <tr className="border-b border-white/60 text-xs uppercase tracking-wide text-slate-500">
+                  <th className="px-6 py-3 font-medium">Expediente</th>
                   <th className="px-6 py-3 font-medium">Nombre</th>
                   <th className="px-6 py-3 font-medium">Cédula</th>
                   <th className="px-6 py-3 font-medium">Teléfono</th>
+                  <th className="px-6 py-3 font-medium">Aseguradora</th>
                   <th className="px-6 py-3 font-medium">Registrado</th>
                 </tr>
               </thead>
@@ -84,6 +91,9 @@ export default async function PatientsPage({
                     href={`/patients/${patient.id}/edit`}
                     clickable={canManage}
                   >
+                    <td className="px-6 py-3.5 text-slate-600">
+                      {String(patient.record_number).padStart(4, "0")}
+                    </td>
                     <td className="px-6 py-3.5 font-medium">{patient.full_name}</td>
                     <td className="px-6 py-3.5 text-slate-600">
                       {patient.document_id
@@ -92,6 +102,13 @@ export default async function PatientsPage({
                     </td>
                     <td className="px-6 py-3.5 text-slate-600">
                       {patient.phone ? formatDominicanPhone(patient.phone) : "—"}
+                    </td>
+                    <td className="px-6 py-3.5 text-slate-600">
+                      {patient.insurance_type === "ars"
+                        ? `ARS: ${patient.insurance_provider}`
+                        : patient.insurance_type === "privado"
+                          ? "Privado"
+                          : "—"}
                     </td>
                     <td className="px-6 py-3.5 text-slate-600">
                       {new Date(patient.created_at).toLocaleDateString("es", {

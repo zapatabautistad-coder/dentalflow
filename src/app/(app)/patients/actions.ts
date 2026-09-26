@@ -19,6 +19,9 @@ type PatientValues = {
   email: string | null;
   birth_date: string | null;
   notes: string | null;
+  insurance_type: "ars" | "privado" | null;
+  insurance_provider: string | null;
+  affiliate_number: string | null;
 };
 
 function isAdult(birthDate: string): boolean {
@@ -47,10 +50,24 @@ function parsePatientForm(formData: FormData): ParsedPatient {
   const email = String(formData.get("email") ?? "").trim();
   const birthDate = String(formData.get("birth_date") ?? "").trim();
   const notes = String(formData.get("notes") ?? "").trim();
+  const rawInsuranceType = String(formData.get("insurance_type") ?? "").trim();
+  const insuranceProvider = String(formData.get("insurance_provider") ?? "").trim();
+  const affiliateNumber = String(formData.get("affiliate_number") ?? "").trim();
   const mustHaveDocumentId = isAdult(birthDate);
 
   if (!fullName || !phone) {
     return { ok: false, error: "El nombre completo y el teléfono son obligatorios." };
+  }
+
+  if (rawInsuranceType !== "" && rawInsuranceType !== "ars" && rawInsuranceType !== "privado") {
+    return { ok: false, error: "La aseguradora seleccionada no es válida." };
+  }
+
+  if (rawInsuranceType === "ars" && (!insuranceProvider || !affiliateNumber)) {
+    return {
+      ok: false,
+      error: "El nombre de la ARS y el número de afiliado son obligatorios.",
+    };
   }
 
   if (phone.length !== 10) {
@@ -71,6 +88,8 @@ function parsePatientForm(formData: FormData): ParsedPatient {
     };
   }
 
+  const insuranceType = rawInsuranceType === "" ? null : rawInsuranceType;
+
   return {
     ok: true,
     values: {
@@ -80,6 +99,9 @@ function parsePatientForm(formData: FormData): ParsedPatient {
       email: email || null,
       birth_date: birthDate || null,
       notes: notes || null,
+      insurance_type: insuranceType,
+      insurance_provider: insuranceType === "ars" ? insuranceProvider : null,
+      affiliate_number: insuranceType === "ars" ? affiliateNumber : null,
     },
   };
 }
