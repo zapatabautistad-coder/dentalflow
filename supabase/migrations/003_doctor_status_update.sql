@@ -27,7 +27,9 @@ set search_path = ''
 as $$
 begin
   if (select public.get_my_role()) = 'doctor' then
-    if new.patient_id is distinct from old.patient_id
+    if new.id is distinct from old.id
+       or new.created_at is distinct from old.created_at
+       or new.patient_id is distinct from old.patient_id
        or new.doctor_id is distinct from old.doctor_id
        or new.starts_at is distinct from old.starts_at
        or new.duration_minutes is distinct from old.duration_minutes
@@ -37,6 +39,10 @@ begin
 
     if new.status = 'cancelada' then
       raise exception 'Solo admin o recepción pueden cancelar citas.';
+    end if;
+
+    if old.status = 'cancelada' and new.status is distinct from old.status then
+      raise exception 'Solo admin o recepción pueden reactivar una cita cancelada.';
     end if;
   end if;
 
