@@ -22,6 +22,21 @@ const SOON_ITEM =
 const SOON_BADGE =
   "rounded-full border border-[#8FD3C4]/70 bg-[#8FD3C4]/30 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-[#154360]";
 
+function MolarWatermark({ className }: { className?: string }) {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 200 240"
+      className={`pointer-events-none absolute text-[#8FD3C4] ${className ?? ""}`}
+    >
+      <path
+        d="M100 8C60 8 25 20 20 55C15 90 25 110 40 130C48 140 46 150 44 165C40 190 45 215 60 228C68 235 78 232 82 222C88 205 92 175 100 175C108 175 112 205 118 222C122 232 132 235 140 228C155 215 160 190 156 165C154 150 152 140 160 130C175 110 185 90 180 55C175 20 140 8 100 8Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
 function initialsOf(fullName: string) {
   return fullName
     .split(" ")
@@ -74,7 +89,7 @@ export function Sidebar({
   );
 
   const profileCard = (
-    <div className="crystal-inset rounded-2xl p-3">
+    <div className="crystal-inset relative rounded-2xl p-3">
       <div className="flex items-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#154360] to-[#2b7396] text-sm font-black text-white shadow-[0_6px_14px_-6px_rgba(21,67,96,0.7)]">
           {initialsOf(fullName)}
@@ -114,8 +129,10 @@ export function Sidebar({
         </header>
 
         {mobileOpen && (
-          <div className="crystal-overlay fixed inset-0 z-50">
-            <div className="flex h-full flex-col px-4 py-5">
+          <div className="crystal-overlay fixed inset-0 z-50 overflow-hidden">
+            <MolarWatermark className="-right-16 bottom-[-3rem] h-[70%] w-auto opacity-[0.1]" />
+
+            <div className="relative flex h-full flex-col px-4 py-5">
               <div className="mb-5 flex items-center justify-between">
                 {brand(40, "text-sm")}
 
@@ -163,8 +180,10 @@ export function Sidebar({
         )}
       </div>
 
-      <aside className="sidebar-crystal hidden h-screen w-72 shrink-0 flex-col justify-between px-4 py-6 md:sticky md:top-0 md:flex">
-        <div>
+      <aside className="sidebar-crystal hidden h-screen w-72 shrink-0 flex-col justify-between overflow-hidden px-4 py-6 md:sticky md:top-0 md:flex">
+        <MolarWatermark className="-right-14 bottom-[-2.5rem] h-[85%] w-auto opacity-[0.12]" />
+
+        <div className="relative">
           <div className="crystal-inset mb-8 rounded-2xl px-3 py-2.5">{brand(56, "text-xl")}</div>
 
           <nav className="flex flex-col gap-1.5">
