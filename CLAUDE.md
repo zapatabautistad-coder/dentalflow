@@ -17,7 +17,7 @@ Sistema de gestión para clínicas dentales. Stack: Next.js (App Router, TypeScr
 
 ## Diseño
 - Fondo: degradado `#F5F7FA` → `#C3CFE2`.
-- Barra lateral: degradado morado `#667EEA` → `#764BA2`.
+- Barra lateral: paleta del logo, azul marino `#154360` (base) + aguamarina `#8FD3C4` (acento: bordes, iconos activos, detalles), texto blanco. Efecto vidrio esmerilado (fondo semitransparente con blur, brillo sutil en el borde superior, borde delgado claro). Clase `sidebar-glass` en `src/app/globals.css`. Pendiente: decidir si el resto de la app (login, tarjetas, botones) migra a esta paleta o se queda con el morado actual.
 - Tipografía: Inter.
 - Botones estilo vidrio (glassmorphism).
 - El color **teal se reserva solo para funciones de IA**.

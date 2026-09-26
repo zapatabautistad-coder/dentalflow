@@ -21,10 +21,10 @@ export function Sidebar({
   const pathname = usePathname();
 
   return (
-    <aside className="flex w-64 shrink-0 flex-col justify-between bg-gradient-to-b from-brand-from to-brand-to px-5 py-8 text-white">
+    <aside className="sidebar-glass flex w-64 shrink-0 flex-col justify-between px-5 py-8 text-white">
       <div>
         <div className="mb-8 flex items-center gap-2.5 px-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/20 text-lg font-bold backdrop-blur-md">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-sidebar-aqua/30 bg-white/10 text-lg font-bold backdrop-blur-md">
             D
           </div>
           <span className="text-lg font-bold">DentalFlow</span>
@@ -40,8 +40,8 @@ export function Sidebar({
                 href={link.href}
                 className={`rounded-xl px-4 py-2.5 text-sm font-medium transition ${
                   active
-                    ? "bg-white/20 shadow-inner"
-                    : "text-white/80 hover:bg-white/10 hover:text-white"
+                    ? "bg-white/10 text-white shadow-[inset_3px_0_0_0_var(--color-sidebar-aqua)]"
+                    : "text-white/85 hover:bg-white/10 hover:text-white"
                 }`}
               >
                 {link.label}
@@ -52,10 +52,10 @@ export function Sidebar({
           {SOON_LABELS.map((label) => (
             <div
               key={label}
-              className="flex cursor-not-allowed items-center justify-between rounded-xl px-4 py-2.5 text-sm font-medium text-white/50"
+              className="flex cursor-not-allowed items-center justify-between rounded-xl px-4 py-2.5 text-sm font-medium text-white/75"
             >
               {label}
-              <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
+              <span className="rounded-full border border-sidebar-aqua/30 bg-sidebar-aqua/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white/85">
                 Próximamente
               </span>
             </div>
@@ -63,13 +63,13 @@ export function Sidebar({
         </nav>
       </div>
 
-      <div className="border-t border-white/20 pt-4">
-        <p className="truncate px-2 text-sm font-semibold">{fullName}</p>
-        <p className="px-2 text-xs text-white/70">{roleLabel}</p>
+      <div className="border-t border-white/15 pt-4">
+        <p className="truncate px-2 text-sm font-semibold text-white">{fullName}</p>
+        <p className="px-2 text-xs text-white/75">{roleLabel}</p>
         <form action={logout} className="mt-3">
           <button
             type="submit"
-            className="w-full rounded-xl border border-white/30 bg-white/10 px-4 py-2 text-sm font-medium backdrop-blur-md transition hover:bg-white/20"
+            className="w-full rounded-xl border border-white/25 bg-white/10 px-4 py-2 text-sm font-medium text-white backdrop-blur-md transition hover:bg-white/20"
           >
             Cerrar sesión
           </button>
