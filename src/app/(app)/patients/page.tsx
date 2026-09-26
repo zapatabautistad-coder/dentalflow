@@ -3,6 +3,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { canManagePatients, requireProfile } from "@/lib/auth";
 import { formatDominicanDocumentId, formatDominicanPhone } from "@/lib/phone";
+import { buildPatientSearchFilter } from "@/lib/patient-search";
 import { PatientRow } from "./patient-row";
 import { SearchBox } from "./search-box";
 
@@ -15,12 +16,6 @@ type PatientRow = {
   phone: string | null;
   created_at: string;
 };
-
-// El texto de búsqueda entra en un filtro or() de PostgREST, donde
-// `%`, `,`, `(` y `)` tienen significado especial: se descartan.
-function sanitizeSearch(value: string) {
-  return value.replace(/[%,()]/g, "").trim();
-}
 
 export default async function PatientsPage({
   searchParams,
@@ -37,11 +32,9 @@ export default async function PatientsPage({
     .select("id, full_name, document_id, phone, created_at")
     .order("created_at", { ascending: false });
 
-  const search = sanitizeSearch(q ?? "");
-  if (search) {
-    query = query.or(
-      `full_name.ilike.%${search}%,document_id.ilike.%${search}%,phone.ilike.%${search}%`
-    );
+  const searchFilter = buildPatientSearchFilter(q ?? "");
+  if (searchFilter) {
+    query = query.or(searchFilter);
   }
 
   const { data: patients } = await query.returns<PatientRow[]>();
@@ -69,7 +62,7 @@ export default async function PatientsPage({
       <div className="glass-card overflow-hidden">
         {!patients || patients.length === 0 ? (
           <p className="p-8 text-center text-sm text-slate-500">
-            {search
+            {searchFilter
               ? "No se encontraron pacientes con ese criterio de búsqueda."
               : "Todavía no hay pacientes registrados."}
           </p>

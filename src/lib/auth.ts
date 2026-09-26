@@ -65,10 +65,17 @@ export const requireProfile = cache(async (): Promise<SessionProfile> => {
     .eq("id", userId)
     .single();
 
+  // Sin fila en profiles no hay rol legítimo que asignar: nunca se asume uno
+  // por defecto, se cierra la sesión y se manda a /login.
+  if (!profile) {
+    await supabase.auth.signOut();
+    redirect("/login");
+  }
+
   return {
     userId,
     email,
-    fullName: profile?.full_name || "Sin nombre",
-    role: (profile?.role as Role) ?? "recepcion",
+    fullName: profile.full_name || "Sin nombre",
+    role: profile.role as Role,
   };
 });

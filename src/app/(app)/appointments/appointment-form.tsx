@@ -39,6 +39,21 @@ export function AppointmentForm({
 }: AppointmentFormProps) {
   const [state, formAction, pending] = useActionState(action, undefined);
 
+  // React descarta los campos no controlados al terminar cada envío del
+  // action, incluso si este devuelve un error. Se usan los valores enviados
+  // (si los hay) como nuevo defaultValue y se fuerza el remount con `key`
+  // (el attemptId que genera el servidor en cada intento) para que el campo
+  // muestre lo último que escribió el usuario.
+  const attempt = state?.attemptId ?? "initial";
+  const submitted = state?.values;
+
+  const doctorId = submitted?.doctor_id ?? defaultValues?.doctor_id ?? "";
+  const date = submitted?.date ?? defaultValues?.date ?? "";
+  const time = submitted?.time ?? defaultValues?.time ?? "";
+  const durationMinutes = submitted?.duration_minutes ?? String(defaultValues?.duration_minutes ?? 30);
+  const reason = submitted?.reason ?? defaultValues?.reason ?? "";
+  const status = submitted?.status ?? defaultValues?.status ?? "programada";
+
   return (
     <form action={formAction} className="flex flex-col gap-4">
       <label className="flex flex-col gap-1.5 text-sm font-medium">
@@ -49,9 +64,10 @@ export function AppointmentForm({
       <label className="flex flex-col gap-1.5 text-sm font-medium">
         Doctor
         <select
+          key={`doctor-${attempt}`}
           name="doctor_id"
           required
-          defaultValue={defaultValues?.doctor_id ?? ""}
+          defaultValue={doctorId}
           className="glass-input"
         >
           <option value="" disabled>
@@ -69,10 +85,11 @@ export function AppointmentForm({
         <label className="flex flex-col gap-1.5 text-sm font-medium">
           Fecha
           <input
+            key={`date-${attempt}`}
             name="date"
             type="date"
             required
-            defaultValue={defaultValues?.date}
+            defaultValue={date}
             className="glass-input"
           />
         </label>
@@ -80,10 +97,11 @@ export function AppointmentForm({
         <label className="flex flex-col gap-1.5 text-sm font-medium">
           Hora
           <input
+            key={`time-${attempt}`}
             name="time"
             type="time"
             required
-            defaultValue={defaultValues?.time}
+            defaultValue={time}
             className="glass-input"
           />
         </label>
@@ -92,9 +110,10 @@ export function AppointmentForm({
       <label className="flex flex-col gap-1.5 text-sm font-medium">
         Duración
         <select
+          key={`duration-${attempt}`}
           name="duration_minutes"
           required
-          defaultValue={String(defaultValues?.duration_minutes ?? 30)}
+          defaultValue={durationMinutes}
           className="glass-input"
         >
           {DURATION_OPTIONS.map((minutes) => (
@@ -108,8 +127,9 @@ export function AppointmentForm({
       <label className="flex flex-col gap-1.5 text-sm font-medium">
         Motivo (opcional)
         <input
+          key={`reason-${attempt}`}
           name="reason"
-          defaultValue={defaultValues?.reason}
+          defaultValue={reason}
           placeholder="Limpieza, revisión, dolor…"
           className="glass-input"
         />
@@ -119,9 +139,10 @@ export function AppointmentForm({
         <label className="flex flex-col gap-1.5 text-sm font-medium">
           Estado
           <select
+            key={`status-${attempt}`}
             name="status"
             required
-            defaultValue={defaultValues?.status ?? "programada"}
+            defaultValue={status}
             className="glass-input"
           >
             {STATUS_ORDER.map((status) => (
