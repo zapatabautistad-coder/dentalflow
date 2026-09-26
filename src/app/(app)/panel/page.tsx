@@ -127,8 +127,8 @@ export default async function PanelPage() {
 
   return (
     <div className="space-y-6">
-      <header className="overflow-hidden rounded-[30px] border border-white/60 bg-white/80 shadow-[0_16px_40px_rgba(21,67,96,0.08)] backdrop-blur-xl">
-        <div className="flex flex-col gap-4 border-b border-slate-200/80 bg-gradient-to-r from-[#154360]/5 via-white to-[#8FD3C4]/10 p-5 lg:flex-row lg:items-center lg:justify-between">
+      <header className="crystal-card overflow-hidden rounded-[30px]">
+        <div className="flex flex-col gap-4 border-b border-white/70 bg-gradient-to-r from-[#154360]/5 via-white/20 to-[#8FD3C4]/15 p-5 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <div className="text-[11px] font-black uppercase tracking-[0.22em] text-[#154360]">Panel general</div>
             <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-900">Bienvenido, {profile.fullName}</h1>
@@ -158,7 +158,7 @@ export default async function PanelPage() {
         {kpis.map((kpi) => (
           <div
             key={kpi.label}
-            className="rounded-[22px] border border-slate-200/80 bg-white p-4 shadow-[0_12px_26px_rgba(15,23,42,0.06)]"
+            className="crystal-card rounded-[22px] p-4"
           >
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -174,8 +174,8 @@ export default async function PanelPage() {
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[1.35fr_0.65fr]">
-        <div className="glass-card overflow-hidden">
-          <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+        <div className="crystal-card overflow-hidden rounded-3xl">
+          <div className="flex items-center justify-between border-b border-white/70 px-5 py-4">
             <div>
               <h2 className="text-lg font-black text-slate-900">Agenda de hoy</h2>
               <p className="text-xs text-slate-500">Citas del día con estado de atención</p>
@@ -196,7 +196,7 @@ export default async function PanelPage() {
           {appointments.length === 0 ? (
             <p className="p-8 text-center text-sm text-slate-500">No hay citas para hoy.</p>
           ) : (
-            <div className="divide-y divide-slate-100">
+            <div className="divide-y divide-white/70">
               {appointments.map((item) => {
                 const statusInfo = APPOINTMENT_STATUS_LABELS[item.status] ?? { label: item.status, tone: "slate" };
                 return (
@@ -242,14 +242,14 @@ export default async function PanelPage() {
           )}
         </div>
 
-        <div className="glass-card p-5">
+        <div className="crystal-card rounded-3xl p-5">
           <h3 className="text-sm font-black uppercase tracking-[0.18em] text-slate-500">Sala de espera</h3>
           {queue.length === 0 ? (
             <p className="mt-4 text-sm text-slate-500">No hay pacientes en sala de espera.</p>
           ) : (
             <div className="mt-4 space-y-3">
               {queue.map((entry) => (
-                <div key={entry.id} className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5">
+                <div key={entry.id} className="flex items-center justify-between rounded-2xl border border-white/80 bg-white/50 px-3 py-2.5">
                   <div>
                     <div className="text-sm font-bold text-slate-800">{entry.patients?.full_name ?? "Paciente"}</div>
                     <div className="text-[10px] text-slate-500">{entry.profiles?.full_name ?? QUEUE_STATUS_LABELS[entry.status] ?? entry.status}</div>
@@ -264,7 +264,7 @@ export default async function PanelPage() {
         </div>
       </section>
 
-      <section className="glass-card p-5">
+      <section className="crystal-card rounded-3xl p-5">
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-sm font-black uppercase tracking-[0.18em] text-slate-500">Pacientes recientes</h3>
           <Link href="/patients" className="text-[11px] font-bold text-[#154360]">
@@ -277,7 +277,7 @@ export default async function PanelPage() {
         ) : (
           <div className="space-y-3">
             {recentPatients.map((patient) => (
-              <div key={patient.id} className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 p-3">
+              <div key={patient.id} className="flex items-center justify-between rounded-2xl border border-white/80 bg-white/50 p-3">
                 <div>
                   <div className="text-sm font-bold text-slate-800">{patient.full_name}</div>
                   <div className="text-[11px] text-slate-500">
@@ -292,7 +292,7 @@ export default async function PanelPage() {
                 </div>
                 <Link
                   href={`/patients/${patient.id}/edit`}
-                  className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-700 transition hover:border-[#154360] hover:bg-[#154360]/6 hover:text-[#154360]"
+                  className="rounded-lg border border-white/90 bg-white/70 px-3 py-1.5 text-[11px] font-semibold text-slate-700 transition hover:border-[#154360] hover:bg-[#154360]/6 hover:text-[#154360]"
                 >
                   Ficha
                 </Link>
