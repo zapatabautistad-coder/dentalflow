@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useState } from "react";
 import {
   formatDominicanDocumentId,
   formatDominicanPhone,
@@ -59,19 +59,26 @@ export function PatientForm({
   );
   const [birthDate, setBirthDate] = useState(defaultValues?.birth_date ?? "");
 
-  useEffect(() => {
+  // Si el formulario cambia de paciente (misma instancia, nuevas
+  // defaultValues) sincronizamos el estado local durante el render en vez
+  // de en un efecto, para no disparar un render extra innecesario.
+  const [prevPhoneProp, setPrevPhoneProp] = useState(defaultValues?.phone);
+  if (defaultValues?.phone !== prevPhoneProp) {
+    setPrevPhoneProp(defaultValues?.phone);
     setPhoneValue(formatDominicanPhone(defaultValues?.phone ?? ""));
-  }, [defaultValues?.phone]);
+  }
 
-  useEffect(() => {
+  const [prevDocumentIdProp, setPrevDocumentIdProp] = useState(defaultValues?.document_id);
+  if (defaultValues?.document_id !== prevDocumentIdProp) {
+    setPrevDocumentIdProp(defaultValues?.document_id);
     setDocumentIdValue(formatDominicanDocumentId(defaultValues?.document_id ?? ""));
-  }, [defaultValues?.document_id]);
+  }
 
-  useEffect(() => {
-    if (defaultValues?.birth_date) {
-      setBirthDate(defaultValues.birth_date);
-    }
-  }, [defaultValues?.birth_date]);
+  const [prevBirthDateProp, setPrevBirthDateProp] = useState(defaultValues?.birth_date);
+  if (defaultValues?.birth_date && defaultValues.birth_date !== prevBirthDateProp) {
+    setPrevBirthDateProp(defaultValues.birth_date);
+    setBirthDate(defaultValues.birth_date);
+  }
 
   const handlePhoneChange = (value: string) => {
     const digitsOnly = value.replace(/\D/g, "").slice(0, 10);

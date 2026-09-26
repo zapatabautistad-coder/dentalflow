@@ -9,9 +9,10 @@ import { logout } from "./actions";
 const LINKS = [
   { href: "/panel", label: "Panel" },
   { href: "/patients", label: "Pacientes" },
+  { href: "/appointments", label: "Citas" },
 ];
 
-const SOON_LABELS = ["Citas", "Turnos"];
+const SOON_LABELS = ["Turnos"];
 
 const ACTIVE_LINK =
   "bg-gradient-to-r from-[#154360] to-[#1f5f84] text-white shadow-[0_10px_22px_-10px_rgba(21,67,96,0.75),inset_0_1px_0_rgba(255,255,255,0.28)]";

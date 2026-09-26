@@ -24,6 +24,12 @@ export function canManagePatients(role: Role) {
   return role === "admin" || role === "recepcion";
 }
 
+// Roles que pueden crear, editar y cancelar citas (ver RLS en 001_mvp.sql
+// y 003_doctor_status_update.sql). El doctor solo cambia el estado de las suyas.
+export function canManageAppointments(role: Role) {
+  return role === "admin" || role === "recepcion";
+}
+
 // Obtiene el perfil de la sesión actual o redirige a /login.
 // El proxy ya protege las rutas y ya validó al usuario con getUser(); aquí
 // reutilizamos ese resultado (vía header interno) en vez de repetir la

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { requireProfile } from "@/lib/auth";
+import { canManageAppointments, requireProfile } from "@/lib/auth";
 
 export const metadata: Metadata = { title: "Panel · DentalFlow" };
 
@@ -139,17 +139,11 @@ export default async function PanelPage() {
               <div className="text-xs font-bold text-slate-700">{formattedToday}</div>
             </div>
 
-            <button
-              type="button"
-              disabled
-              title="Próximamente"
-              className="glass-button cursor-not-allowed px-3.5 py-2.5 text-xs opacity-60"
-            >
-              ＋ Nueva cita
-              <span className="ml-2 rounded-full border border-[#8FD3C4]/40 bg-[#8FD3C4]/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-[#154360]">
-                Próx.
-              </span>
-            </button>
+            {canManageAppointments(profile.role) && (
+              <Link href="/appointments/new" className="glass-button px-3.5 py-2.5 text-xs">
+                ＋ Nueva cita
+              </Link>
+            )}
           </div>
         </div>
       </header>
@@ -180,17 +174,9 @@ export default async function PanelPage() {
               <h2 className="text-lg font-black text-slate-900">Agenda de hoy</h2>
               <p className="text-xs text-slate-500">Citas del día con estado de atención</p>
             </div>
-            <button
-              type="button"
-              disabled
-              title="Próximamente"
-              className="flex cursor-not-allowed items-center gap-2 text-[11px] font-bold text-slate-400"
-            >
+            <Link href="/appointments" className="text-[11px] font-bold text-[#154360]">
               Ver calendario
-              <span className="rounded-full border border-[#8FD3C4]/40 bg-[#8FD3C4]/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-[#154360]">
-                Próx.
-              </span>
-            </button>
+            </Link>
           </div>
 
           {appointments.length === 0 ? (
