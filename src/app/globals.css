@@ -17,42 +17,32 @@ body {
 }
 
 @layer components {
-  /* Tarjeta de vidrio */
   .glass-card {
     @apply rounded-3xl border border-white/60 bg-white/55 shadow-[0_8px_32px_rgba(31,38,135,0.15)] backdrop-blur-xl;
   }
 
-  /* Botón de vidrio (acción principal, tono morado) */
   .glass-button {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-white/40 px-5 py-2.5 font-semibold text-white shadow-[0_4px_20px_rgba(102,126,234,0.35)] backdrop-blur-md transition hover:-translate-y-0.5 hover:shadow-[0_6px_24px_rgba(118,75,162,0.45)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-from disabled:pointer-events-none disabled:opacity-60;
-    background: linear-gradient(
-      135deg,
-      rgb(102 126 234 / 0.9),
-      rgb(118 75 162 / 0.9)
-    );
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-white/40 px-5 py-2.5 font-semibold text-white shadow-[0_4px_20px_rgba(21,67,96,0.28)] backdrop-blur-md transition hover:-translate-y-0.5 hover:shadow-[0_6px_24px_rgba(21,67,96,0.32)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-from disabled:pointer-events-none disabled:opacity-60;
+    background: linear-gradient(135deg, rgb(21 67 96 / 0.96), rgb(143 211 196 / 0.9));
   }
 
-  /* Botón de vidrio secundario (claro) */
   .glass-button-light {
     @apply inline-flex items-center justify-center gap-2 rounded-xl border border-white/70 bg-white/50 px-5 py-2.5 font-semibold text-brand-to shadow-[0_4px_16px_rgba(31,38,135,0.12)] backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-white/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-from disabled:pointer-events-none disabled:opacity-60;
   }
 
   .glass-input {
-    @apply w-full rounded-xl border border-white/70 bg-white/60 px-4 py-2.5 text-ink placeholder:text-slate-400 backdrop-blur-md outline-none transition focus:border-brand-from focus:ring-2 focus:ring-brand-from/30;
+    @apply w-full rounded-xl border border-white/70 bg-white/60 px-4 py-2.5 text-ink placeholder:text-slate-400 backdrop-blur-md outline-none transition focus:border-[#154360] focus:ring-2 focus:ring-[#154360]/15;
   }
 
-  /* Sidebar de vidrio: azul marino + acento aguamarina */
   .sidebar-glass {
-    background: linear-gradient(
-      180deg,
-      rgb(21 67 96 / 0.88),
-      rgb(21 67 96 / 0.8)
-    );
-    border-right: 1px solid rgb(143 211 196 / 0.25);
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.3),
-      8px 0 32px rgba(10, 30, 46, 0.25);
+    background: linear-gradient(180deg, rgb(21 67 96 / 0.9), rgb(21 67 96 / 0.82));
+    border-right: 1px solid rgb(143 211 196 / 0.22);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.18), 8px 0 32px rgba(10, 30, 46, 0.2);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
+  }
+
+  .brand-stage {
+    background: linear-gradient(135deg, rgba(255,255,255,0.42), rgba(143,211,196,0.12));
   }
 }
