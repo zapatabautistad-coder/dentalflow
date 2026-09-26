@@ -9,6 +9,7 @@ Sistema de gestión para clínicas dentales. Stack: Next.js (App Router, TypeScr
 ## Cómo trabajar
 - Responder siempre en **español**, breve y paso a paso.
 - Proyecto de **portafolio**: nunca inventar métricas, testimonios ni certificaciones (nada de "HIPAA compliant" ni similares).
+- Antes de decir que una tarea está terminada, ejecuta `npm run build` y `npm run lint`, corrige todos los errores que salgan y repite hasta que pasen sin errores. Luego haz commit.
 
 ## Referencia: demo HTML (v6)
 - Vistas: Panel, Turnos, Pacientes, Odontograma, Citas, Horarios, Planes de tratamiento, Facturación, Análisis.
