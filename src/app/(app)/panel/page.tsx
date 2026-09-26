@@ -121,7 +121,7 @@ export default async function PanelPage() {
 
   const kpis = [
     { label: "Pacientes registrados", value: String(patientsCount), iconBg: "bg-[#154360]/10 text-[#154360]", icon: "P" },
-    { label: "Citas de hoy", value: String(appointments.length), iconBg: "bg-indigo-100 text-indigo-700", icon: "C" },
+    { label: "Citas de hoy", value: String(appointments.length), iconBg: "bg-[#8FD3C4]/20 text-[#154360]", icon: "C" },
     { label: "En sala de espera", value: String(queue.length), iconBg: "bg-amber-100 text-amber-700", icon: "S" },
   ];
 
