@@ -15,7 +15,7 @@ const LINKS = [
 const SOON_LABELS = ["Turnos"];
 
 const ACTIVE_LINK =
-  "bg-gradient-to-r from-[#154360] to-[#1f5f84] text-white shadow-[0_10px_22px_-10px_rgba(21,67,96,0.75),inset_0_1px_0_rgba(255,255,255,0.28)]";
+  "border border-white/40 bg-gradient-to-r from-[#1c5478]/70 to-[#2f7fa3]/70 text-white backdrop-blur-md shadow-[0_14px_28px_-12px_rgba(21,67,96,0.7),0_5px_14px_-6px_rgba(21,67,96,0.45),inset_0_1px_0_rgba(255,255,255,0.4)]";
 const IDLE_LINK = "text-[#154360] hover:bg-white/70 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]";
 const SOON_ITEM =
   "flex cursor-not-allowed items-center justify-between rounded-2xl border border-white/70 bg-white/30 font-semibold text-[#4A6B80]";
