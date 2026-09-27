@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { canManageAppointments, canManagePatients, requireProfile } from "@/lib/auth";
+import { canManageAppointments, canManagePatients, canWriteClinicalEntries, requireProfile } from "@/lib/auth";
 import { formatDominicanDocumentId, formatDominicanPhone } from "@/lib/phone";
 import {
   TIME_ZONE,
@@ -12,9 +12,10 @@ import {
   todayDateKey,
 } from "@/lib/timezone";
 import { StatusChip } from "../../appointments/status-chip";
-import { archivePatient, restorePatient, saveMedicalHistory } from "../actions";
+import { addClinicalEntry, archivePatient, restorePatient, saveMedicalHistory } from "../actions";
 import { ArchiveForm } from "./archive-form";
 import { ChangeLog, type AuditRow } from "./change-log";
+import { ClinicalRecord, type ClinicalEntry } from "./clinical-record";
 import { MedicalHistoryForm, type MedicalHistoryValues } from "./medical-history-form";
 
 export const metadata: Metadata = { title: "Ficha del paciente · DentalFlow" };
@@ -127,7 +128,7 @@ export default async function PatientChartPage({ params }: { params: Promise<{ i
   if (!patient) notFound();
 
   const nowIso = new Date().toISOString();
-  const [historyResult, upcomingResult, pastResult, auditResult] = await Promise.all([
+  const [historyResult, upcomingResult, pastResult, auditResult, entriesResult] = await Promise.all([
     supabase
       .from("patient_medical_history")
       .select(
@@ -158,6 +159,15 @@ export default async function PatientChartPage({ params }: { params: Promise<{ i
       .order("changed_at", { ascending: false })
       .limit(30)
       .returns<AuditRow[]>(),
+    supabase
+      .from("clinical_entries")
+      .select(
+        "id, kind, body, medication_name, dose, route, administered_at, corrects_entry_id, correction_reason, created_at, author_role, profiles(full_name)"
+      )
+      .eq("patient_id", id)
+      .order("created_at", { ascending: false })
+      .limit(100)
+      .returns<ClinicalEntry[]>(),
   ]);
 
   const history = historyResult.data;
@@ -168,6 +178,7 @@ export default async function PatientChartPage({ params }: { params: Promise<{ i
   const archiveThisPatient = archivePatient.bind(null, patient.id);
   const restoreThisPatient = restorePatient.bind(null, patient.id);
   const auditRows = auditResult.data ?? [];
+  const addEntry = addClinicalEntry.bind(null, patient.id);
 
   const identity = [
     `Expediente N.° ${String(patient.record_number).padStart(4, "0")}`,
@@ -275,6 +286,23 @@ export default async function PatientChartPage({ params }: { params: Promise<{ i
           </p>
         </section>
       )}
+
+      <section className="glass-card p-5 sm:p-6">
+        <h2 className="text-lg font-bold text-[#0F172A]" data-i18n="chart.clinical">Registro clínico</h2>
+        <p className="mb-4 mt-1 text-sm text-slate-600" data-i18n="chart.clinical.hint">
+          Notas de evolución, medicamentos administrados y procedimientos. Lo registrado no se edita ni se borra: se corrige con motivo.
+        </p>
+        {entriesResult.error ? (
+          <p role="alert" className="text-[15px] text-rose-700">No se pudo cargar el registro clínico. Recarga la página.</p>
+        ) : (
+          <ClinicalRecord
+            entries={entriesResult.data ?? []}
+            canWrite={canWriteClinicalEntries(profile.role) && !patient.archived_at}
+            action={addEntry}
+            nowIso={nowIso}
+          />
+        )}
+      </section>
 
       <div className="grid gap-4 xl:grid-cols-[1.25fr_1fr]">
         <section className="glass-card p-5 sm:p-6">

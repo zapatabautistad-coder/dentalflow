@@ -17,6 +17,7 @@ Sistema de gestión para clínicas dentales. Stack: Next.js (App Router, TypeScr
 - **Nada clínico se borra**: pacientes y citas no tienen permiso DELETE en la base; un paciente se archiva (con motivo) y una cita se cancela. No agregar botones de borrar.
 - **Todo cambio queda auditado**: `audit_log` guarda versión anterior, nueva, quién y cuándo (trigger `audit_row`). Toda tabla clínica nueva debe llevar ese trigger y no tener DELETE.
 - Autor y fecha de un registro los pone la base de datos (triggers), nunca la app.
+- **Registro clínico** (`clinical_entries`): solo INSERT y SELECT. Nunca agregar UPDATE/DELETE; un error se corrige con otra entrada (`corrects_entry_id` + `correction_reason`). Escriben solo doctor y enfermería.
 - `data-i18n` solo en textos fijos, nunca en elementos que muestran datos de Supabase (nombres, motivos).
 - Antes de decir que una tarea está terminada, ejecuta `npm run build` y `npm run lint`, corrige todos los errores que salgan y repite hasta que pasen sin errores. Luego haz commit.
 
@@ -38,7 +39,7 @@ Sistema de gestión para clínicas dentales. Stack: Next.js (App Router, TypeScr
 
 ## Estado
 - En producción: https://dentalflow-navy.vercel.app (Vercel, se publica solo con cada push a `main`).
-- Supabase con migraciones en `supabase/migrations/`. Aplicadas en producción: 001, 002, 003, 004, 007, 008, 009, 010, 011. **No ejecutar 005 ni 006** (ver aviso en cada archivo). Antes de escribir una migración nueva, revisar el esquema real de la base, no solo los archivos. Claves en `.env.local` (ignorado por git) y en Vercel:
+- Supabase con migraciones en `supabase/migrations/`. Aplicadas en producción: 001, 002, 003, 004, 007, 008, 009, 010, 011, 012. **No ejecutar 005 ni 006** (ver aviso en cada archivo). Antes de escribir una migración nueva, revisar el esquema real de la base, no solo los archivos. Claves en `.env.local` (ignorado por git) y en Vercel:
   `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
 - Menú: Panel, Pacientes, Citas. Horarios, Reportes y Configuración eran pantallas de relleno: fuera del menú, pendientes de borrar o rehacer con datos reales.
 - Odontograma, periodontograma y plan de tratamiento no guardan datos y muestran valores inventados; no tienen enlace desde la app hasta rehacerlos.

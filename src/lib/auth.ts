@@ -25,6 +25,11 @@ export function canManagePatients(role: Role) {
   return role === "admin" || role === "recepcion";
 }
 
+// Roles que pueden escribir en el registro clínico (ver RLS en 012_clinical_entries.sql).
+export function canWriteClinicalEntries(role: Role) {
+  return role === "doctor" || role === "enfermeria";
+}
+
 // Roles que pueden crear, editar y cancelar citas (ver RLS en 001_mvp.sql
 // y 003_doctor_status_update.sql). El doctor solo cambia el estado de las suyas.
 export function canManageAppointments(role: Role) {

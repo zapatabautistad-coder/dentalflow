@@ -3,7 +3,8 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { canManagePatients, requireProfile } from "@/lib/auth";
+import { canManagePatients, canWriteClinicalEntries, requireProfile } from "@/lib/auth";
+import { combineDateTime, isValidDateKey } from "@/lib/timezone";
 import { cleanDocumentIdDigits, cleanPhoneDigits } from "@/lib/phone";
 
 export type PatientFormState = { error: string } | undefined;
@@ -260,4 +261,97 @@ export async function saveMedicalHistory(
 
   revalidatePath(`/patients/${patientId}`);
   return { saved: true };
+}
+
+export type ClinicalEntryState = { error: string } | { saved: true; at: number } | undefined;
+
+const CLINICAL_KINDS = ["nota", "medicamento", "procedimiento"] as const;
+type ClinicalKind = (typeof CLINICAL_KINDS)[number];
+
+function field(formData: FormData, name: string): string {
+  return String(formData.get(name) ?? "").trim();
+}
+
+export async function addClinicalEntry(
+  patientId: string,
+  _prev: ClinicalEntryState,
+  formData: FormData
+): Promise<ClinicalEntryState> {
+  const profile = await requireProfile();
+  if (!canWriteClinicalEntries(profile.role)) {
+    return { error: "Solo doctores y enfermería pueden escribir en el registro clínico." };
+  }
+
+  const kind = field(formData, "kind") as ClinicalKind;
+  if (!CLINICAL_KINDS.includes(kind)) {
+    return { error: "Elige el tipo de entrada." };
+  }
+
+  const correctsEntryId = field(formData, "corrects_entry_id") || null;
+  const correctionReason = field(formData, "correction_reason") || null;
+  if (correctsEntryId && (!correctionReason || correctionReason.length < 5)) {
+    return { error: "Escribe el motivo de la corrección (mínimo 5 caracteres)." };
+  }
+  if (correctionReason && correctionReason.length > 500) {
+    return { error: "El motivo admite hasta 500 caracteres." };
+  }
+
+  const values: Record<string, string | null> = {
+    patient_id: patientId,
+    kind,
+    corrects_entry_id: correctsEntryId,
+    correction_reason: correctsEntryId ? correctionReason : null,
+    body: null,
+    medication_name: null,
+    dose: null,
+    route: null,
+    administered_at: null,
+  };
+
+  if (kind === "medicamento") {
+    const medication = field(formData, "medication_name");
+    const dose = field(formData, "dose");
+    const route = field(formData, "route");
+    const date = field(formData, "administered_date");
+    const time = field(formData, "administered_time");
+    if (!medication || !dose || !route || !date || !time) {
+      return { error: "Completa medicamento, dosis, vía, fecha y hora de administración." };
+    }
+    if (!isValidDateKey(date) || !/^\d{2}:\d{2}$/.test(time)) {
+      return { error: "La fecha u hora de administración no es válida." };
+    }
+    const administeredAt = combineDateTime(date, time);
+    if (new Date(administeredAt).getTime() > Date.now() + 5 * 60_000) {
+      return { error: "La hora de administración no puede estar en el futuro." };
+    }
+    if (medication.length > 200 || dose.length > 100 || route.length > 100) {
+      return { error: "Algún campo del medicamento es demasiado largo." };
+    }
+    values.medication_name = medication;
+    values.dose = dose;
+    values.route = route;
+    values.administered_at = administeredAt;
+    values.body = field(formData, "body") || null;
+  } else {
+    const body = field(formData, "body");
+    if (!body) return { error: "Escribe el contenido de la entrada." };
+    values.body = body;
+  }
+
+  if (values.body && values.body.length > 4000) {
+    return { error: "El texto admite hasta 4000 caracteres." };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("clinical_entries").insert(values);
+
+  if (error) {
+    if (error.code === "23505") {
+      return { error: "Esa entrada ya fue corregida. Corrige la corrección más reciente." };
+    }
+    return { error: "No se pudo guardar la entrada. Inténtalo de nuevo." };
+  }
+
+  revalidatePath(`/patients/${patientId}`);
+  return { saved: true, at: Date.now() };
 }

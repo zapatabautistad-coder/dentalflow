@@ -57,6 +57,11 @@ const TITLES: Record<string, Record<AuditRow["action"], string>> = {
     DELETE: "Historial médico eliminado",
   },
   appointments: { INSERT: "Cita creada", UPDATE: "Cita modificada", DELETE: "Cita eliminada" },
+  clinical_entries: {
+    INSERT: "Entrada del registro clínico firmada",
+    UPDATE: "Entrada del registro clínico modificada",
+    DELETE: "Entrada del registro clínico eliminada",
+  },
 };
 
 function formatStamp(iso: string): string {
