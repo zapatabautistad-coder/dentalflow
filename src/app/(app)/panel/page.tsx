@@ -175,7 +175,7 @@ export default async function PanelPage() {
                       </div>
                     </div>
 
-                    <button type="button" className="rounded-xl border border-[#0D9488]/20 bg-[#0D9488]/5 px-2 py-1.25 text-[8px] font-black uppercase tracking-[0.18em] text-[#0D9488] transition hover:bg-[#0D9488]/10" data-i18n="panel.agenda.view">
+                    <button type="button" className="rounded-xl border border-[#0D9488]/20 bg-[#0D9488]/5 px-2 py-1.25 text-[8px] font-black uppercase tracking-[0.18em] text-[#0D9488] transition hover:bg-[#0D9488]/10" data-i18n="panel.agenda.action">
                       Ver
                     </button>
                   </div>
