@@ -304,7 +304,7 @@ export default async function PatientChartPage({ params }: { params: Promise<{ i
         )}
       </section>
 
-      <div className="grid gap-4 xl:grid-cols-[1.25fr_1fr]">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]">
         <section className="glass-card p-5 sm:p-6">
           <h2 className="text-lg font-bold text-[#0F172A]" data-i18n="chart.history">Historial médico</h2>
           <p className="mb-4 mt-1 text-sm text-slate-600" data-i18n="chart.history.hint">

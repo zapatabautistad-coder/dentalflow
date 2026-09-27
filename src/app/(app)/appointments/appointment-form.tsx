@@ -81,7 +81,7 @@ export function AppointmentForm({
         </select>
       </label>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <label className="flex flex-col gap-1.5 text-sm font-medium" data-i18n="appointments.form.date">
           Fecha
           <input

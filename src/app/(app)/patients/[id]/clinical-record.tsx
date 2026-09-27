@@ -101,7 +101,7 @@ function EntryForm({
       )}
 
       {kind === "medicamento" && (
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <label className="flex flex-col gap-1.5 text-sm font-medium text-slate-700 sm:col-span-2">
             Medicamento
             <input name="medication_name" required maxLength={200} defaultValue={original?.medication_name ?? ""} placeholder="Ej.: Amoxicilina" className="glass-input text-[15px]" />

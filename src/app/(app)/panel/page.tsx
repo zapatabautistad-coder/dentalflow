@@ -114,7 +114,7 @@ export default async function PanelPage() {
         ))}
       </section>
 
-      <section className="mt-4 grid gap-3 xl:grid-cols-[1.48fr_0.97fr]">
+      <section className="mt-4 grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1.48fr)_minmax(0,0.97fr)]">
         <div className="crystal-card rounded-[24px] p-3.5">
           <div className="flex items-center justify-between gap-4 border-b border-white/70 pb-2.5">
             <div>

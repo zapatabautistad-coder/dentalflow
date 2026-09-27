@@ -104,7 +104,7 @@ export function PatientForm({
         </p>
       )}
 
-      <div className="grid gap-2 sm:grid-cols-[1.3fr_0.9fr]">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1.3fr)_minmax(0,0.9fr)]">
         <label className="flex flex-col gap-1 text-[13px] font-medium text-slate-700" data-i18n="patient.form.fullName">
           Nombre completo
           <input
@@ -131,7 +131,7 @@ export function PatientForm({
         </label>
       </div>
 
-      <div className="grid gap-2 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         <label className="flex flex-col gap-1 text-[13px] font-medium text-slate-700">
           Teléfono
           <input
@@ -158,7 +158,7 @@ export function PatientForm({
         </label>
       </div>
 
-      <div className="grid gap-2 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         <label className="flex flex-col gap-1 text-[13px] font-medium text-slate-700">
           Correo (opcional)
           <input
@@ -188,7 +188,7 @@ export function PatientForm({
       </div>
 
       {insuranceType === "ars" && (
-        <div className="grid gap-2 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           <label className="flex flex-col gap-1 text-[13px] font-medium text-slate-700">
             Nombre de la ARS
             <input

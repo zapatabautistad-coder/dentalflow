@@ -69,7 +69,7 @@ export function MedicalHistoryForm({
       {GROUPS.map((group) => (
         <fieldset key={group.title} className="flex flex-col gap-2.5">
           <legend className="mb-1 text-sm font-bold text-[#154360]" data-i18n={group.i18n}>{group.title}</legend>
-          <div className="grid gap-2 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {group.flags.map((flag) => (
               <label
                 key={flag.name}

@@ -57,7 +57,7 @@ export default async function AppointmentsPage({
         )}
       </div>
 
-      <div className="grid gap-2.5 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-2.5 md:grid-cols-3">
         <div className="crystal-card rounded-[18px] p-3">
           <p className="text-xs font-black uppercase tracking-[0.08em] text-slate-500" data-i18n="appointments.kpi.total">Total del día</p>
           <p className="mt-2 text-xl font-black tracking-[-0.06em] text-[#0F172A]">{appointments.length}</p>
