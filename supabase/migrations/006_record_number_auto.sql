@@ -1,3 +1,5 @@
+-- ⚠️ NO EJECUTAR. Innecesaria: la 004 ya crea record_number como identity única.
+
 -- =============================================================
 -- DentalFlow · Migración 006 · Número de expediente automático
 -- Garantiza que cada paciente reciba un record_number único y generado

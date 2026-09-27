@@ -1,3 +1,7 @@
+-- ⚠️ NO EJECUTAR. Nunca se aplicó en producción y rompería el registro de usuarios:
+-- redefine handle_new_user() para escribir profiles.email, columna que no existe.
+-- Lo que sí hacía falta (expediente y seguro) ya lo cubre la 004.
+
 -- =============================================================
 -- DentalFlow · Migración 005 · profiles + patients + RLS completo
 -- Pegar completo en el SQL Editor de Supabase.
