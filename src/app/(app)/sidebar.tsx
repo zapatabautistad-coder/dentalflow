@@ -169,7 +169,7 @@ const NAV: NavItem[] = [
 ];
 
 const NAV_ITEM =
-  "flex items-center gap-3.5 rounded-2xl border px-3.5 py-2.5 text-[10px] font-black uppercase tracking-[0.22em] transition [@media(max-height:800px)]:py-1.5";
+  "group relative flex items-center gap-3.5 overflow-hidden rounded-[22px] border px-3.5 py-2.5 text-[10px] font-black uppercase tracking-[0.22em] shadow-[0_12px_24px_-18px_rgba(15,23,42,0.65)] transition-all duration-200 [@media(max-height:800px)]:py-1.5";
 
 type ProfileProps = { fullName: string; roleLabel: string };
 
@@ -200,9 +200,12 @@ function Brand({ compact = false }: { compact?: boolean }) {
       </span>
       <div className="min-w-0">
         <p
-          className={`truncate font-bold leading-tight tracking-tight text-white ${
+          className={`truncate font-black leading-none tracking-[-0.04em] text-[#EAFBF8] ${
             compact ? "text-lg" : "text-[22px]"
           }`}
+          style={{
+            textShadow: "0 8px 18px rgba(7, 33, 43, 0.34), 0 1px 0 rgba(255,255,255,0.18)",
+          }}
         >
           DentalFlow
         </p>
@@ -242,11 +245,19 @@ function NavList({ pathname, onNavigate }: { pathname: string; onNavigate?: () =
             aria-current={active ? "page" : undefined}
             className={`${NAV_ITEM} ${
               active
-                ? "nav-pill-active text-white"
-                : "border-transparent text-white/90 hover:bg-white/10 hover:text-white"
+                ? "border-white/30 bg-white/10 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.28),0_14px_28px_-18px_rgba(16,185,129,0.9)] before:absolute before:inset-x-2 before:top-0 before:h-8 before:rounded-full before:bg-[radial-gradient(circle,_rgba(143,211,196,0.52),_transparent_68%)] before:blur-lg before:content-['']"
+                : "border-transparent bg-white/[0.03] text-white/85 hover:border-white/20 hover:bg-white/8 hover:text-white"
             }`}
           >
-            <Icon name={item.icon} className="h-[22px] w-[22px] shrink-0" />
+            <span
+              className={`flex h-9 w-9 items-center justify-center rounded-xl border ${
+                active
+                  ? "border-white/25 bg-white/12 text-[#D6F7F1] shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]"
+                  : "border-white/10 bg-white/[0.04] text-white/80"
+              }`}
+            >
+              <Icon name={item.icon} className="h-[18px] w-[18px] shrink-0" />
+            </span>
             <span className="min-w-0 flex-1 truncate" data-i18n={item.key ?? item.label}>{item.label}</span>
           </Link>
         );
