@@ -161,7 +161,58 @@ export async function updatePatient(
   redirect(`/patients/${patientId}`);
 }
 
-export type MedicalHistoryState = { error: string } | { saved: true } | undefined;
+export type ArchiveState = { error: string } | undefined;
+
+export async function archivePatient(
+  patientId: string,
+  _prev: ArchiveState,
+  formData: FormData
+): Promise<ArchiveState> {
+  const profile = await requireProfile();
+  if (!canManagePatients(profile.role)) {
+    return { error: "No tienes permiso para archivar pacientes." };
+  }
+
+  const reason = String(formData.get("archived_reason") ?? "").trim();
+  if (reason.length < 5) {
+    return { error: "Escribe el motivo del archivado (mínimo 5 caracteres)." };
+  }
+  if (reason.length > 500) {
+    return { error: "El motivo admite hasta 500 caracteres." };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("patients")
+    .update({ archived_at: new Date().toISOString(), archived_reason: reason })
+    .eq("id", patientId);
+
+  if (error) {
+    return { error: "No se pudo archivar el paciente. Inténtalo de nuevo." };
+  }
+
+  revalidatePath("/patients");
+  revalidatePath("/panel");
+  revalidatePath(`/patients/${patientId}`);
+  return undefined;
+}
+
+export async function restorePatient(patientId: string): Promise<void> {
+  const profile = await requireProfile();
+  if (profile.role !== "admin") return;
+
+  const supabase = await createClient();
+  await supabase
+    .from("patients")
+    .update({ archived_at: null, archived_reason: null })
+    .eq("id", patientId);
+
+  revalidatePath("/patients");
+  revalidatePath("/panel");
+  revalidatePath(`/patients/${patientId}`);
+}
+
+export type MedicalHistoryState ={ error: string } | { saved: true } | undefined;
 
 const MEDICAL_FLAGS = [
   "allergy_penicillin",

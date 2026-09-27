@@ -41,7 +41,7 @@ export default async function PanelPage() {
   const supabase = await createClient();
 
   const [patientsCount, agendaResult, waitingCount, recentResult] = await Promise.all([
-    supabase.from("patients").select("id", { count: "exact", head: true }),
+    supabase.from("patients").select("id", { count: "exact", head: true }).is("archived_at", null),
     supabase
       .from("appointments")
       .select("id, patient_id, starts_at, duration_minutes, reason, status, patients(full_name), profiles(full_name)")
@@ -57,6 +57,7 @@ export default async function PanelPage() {
     supabase
       .from("patients")
       .select("id, full_name, record_number, insurance_type, insurance_provider")
+      .is("archived_at", null)
       .order("created_at", { ascending: false })
       .limit(5)
       .returns<RecentPatient[]>(),

@@ -12,7 +12,9 @@ import {
   todayDateKey,
 } from "@/lib/timezone";
 import { StatusChip } from "../../appointments/status-chip";
-import { saveMedicalHistory } from "../actions";
+import { archivePatient, restorePatient, saveMedicalHistory } from "../actions";
+import { ArchiveForm } from "./archive-form";
+import { ChangeLog, type AuditRow } from "./change-log";
 import { MedicalHistoryForm, type MedicalHistoryValues } from "./medical-history-form";
 
 export const metadata: Metadata = { title: "Ficha del paciente · DentalFlow" };
@@ -29,6 +31,9 @@ type Patient = {
   insurance_type: "ars" | "privado" | null;
   insurance_provider: string | null;
   affiliate_number: string | null;
+  archived_at: string | null;
+  archived_reason: string | null;
+  archiver: { full_name: string } | null;
 };
 
 type MedicalHistory = MedicalHistoryValues & {
@@ -114,7 +119,7 @@ export default async function PatientChartPage({ params }: { params: Promise<{ i
   const { data: patient } = await supabase
     .from("patients")
     .select(
-      "id, full_name, document_id, birth_date, phone, email, notes, record_number, insurance_type, insurance_provider, affiliate_number"
+      "id, full_name, document_id, birth_date, phone, email, notes, record_number, insurance_type, insurance_provider, affiliate_number, archived_at, archived_reason, archiver:profiles!patients_archived_by_fkey(full_name)"
     )
     .eq("id", id)
     .maybeSingle<Patient>();
@@ -122,7 +127,7 @@ export default async function PatientChartPage({ params }: { params: Promise<{ i
   if (!patient) notFound();
 
   const nowIso = new Date().toISOString();
-  const [historyResult, upcomingResult, pastResult] = await Promise.all([
+  const [historyResult, upcomingResult, pastResult, auditResult] = await Promise.all([
     supabase
       .from("patient_medical_history")
       .select(
@@ -146,6 +151,13 @@ export default async function PatientChartPage({ params }: { params: Promise<{ i
       .order("starts_at", { ascending: false })
       .limit(5)
       .returns<PatientAppointment[]>(),
+    supabase
+      .from("audit_log")
+      .select("id, table_name, action, changed_at, old_data, new_data, profiles(full_name)")
+      .eq("patient_id", id)
+      .order("changed_at", { ascending: false })
+      .limit(30)
+      .returns<AuditRow[]>(),
   ]);
 
   const history = historyResult.data;
@@ -153,6 +165,9 @@ export default async function PatientChartPage({ params }: { params: Promise<{ i
   const alerts = history ? activeAlerts(history) : [];
   const age = ageFrom(patient.birth_date);
   const saveHistory = saveMedicalHistory.bind(null, patient.id);
+  const archiveThisPatient = archivePatient.bind(null, patient.id);
+  const restoreThisPatient = restorePatient.bind(null, patient.id);
+  const auditRows = auditResult.data ?? [];
 
   const identity = [
     `Expediente N.° ${String(patient.record_number).padStart(4, "0")}`,
@@ -165,6 +180,23 @@ export default async function PatientChartPage({ params }: { params: Promise<{ i
       <Link href="/patients" className="self-start text-sm font-semibold text-[#154360] hover:underline" data-i18n="chart.back">
         ← Pacientes
       </Link>
+
+      {patient.archived_at && (
+        <section role="alert" className="flex flex-col gap-3 rounded-2xl border-2 border-slate-400 bg-slate-100 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-base font-bold text-slate-800">Paciente archivado</p>
+            <p className="mt-1 text-[15px] text-slate-700">
+              {formatStamp(patient.archived_at)}
+              {patient.archiver?.full_name ? ` por ${patient.archiver.full_name}` : ""} · Motivo: {patient.archived_reason}
+            </p>
+          </div>
+          {profile.role === "admin" && (
+            <form action={restoreThisPatient}>
+              <button type="submit" className="glass-button min-h-11 text-[15px]">Restaurar paciente</button>
+            </form>
+          )}
+        </section>
+      )}
 
       <header className="glass-card flex flex-col gap-4 p-5 sm:flex-row sm:items-start sm:justify-between sm:p-6">
         <div className="min-w-0">
@@ -267,6 +299,24 @@ export default async function PatientChartPage({ params }: { params: Promise<{ i
             <h2 className="mb-3 text-lg font-bold text-[#0F172A]" data-i18n="chart.past">Citas anteriores</h2>
             <AppointmentList items={pastResult.data ?? []} empty="Sin citas anteriores." />
           </section>
+
+          <section className="glass-card p-5 sm:p-6">
+            <details>
+              <summary className="cursor-pointer text-lg font-bold text-[#0F172A]">
+                Ver cambios{auditRows.length > 0 ? ` (${auditRows.length}${auditRows.length === 30 ? "+" : ""})` : ""}
+              </summary>
+              <p className="mb-3 mt-1 text-sm text-slate-600">
+                Registro automático de quién creó o cambió cada dato y cuándo. No se puede editar ni borrar.
+              </p>
+              {auditResult.error ? (
+                <p className="text-sm text-rose-700">No se pudo cargar el registro de cambios.</p>
+              ) : (
+                <ChangeLog rows={auditRows} />
+              )}
+            </details>
+          </section>
+
+          {canManagePatients(profile.role) && !patient.archived_at && <ArchiveForm action={archiveThisPatient} />}
 
           {patient.notes && (
             <section className="glass-card p-5 sm:p-6">

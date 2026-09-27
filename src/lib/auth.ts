@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { USER_EMAIL_HEADER, USER_ID_HEADER } from "@/lib/auth-headers";
 
-export type Role = "doctor" | "recepcion" | "admin";
+export type Role = "doctor" | "recepcion" | "enfermeria" | "admin";
 
 export type SessionProfile = {
   userId: string;
@@ -16,6 +16,7 @@ export type SessionProfile = {
 export const ROLE_LABELS: Record<Role, string> = {
   doctor: "Doctor",
   recepcion: "Recepción",
+  enfermeria: "Enfermería",
   admin: "Admin",
 };
 

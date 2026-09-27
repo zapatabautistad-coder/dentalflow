@@ -61,6 +61,7 @@ export default async function PatientsPage({
     .select(
       "id, full_name, document_id, phone, email, created_at, record_number, insurance_type, insurance_provider"
     )
+    .is("archived_at", null)
     .order("created_at", { ascending: false });
 
   const searchFilter = buildPatientSearchFilter(q ?? "");

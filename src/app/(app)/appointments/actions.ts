@@ -139,6 +139,7 @@ export async function searchPatients(rawQuery: string): Promise<PatientResult[]>
   const { data } = await supabase
     .from("patients")
     .select("id, full_name, document_id")
+    .is("archived_at", null)
     .or(searchFilter)
     .order("full_name", { ascending: true })
     .limit(8)

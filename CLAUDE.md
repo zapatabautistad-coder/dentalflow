@@ -8,17 +8,21 @@ Sistema de gestión para clínicas dentales. Stack: Next.js (App Router, TypeScr
 
 ## Cómo trabajar
 - Responder siempre en **español**, breve y paso a paso.
-- **Producto real** para clínicas dentales en República Dominicana (no es demo ni portafolio). Lo usan doctores con pacientes reales.
+- **Producto real** para clínicas en República Dominicana, dentales y de medicina general (no es demo ni portafolio). Lo usan doctores, secretarias y enfermería con pacientes reales.
 - Nunca mostrar datos inventados: todo número, lista o estado en pantalla sale de Supabase. Si no hay datos, se muestra un estado vacío honesto.
 - Nunca inventar métricas, testimonios ni certificaciones (nada de "HIPAA compliant" ni similares).
 - Nada de botones u opciones de menú que no hagan nada: si una función no existe todavía, no se muestra.
 - El diseño está congelado: no cambiar barra lateral, ícono ni paleta sin que se pida explícitamente.
 - Idiomas: solo español e inglés.
+- **Nada clínico se borra**: pacientes y citas no tienen permiso DELETE en la base; un paciente se archiva (con motivo) y una cita se cancela. No agregar botones de borrar.
+- **Todo cambio queda auditado**: `audit_log` guarda versión anterior, nueva, quién y cuándo (trigger `audit_row`). Toda tabla clínica nueva debe llevar ese trigger y no tener DELETE.
+- Autor y fecha de un registro los pone la base de datos (triggers), nunca la app.
+- `data-i18n` solo en textos fijos, nunca en elementos que muestran datos de Supabase (nombres, motivos).
 - Antes de decir que una tarea está terminada, ejecuta `npm run build` y `npm run lint`, corrige todos los errores que salgan y repite hasta que pasen sin errores. Luego haz commit.
 
 ## Referencia: demo HTML (v6)
 - Vistas: Panel, Turnos, Pacientes, Odontograma, Citas, Horarios, Planes de tratamiento, Facturación, Análisis.
-- Roles: Doctor, Recepción, Admin.
+- Roles: Doctor, Recepción (secretaria/asistente), Enfermería, Admin.
 - Idiomas: ES / EN.
 
 ## Diseño
@@ -34,7 +38,7 @@ Sistema de gestión para clínicas dentales. Stack: Next.js (App Router, TypeScr
 
 ## Estado
 - En producción: https://dentalflow-navy.vercel.app (Vercel, se publica solo con cada push a `main`).
-- Supabase con migraciones en `supabase/migrations/`. Aplicadas en producción: 001, 002, 003, 004, 007. **No ejecutar 005 ni 006** (ver aviso en cada archivo). Antes de escribir una migración nueva, revisar el esquema real de la base, no solo los archivos. Claves en `.env.local` (ignorado por git) y en Vercel:
+- Supabase con migraciones en `supabase/migrations/`. Aplicadas en producción: 001, 002, 003, 004, 007. Pendientes de aplicar, en orden: 008, 009, 010 (el código de la ficha y de archivar depende de ellas). **No ejecutar 005 ni 006** (ver aviso en cada archivo). Antes de escribir una migración nueva, revisar el esquema real de la base, no solo los archivos. Claves en `.env.local` (ignorado por git) y en Vercel:
   `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
 - Menú: Panel, Pacientes, Citas. Horarios, Reportes y Configuración eran pantallas de relleno: fuera del menú, pendientes de borrar o rehacer con datos reales.
 - Odontograma, periodontograma y plan de tratamiento no guardan datos y muestran valores inventados; no tienen enlace desde la app hasta rehacerlos.
