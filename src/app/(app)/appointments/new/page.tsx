@@ -11,9 +11,9 @@ export const metadata: Metadata = { title: "Nueva cita · DentalFlow" };
 export default async function NewAppointmentPage({
   searchParams,
 }: {
-  searchParams: Promise<{ date?: string }>;
+  searchParams: Promise<{ date?: string; patient?: string }>;
 }) {
-  const { date } = await searchParams;
+  const { date, patient } = await searchParams;
   const profile = await requireProfile();
   if (!canManageAppointments(profile.role)) redirect("/appointments");
 
@@ -25,6 +25,15 @@ export default async function NewAppointmentPage({
     .order("full_name", { ascending: true })
     .returns<{ id: string; full_name: string }[]>();
 
+  const { data: defaultPatient } = patient
+    ? await supabase
+        .from("patients")
+        .select("id, full_name, document_id")
+        .eq("id", patient)
+        .is("archived_at", null)
+        .maybeSingle<{ id: string; full_name: string; document_id: string | null }>()
+    : { data: null };
+
   const dateKey = date && isValidDateKey(date) ? date : todayDateKey();
 
   return (
@@ -35,6 +44,7 @@ export default async function NewAppointmentPage({
         <AppointmentForm
           action={createAppointment}
           doctors={doctors ?? []}
+          defaultPatient={defaultPatient ?? null}
           defaultValues={{ date: dateKey, duration_minutes: 30 }}
           submitLabel="Guardar cita"
           pendingLabel="Guardando…"

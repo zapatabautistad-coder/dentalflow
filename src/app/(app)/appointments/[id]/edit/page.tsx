@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { canManageAppointments, requireProfile } from "@/lib/auth";
@@ -92,6 +93,12 @@ export default async function EditAppointmentPage({
           ? ` · ${formatDominicanDocumentId(appointment.patients.document_id)}`
           : ""}
       </p>
+      <Link
+        href={`/patients/${appointment.patient_id}`}
+        className="mt-3 inline-flex items-center text-sm font-semibold text-[#154360] hover:underline"
+      >
+        Ver ficha del paciente
+      </Link>
       <div className="mt-6">
         <AppointmentForm
           action={updateAppointmentWithId}
