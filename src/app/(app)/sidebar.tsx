@@ -3,225 +3,406 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { logout } from "./actions";
 
-const LINKS = [
-  { href: "/panel", label: "Panel" },
-  { href: "/patients", label: "Pacientes" },
-  { href: "/appointments", label: "Citas" },
-];
+// Nombre de la clínica bajo el logo y en el perfil. Se cambia con
+// NEXT_PUBLIC_CLINIC_NAME en .env.local, sin tocar el código.
+const CLINIC_NAME = process.env.NEXT_PUBLIC_CLINIC_NAME || "Bright Smile Dental";
 
-const SOON_LABELS = ["Turnos"];
+type IconName =
+  | "home"
+  | "turnos"
+  | "users"
+  | "tooth"
+  | "calendar"
+  | "clock"
+  | "file"
+  | "card"
+  | "chart"
+  | "settings"
+  | "logout"
+  | "menu"
+  | "close";
 
-const ACTIVE_LINK =
-  "border border-white/40 bg-gradient-to-r from-[#1c5478]/70 to-[#2f7fa3]/70 text-white backdrop-blur-md shadow-[0_14px_28px_-12px_rgba(21,67,96,0.7),0_5px_14px_-6px_rgba(21,67,96,0.45),inset_0_1px_0_rgba(255,255,255,0.4)]";
-const IDLE_LINK = "text-[#154360] hover:bg-white/70 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]";
-const SOON_ITEM =
-  "flex cursor-not-allowed items-center justify-between rounded-2xl border border-white/70 bg-white/30 font-semibold text-[#4A6B80]";
-const SOON_BADGE =
-  "rounded-full border border-[#8FD3C4]/70 bg-[#8FD3C4]/30 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-[#154360]";
+// Íconos de línea (trazos estilo Lucide, licencia ISC) dibujados aquí
+// para no añadir dependencias.
+const ICONS: Record<IconName, ReactNode> = {
+  home: (
+    <>
+      <path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" />
+      <path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+    </>
+  ),
+  turnos: (
+    <>
+      <path d="M21 7.5V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3.5" />
+      <path d="M16 2v4" />
+      <path d="M8 2v4" />
+      <path d="M3 10h5" />
+      <path d="M17.5 17.5 16 16.3V14" />
+      <circle cx="16" cy="16" r="6" />
+    </>
+  ),
+  users: (
+    <>
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </>
+  ),
+  tooth: (
+    <>
+      <path d="M12 5.5C10.3 4.2 8.9 3.5 7.3 3.5 4.8 3.5 3 5.4 3 8.2c0 2.1.8 3.5 1.5 4.9.6 1.3.7 2.8 1 4.5.4 2.3 1 3.4 2.1 3.4 1.2 0 1.6-1.4 1.9-3.2.3-1.7.9-3 2.5-3s2.2 1.3 2.5 3c.3 1.8.7 3.2 1.9 3.2 1.1 0 1.7-1.1 2.1-3.4.3-1.7.4-3.2 1-4.5.7-1.4 1.5-2.8 1.5-4.9 0-2.8-1.8-4.7-4.3-4.7-1.6 0-3 .7-4.7 2Z" />
+      <path d="M6.6 7.4c.9-.9 2.6-1 4.2.2" />
+    </>
+  ),
+  calendar: (
+    <>
+      <path d="M8 2v4" />
+      <path d="M16 2v4" />
+      <rect width="18" height="18" x="3" y="4" rx="2" />
+      <path d="M3 10h18" />
+      <path d="M8 14h.01" />
+      <path d="M12 14h.01" />
+      <path d="M16 14h.01" />
+      <path d="M8 18h.01" />
+      <path d="M12 18h.01" />
+    </>
+  ),
+  clock: (
+    <>
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 6v6l4 2" />
+    </>
+  ),
+  file: (
+    <>
+      <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
+      <path d="M14 2v4a2 2 0 0 0 2 2h4" />
+      <path d="M10 9H8" />
+      <path d="M16 13H8" />
+      <path d="M16 17H8" />
+    </>
+  ),
+  card: (
+    <>
+      <rect width="20" height="14" x="2" y="5" rx="2" />
+      <path d="M2 10h20" />
+      <path d="M6 15h4" />
+    </>
+  ),
+  chart: (
+    <>
+      <path d="M3 21h18" />
+      <path d="M6 17v-3" />
+      <path d="M10 17V9" />
+      <path d="M14 17v-5" />
+      <path d="M18 17V5" />
+    </>
+  ),
+  settings: (
+    <>
+      <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+      <circle cx="12" cy="12" r="3" />
+    </>
+  ),
+  logout: (
+    <>
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+      <path d="m16 17 5-5-5-5" />
+      <path d="M21 12H9" />
+    </>
+  ),
+  menu: (
+    <>
+      <path d="M4 7h16" />
+      <path d="M4 12h16" />
+      <path d="M4 17h16" />
+    </>
+  ),
+  close: (
+    <>
+      <path d="M18 6 6 18" />
+      <path d="m6 6 12 12" />
+    </>
+  ),
+};
 
-function MolarWatermark({ className }: { className?: string }) {
+function Icon({
+  name,
+  className,
+  strokeWidth = 1.6,
+}: {
+  name: IconName;
+  className?: string;
+  strokeWidth?: number;
+}) {
   return (
     <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
       aria-hidden="true"
-      viewBox="0 0 200 240"
-      className={`pointer-events-none absolute text-[#8FD3C4] ${className ?? ""}`}
+      className={className}
     >
-      <path
-        d="M100 8C60 8 25 20 20 55C15 90 25 110 40 130C48 140 46 150 44 165C40 190 45 215 60 228C68 235 78 232 82 222C88 205 92 175 100 175C108 175 112 205 118 222C122 232 132 235 140 228C155 215 160 190 156 165C154 150 152 140 160 130C175 110 185 90 180 55C175 20 140 8 100 8Z"
-        fill="currentColor"
-      />
+      {ICONS[name]}
     </svg>
   );
 }
 
+// Módulos del menú, en el mismo orden del diseño. Los que no tienen `href`
+// todavía no existen en la app: se ven igual pero no llevan a ninguna parte.
+type NavItem = { label: string; icon: IconName; href?: string };
+
+const NAV: NavItem[] = [
+  { label: "PANEL", icon: "home", href: "/panel" },
+  { label: "PACIENTES", icon: "users", href: "/patients" },
+  { label: "CITAS", icon: "calendar", href: "/appointments" },
+  { label: "HORARIOS", icon: "clock" },
+  { label: "REPORTES", icon: "chart" },
+  { label: "CONFIGURACIÓN", icon: "settings" },
+];
+
+const NAV_ITEM =
+  "flex items-center gap-3.5 rounded-2xl border px-3.5 py-2.5 text-[10px] font-black uppercase tracking-[0.22em] transition [@media(max-height:800px)]:py-1.5";
+
+type ProfileProps = { fullName: string; roleLabel: string };
+
 function initialsOf(fullName: string) {
   return fullName
     .split(" ")
+    .filter(Boolean)
     .map((word) => word[0])
     .slice(0, 2)
     .join("")
     .toUpperCase();
 }
 
-export function Sidebar({
-  fullName,
-  roleLabel,
-}: {
-  fullName: string;
-  roleLabel: string;
-}) {
-  const pathname = usePathname();
-  const [mobileOpen, setMobileOpen] = useState(false);
-
-  const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
-
-  const brand = (size: number, nameClass: string) => (
-    <div className="flex items-center gap-3">
-      <div
-        className="relative flex shrink-0 items-center justify-center"
-        style={{ width: size, height: size }}
+function Brand({ compact = false }: { compact?: boolean }) {
+  return (
+    <div className="flex min-w-0 items-center gap-3">
+      <span
+        className={`brand-glow flex shrink-0 items-center justify-center ${compact ? "h-11 w-11" : "h-[72px] w-[72px]"}`}
       >
-        <div
-          aria-hidden="true"
-          className="absolute -inset-2 rounded-full blur-md"
-          style={{
-            background:
-              "radial-gradient(circle, rgba(143,211,196,0.75) 0%, rgba(143,211,196,0) 70%)",
-          }}
-        />
         <Image
-          src="/dentalflow-mark.png"
+          src="/dentalflow-app-icon.png"
           alt="DentalFlow"
-          width={389}
+          width={512}
           height={512}
-          style={{ height: size, width: "auto" }}
-          className="relative drop-shadow-[0_8px_12px_rgba(21,67,96,0.35)]"
+          priority
+          className="h-full w-full"
         />
-      </div>
-      <div>
-        <div className="text-[10px] font-black uppercase tracking-[0.22em] text-[#4A6B80]">Clínica</div>
-        <div className={`font-black tracking-tight text-[#154360] ${nameClass}`}>DentalFlow</div>
+      </span>
+      <div className="min-w-0">
+        <p
+          className={`truncate font-bold leading-tight tracking-tight text-white ${
+            compact ? "text-lg" : "text-[22px]"
+          }`}
+        >
+          DentalFlow
+        </p>
+        <p className={`truncate font-medium text-[#B8E6DE] ${compact ? "text-[11px]" : "text-[13px]"}`}>
+          {CLINIC_NAME}
+        </p>
       </div>
     </div>
   );
+}
 
-  const profileCard = (
-    <div className="crystal-inset relative rounded-2xl p-3">
+function NavList({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
+  return (
+    <nav aria-label="Menú principal" className="flex flex-col gap-1">
+      {NAV.map((item) => {
+        if (!item.href) {
+          return (
+            <div
+              key={item.label}
+              aria-disabled="true"
+              className={`${NAV_ITEM} cursor-default border-transparent text-white/90`}
+            >
+              <Icon name={item.icon} className="h-[22px] w-[22px] shrink-0" />
+              <span className="min-w-0 flex-1 truncate">{item.label}</span>
+            </div>
+          );
+        }
+
+        const href = item.href;
+        const active = pathname === href || pathname.startsWith(`${href}/`);
+
+        return (
+          <Link
+            key={item.label}
+            href={href}
+            onClick={onNavigate}
+            aria-current={active ? "page" : undefined}
+            className={`${NAV_ITEM} ${
+              active
+                ? "nav-pill-active text-white"
+                : "border-transparent text-white/90 hover:bg-white/10 hover:text-white"
+            }`}
+          >
+            <Icon name={item.icon} className="h-[22px] w-[22px] shrink-0" />
+            <span className="min-w-0 flex-1 truncate">{item.label}</span>
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
+
+// La app todavía está solo en español: EN se muestra pero no está activo.
+function LanguageToggle() {
+  return (
+    <div
+      role="group"
+      aria-label="Idioma"
+      className="lang-toggle grid grid-cols-2 rounded-full p-1 text-xs font-semibold"
+    >
+      <button type="button" aria-pressed="true" className="lang-active rounded-full py-1.5 text-[#154360]">
+        ES
+      </button>
+      <button
+        type="button"
+        aria-pressed="false"
+        aria-disabled="true"
+        title="Inglés: próximamente"
+        className="cursor-not-allowed rounded-full py-1.5 text-white/70"
+      >
+        EN
+      </button>
+    </div>
+  );
+}
+
+function ProfileCard({ fullName, roleLabel }: ProfileProps) {
+  return (
+    <div className="profile-glass rounded-2xl p-3">
       <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#154360] to-[#2b7396] text-sm font-black text-white shadow-[0_6px_14px_-6px_rgba(21,67,96,0.7)]">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#8FD3C4] text-sm font-bold text-[#154360] shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_6px_14px_-6px_rgba(6,28,40,0.7)]">
           {initialsOf(fullName)}
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-bold text-[#154360]">{fullName}</p>
-          <p className="truncate text-[11px] font-medium text-[#4A6B80]">{roleLabel}</p>
+        </span>
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold text-white">{fullName}</p>
+          <p className="truncate text-xs text-white/70">
+            {roleLabel} · {CLINIC_NAME}
+          </p>
         </div>
       </div>
 
-      <form action={logout} className="mt-3">
+      <form action={logout} className="mt-3 border-t border-white/15 pt-2">
         <button
           type="submit"
-          className="w-full rounded-xl border border-[#154360]/15 bg-white/75 px-4 py-2 text-sm font-semibold text-[#154360] shadow-[inset_0_1px_0_rgba(255,255,255,1)] transition hover:bg-white"
+          className="flex w-full items-center gap-3 rounded-xl px-2 py-1.5 text-sm font-medium text-white/90 transition hover:bg-white/10 hover:text-white"
         >
+          <Icon name="logout" className="h-5 w-5" />
           Cerrar sesión
         </button>
       </form>
     </div>
   );
+}
+
+function SidebarFooter({ fullName, roleLabel }: ProfileProps) {
+  return (
+    <div className="space-y-4">
+      <div className="px-2 [@media(max-height:860px)]:hidden">
+        <p className="text-[15px] leading-snug text-white/85">
+          Sonrisas
+          <br />
+          que inspiran
+          <br />
+          vidas mejores
+        </p>
+        <span aria-hidden="true" className="mt-3 block h-px w-10 bg-[#8FD3C4]/80" />
+      </div>
+      <LanguageToggle />
+      <ProfileCard fullName={fullName} roleLabel={roleLabel} />
+    </div>
+  );
+}
+
+// Molar 3D del logo, grande y recortado, como molar decorativo de fondo.
+function Watermark({ className }: { className: string }) {
+  return (
+    <Image
+      src="/dentalflow-mark.png"
+      alt=""
+      aria-hidden="true"
+      width={389}
+      height={512}
+      className={`sidebar-watermark pointer-events-none absolute w-auto select-none ${className}`}
+    />
+  );
+}
+
+export function Sidebar({ fullName, roleLabel }: ProfileProps) {
+  const pathname = usePathname();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
     <>
       <div className="md:hidden">
-        <header className="topbar-crystal sticky top-0 z-40 flex items-center justify-between px-4 py-3">
-          {brand(44, "text-base")}
-
+        <header className="topbar-crystal sticky top-0 z-40 flex items-center justify-between gap-3 px-4 py-3">
+          <Brand compact />
           <button
             type="button"
             aria-label="Abrir menú"
             aria-expanded={mobileOpen}
-            onClick={() => setMobileOpen((prev) => !prev)}
-            className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#154360]/15 bg-white/70 text-xl font-bold text-[#154360]"
+            onClick={() => setMobileOpen(true)}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/30 bg-white/10 text-white transition hover:bg-white/20"
           >
-            ☰
+            <Icon name="menu" className="h-6 w-6" />
           </button>
         </header>
 
         {mobileOpen && (
           <div className="crystal-overlay fixed inset-0 z-50 overflow-hidden">
-            <MolarWatermark className="-right-16 bottom-[-3rem] h-[70%] w-auto opacity-[0.1]" />
+            <Watermark className="-right-20 bottom-28 h-[45%]" />
 
-            <div className="relative flex h-full flex-col px-4 py-5">
-              <div className="mb-5 flex items-center justify-between">
-                {brand(40, "text-sm")}
-
+            <div className="relative z-10 flex h-full flex-col px-4 py-4">
+              <div className="mb-5 flex items-center justify-between gap-3">
+                <Brand compact />
                 <button
                   type="button"
                   aria-label="Cerrar menú"
                   onClick={() => setMobileOpen(false)}
-                  className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#154360]/15 bg-white/70 text-xl font-bold text-[#154360]"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/30 bg-white/10 text-white transition hover:bg-white/20"
                 >
-                  ✕
+                  <Icon name="close" className="h-6 w-6" />
                 </button>
               </div>
 
-              <div className="flex-1 space-y-5 overflow-y-auto pb-6">
-                <div className="space-y-2">
-                  {LINKS.map((link) => {
-                    const active = isActive(link.href);
-                    return (
-                      <Link
-                        key={link.href}
-                        href={link.href}
-                        onClick={() => setMobileOpen(false)}
-                        className={`flex items-center justify-between rounded-2xl px-4 py-3 text-base font-semibold transition ${
-                          active ? ACTIVE_LINK : IDLE_LINK
-                        }`}
-                      >
-                        <span>{link.label}</span>
-                        {active && <span className="h-2 w-2 rounded-full bg-[#8FD3C4]" />}
-                      </Link>
-                    );
-                  })}
-
-                  {SOON_LABELS.map((label) => (
-                    <div key={label} className={`${SOON_ITEM} px-4 py-3 text-base`}>
-                      <span>{label}</span>
-                      <span className={SOON_BADGE}>Próx.</span>
-                    </div>
-                  ))}
-                </div>
-
-                {profileCard}
+              <div className="sidebar-scroll min-h-0 flex-1 overflow-y-auto pb-4">
+                <NavList pathname={pathname} onNavigate={() => setMobileOpen(false)} />
               </div>
+
+              <SidebarFooter fullName={fullName} roleLabel={roleLabel} />
             </div>
           </div>
         )}
       </div>
 
-      <aside className="sidebar-crystal hidden h-screen w-72 shrink-0 flex-col justify-between overflow-hidden px-4 py-6 md:sticky md:top-0 md:flex">
-        <MolarWatermark className="-right-14 bottom-[-2.5rem] h-[85%] w-auto opacity-[0.12]" />
+      <aside className="sidebar-crystal hidden shrink-0 flex-col overflow-hidden rounded-[28px] md:sticky md:top-3 md:m-3 md:flex md:h-[calc(100dvh-1.5rem)] md:w-72">
+        <Watermark className="-right-24 top-[48%] h-[54%]" />
 
-        <div className="relative">
-          <div className="crystal-inset mb-8 rounded-2xl px-3 py-2.5">{brand(56, "text-xl")}</div>
+        <div className="relative z-10 flex h-full flex-col px-3.5 py-5">
+          <div className="px-2.5 pb-6">
+            <Brand />
+          </div>
 
-          <nav className="flex flex-col gap-1.5">
-            {LINKS.map((link) => {
-              const active = isActive(link.href);
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`group relative flex items-center justify-between rounded-2xl px-3.5 py-2.5 text-sm font-semibold transition ${
-                    active ? ACTIVE_LINK : IDLE_LINK
-                  }`}
-                >
-                  <span className="flex items-center gap-3">
-                    <span
-                      className={`h-2.5 w-2.5 rounded-full ${
-                        active
-                          ? "bg-[#8FD3C4] shadow-[0_0_0_4px_rgba(143,211,196,0.28),0_0_12px_rgba(143,211,196,0.9)]"
-                          : "bg-[#154360]/25"
-                      }`}
-                    />
-                    {link.label}
-                  </span>
-                  {active && <span className="h-2 w-2 rounded-full bg-[#8FD3C4]" />}
-                </Link>
-              );
-            })}
+          <div className="sidebar-scroll -mx-1 min-h-0 flex-1 overflow-y-auto px-1">
+            <NavList pathname={pathname} />
+          </div>
 
-            {SOON_LABELS.map((label) => (
-              <div key={label} className={`${SOON_ITEM} px-3.5 py-2.5 text-sm`}>
-                <span>{label}</span>
-                <span className={SOON_BADGE}>Próx.</span>
-              </div>
-            ))}
-          </nav>
+          <div className="pt-4">
+            <SidebarFooter fullName={fullName} roleLabel={roleLabel} />
+          </div>
         </div>
-
-        {profileCard}
       </aside>
     </>
   );

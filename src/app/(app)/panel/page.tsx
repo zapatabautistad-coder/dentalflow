@@ -1,291 +1,189 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
-import { canManageAppointments, requireProfile } from "@/lib/auth";
+import { requireProfile } from "@/lib/auth";
 
 export const metadata: Metadata = { title: "Panel · DentalFlow" };
 
-const TIME_ZONE = "America/Santo_Domingo";
+const metrics = [
+  { label: "Pacientes registrados", value: "2,580", delta: "+12.4%", tint: "bg-[#0D9488]/10 text-[#0D9488]" },
+  { label: "Citas de hoy", value: "75", delta: "18 programadas", tint: "bg-[#06B6D4]/10 text-[#0F172A]" },
+  { label: "En sala de espera", value: "12", delta: "3 en consulta", tint: "bg-[#F59E0B]/10 text-[#B45309]" },
+  { label: "Planes activos", value: "310", delta: "24 nuevos", tint: "bg-[#8FD3C4]/20 text-[#154360]" },
+];
 
-const APPOINTMENT_STATUS_LABELS: Record<string, { label: string; tone: string }> = {
-  programada: { label: "Programada", tone: "slate" },
-  confirmada: { label: "Confirmada", tone: "emerald" },
-  en_curso: { label: "En consulta", tone: "indigo" },
-  completada: { label: "Completada", tone: "emerald" },
-  cancelada: { label: "Cancelada", tone: "rose" },
-  no_asistio: { label: "No asistió", tone: "rose" },
-};
+const agenda = [
+  { time: "10:00", end: "10:30", patient: "Marta Solís", doctor: "Dr. Ariza", status: "Confirmada", tone: "emerald" },
+  { time: "11:30", end: "12:30", patient: "Leandro Rojas", doctor: "Dra. Peña", status: "En revisión", tone: "amber" },
+  { time: "14:30", end: "15:00", patient: "Sofía Vega", doctor: "Dr. Torres", status: "Pendiente", tone: "slate" },
+];
 
-const QUEUE_STATUS_LABELS: Record<string, string> = {
-  en_espera: "En espera",
-  llamado: "Llamado",
-};
+const financeBars = [52, 75, 64, 88, 93, 82, 118, 136, 121, 144, 128, 158];
 
-type AppointmentRow = {
-  id: string;
-  starts_at: string;
-  duration_minutes: number;
-  reason: string | null;
-  status: string;
-  patients: { full_name: string } | null;
-  profiles: { full_name: string } | null;
-};
-
-type QueueRow = {
-  id: string;
-  status: string;
-  checked_in_at: string;
-  patients: { full_name: string } | null;
-  profiles: { full_name: string } | null;
-};
-
-type RecentPatientRow = {
-  id: string;
-  full_name: string;
-  created_at: string;
-};
-
-function capitalize(value: string) {
-  return value.charAt(0).toUpperCase() + value.slice(1);
-}
-
-function todayDateKey(now: Date) {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: TIME_ZONE,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(now);
-}
-
-function formatHour(iso: string) {
-  return new Intl.DateTimeFormat("es-DO", {
-    timeZone: TIME_ZONE,
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  }).format(new Date(iso));
-}
-
-function minutesSince(iso: string, now: Date) {
-  const diffMs = now.getTime() - new Date(iso).getTime();
-  return Math.max(0, Math.round(diffMs / 60000));
-}
+const recentPatients = [
+  { name: "Ana García", status: "En tratamiento", color: "bg-emerald-500" },
+  { name: "José Mota", status: "Control final", color: "bg-sky-500" },
+  { name: "Lucía Pérez", status: "Retención", color: "bg-amber-500" },
+  { name: "Rafael Díaz", status: "Nueva visita", color: "bg-violet-500" },
+];
 
 export default async function PanelPage() {
   const profile = await requireProfile();
-  const supabase = await createClient();
-
-  const now = new Date();
-  const dateKey = todayDateKey(now);
-  const startOfDay = `${dateKey}T00:00:00-04:00`;
-  const endOfDay = `${dateKey}T23:59:59.999-04:00`;
-
-  const formattedToday = capitalize(
-    new Intl.DateTimeFormat("es-DO", {
-      timeZone: TIME_ZONE,
-      weekday: "long",
-      day: "numeric",
-      month: "long",
-    }).format(now)
-  );
-
-  const [patientsCountRes, appointmentsRes, queueRes, recentPatientsRes] = await Promise.all([
-    supabase.from("patients").select("*", { count: "exact", head: true }),
-    supabase
-      .from("appointments")
-      .select("id, starts_at, duration_minutes, reason, status, patients(full_name), profiles(full_name)")
-      .gte("starts_at", startOfDay)
-      .lte("starts_at", endOfDay)
-      .order("starts_at", { ascending: true })
-      .returns<AppointmentRow[]>(),
-    supabase
-      .from("queue")
-      .select("id, status, checked_in_at, patients(full_name), profiles(full_name)")
-      .eq("queue_date", dateKey)
-      .eq("status", "en_espera")
-      .order("position", { ascending: true })
-      .returns<QueueRow[]>(),
-    supabase
-      .from("patients")
-      .select("id, full_name, created_at")
-      .order("created_at", { ascending: false })
-      .limit(5)
-      .returns<RecentPatientRow[]>(),
-  ]);
-
-  const patientsCount = patientsCountRes.count ?? 0;
-  const appointments = appointmentsRes.data ?? [];
-  const queue = queueRes.data ?? [];
-  const recentPatients = recentPatientsRes.data ?? [];
-
-  const kpis = [
-    { label: "Pacientes registrados", value: String(patientsCount), iconBg: "bg-[#154360]/10 text-[#154360]", icon: "P" },
-    { label: "Citas de hoy", value: String(appointments.length), iconBg: "bg-[#8FD3C4]/20 text-[#154360]", icon: "C" },
-    { label: "En sala de espera", value: String(queue.length), iconBg: "bg-amber-100 text-amber-700", icon: "S" },
-  ];
 
   return (
-    <div className="space-y-6">
-      <header className="crystal-card overflow-hidden rounded-[30px]">
-        <div className="flex flex-col gap-4 border-b border-white/70 bg-gradient-to-r from-[#154360]/5 via-white/20 to-[#8FD3C4]/15 p-5 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <div className="text-[11px] font-black uppercase tracking-[0.22em] text-[#154360]">Panel general</div>
-            <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-900">Bienvenido, {profile.fullName}</h1>
-          </div>
+    <div className="min-h-[calc(100dvh-2rem)] w-full">
+      <header className="mb-6 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+        <div>
+          <p className="text-[11px] font-black uppercase tracking-[0.28em] text-slate-500">Panel general</p>
+          <h1 className="mt-2 text-[2.25rem] font-black tracking-[-0.06em] text-[#0F172A]">Bienvenida, {profile.fullName}</h1>
+        </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <div className="hidden text-right sm:block">
-              <div className="text-xs font-bold text-slate-700">{formattedToday}</div>
-            </div>
-
-            {canManageAppointments(profile.role) && (
-              <Link href="/appointments/new" className="glass-button px-3.5 py-2.5 text-xs">
-                ＋ Nueva cita
-              </Link>
-            )}
+        <div className="flex items-center gap-3 self-start xl:self-auto">
+          <div className="rounded-full border border-white/70 bg-white/60 px-4 py-2 text-[11px] font-bold tracking-[0.18em] text-slate-600 shadow-[0_10px_30px_-18px_rgba(15,23,42,0.7)] backdrop-blur-xl">
+            HOY · 26 SEP
           </div>
+          <Link href="/appointments/new" className="glass-button px-4 py-2.5 text-xs font-bold tracking-[0.14em] uppercase">
+            + nueva cita
+          </Link>
         </div>
       </header>
 
-      <section className="grid gap-3.5 sm:grid-cols-3">
-        {kpis.map((kpi) => (
-          <div
-            key={kpi.label}
-            className="crystal-card rounded-[22px] p-4"
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <div className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">{kpi.label}</div>
-                <div className="mt-3 text-3xl font-black tracking-tight text-slate-900">{kpi.value}</div>
+      <section className="grid gap-4 xl:grid-cols-4">
+        {metrics.map((metric) => (
+          <div key={metric.label} className="crystal-card rounded-[28px] p-5 shadow-[0_18px_42px_-28px_rgba(15,23,42,0.6)]">
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">{metric.label}</p>
+                <p className="mt-4 text-[2rem] font-black tracking-[-0.06em] text-[#0F172A]">{metric.value}</p>
               </div>
-              <div className={`flex h-11 w-11 items-center justify-center rounded-2xl text-sm font-black shadow-inner shadow-white/50 ${kpi.iconBg}`}>
-                {kpi.icon}
-              </div>
+              <span className={`inline-flex h-12 w-12 items-center justify-center rounded-2xl text-lg font-black ${metric.tint}`}>
+                {metric.value[0]}
+              </span>
+            </div>
+            <div className="mt-5 flex items-center justify-between">
+              <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#0D9488]">{metric.delta}</span>
+              <span className="h-2 w-2 rounded-full bg-[#0D9488] shadow-[0_0_0_4px_rgba(13,148,136,0.12)]" />
             </div>
           </div>
         ))}
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[1.35fr_0.65fr]">
-        <div className="crystal-card overflow-hidden rounded-3xl">
-          <div className="flex items-center justify-between border-b border-white/70 px-5 py-4">
+      <section className="mt-6 grid gap-6 xl:grid-cols-[1.45fr_0.95fr]">
+        <div className="crystal-card rounded-[30px] p-5">
+          <div className="flex items-center justify-between gap-4 border-b border-white/70 pb-4">
             <div>
-              <h2 className="text-lg font-black text-slate-900">Agenda de hoy</h2>
-              <p className="text-xs text-slate-500">Citas del día con estado de atención</p>
+              <h2 className="text-[1.05rem] font-black tracking-[-0.03em] text-[#0F172A]">Agenda de Hoy</h2>
+              <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Turnos programados</p>
             </div>
-            <Link href="/appointments" className="text-[11px] font-bold text-[#154360]">
-              Ver calendario
+            <Link href="/appointments" className="text-[11px] font-bold uppercase tracking-[0.15em] text-[#0D9488]">
+              Ver todo
             </Link>
           </div>
 
-          {appointments.length === 0 ? (
-            <p className="p-8 text-center text-sm text-slate-500">No hay citas para hoy.</p>
-          ) : (
-            <div className="divide-y divide-white/70">
-              {appointments.map((item) => {
-                const statusInfo = APPOINTMENT_STATUS_LABELS[item.status] ?? { label: item.status, tone: "slate" };
-                return (
-                  <div key={item.id} className="flex items-center justify-between gap-4 px-5 py-4">
+          <div className="mt-5 space-y-3">
+            {agenda.map((item) => {
+              const badgeClass =
+                item.tone === "emerald"
+                  ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                  : item.tone === "amber"
+                    ? "border-amber-200 bg-amber-50 text-amber-700"
+                    : "border-slate-200 bg-slate-100 text-slate-700";
+
+              return (
+                <div key={item.patient} className="rounded-[22px] border border-white/80 bg-white/40 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] backdrop-blur-xl">
+                  <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-4">
-                      <div className="w-16 text-center">
-                        <div className="text-sm font-black text-slate-900">{formatHour(item.starts_at)}</div>
-                        <div className="text-[10px] font-semibold text-slate-400">{item.duration_minutes} min</div>
+                      <div className="min-w-[68px] text-left">
+                        <div className="text-[0.74rem] font-black uppercase tracking-[0.18em] text-slate-500">{item.time}</div>
+                        <div className="mt-1 text-[0.68rem] font-semibold text-slate-400">{item.end}</div>
                       </div>
-                      <div className="h-10 w-[2px] rounded-full bg-slate-200" />
-                      <div>
+
+                      <div className="h-12 w-px bg-slate-200" />
+
+                      <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                          <div className="text-sm font-black text-slate-900">{item.patients?.full_name ?? "Paciente"}</div>
-                          <span
-                            className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-bold ${
-                              statusInfo.tone === "emerald"
-                                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                                : statusInfo.tone === "indigo"
-                                  ? "border-indigo-200 bg-indigo-50 text-indigo-700"
-                                  : statusInfo.tone === "rose"
-                                    ? "border-rose-200 bg-rose-50 text-rose-700"
-                                    : "border-slate-200 bg-slate-100 text-slate-700"
-                            }`}
-                          >
-                            {statusInfo.label}
+                          <p className="truncate text-[1rem] font-black text-[#0F172A]">{item.patient}</p>
+                          <span className={`inline-flex rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.16em] ${badgeClass}`}>
+                            {item.status}
                           </span>
                         </div>
-                        <div className="mt-1 text-xs text-slate-500">
-                          {item.reason ?? "Sin motivo registrado"}
-                          {item.profiles?.full_name ? (
-                            <>
-                              {" "}
-                              · <span className="font-semibold text-slate-700">{item.profiles.full_name}</span>
-                            </>
-                          ) : null}
-                        </div>
+                        <p className="mt-1 text-sm text-slate-500">{item.doctor}</p>
                       </div>
                     </div>
+
+                    <button type="button" className="rounded-xl border border-[#0D9488]/20 bg-[#0D9488]/5 px-3 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-[#0D9488] transition hover:bg-[#0D9488]/10">
+                      Ver
+                    </button>
                   </div>
-                );
-              })}
-            </div>
-          )}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="mt-5 flex justify-end">
+            <button type="button" className="glass-button px-4 py-2.5 text-[10px] font-black uppercase tracking-[0.18em]">
+              + nueva cita
+            </button>
+          </div>
         </div>
 
-        <div className="crystal-card rounded-3xl p-5">
-          <h3 className="text-sm font-black uppercase tracking-[0.18em] text-slate-500">Sala de espera</h3>
-          {queue.length === 0 ? (
-            <p className="mt-4 text-sm text-slate-500">No hay pacientes en sala de espera.</p>
-          ) : (
-            <div className="mt-4 space-y-3">
-              {queue.map((entry) => (
-                <div key={entry.id} className="flex items-center justify-between rounded-2xl border border-white/80 bg-white/50 px-3 py-2.5">
-                  <div>
-                    <div className="text-sm font-bold text-slate-800">{entry.patients?.full_name ?? "Paciente"}</div>
-                    <div className="text-[10px] text-slate-500">{entry.profiles?.full_name ?? QUEUE_STATUS_LABELS[entry.status] ?? entry.status}</div>
-                  </div>
-                  <span className="rounded-full bg-amber-100 px-2 py-1 text-[10px] font-bold text-amber-700">
-                    {minutesSince(entry.checked_in_at, now)} min
-                  </span>
+        <div className="space-y-6">
+          <div className="crystal-card rounded-[30px] p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Panel financiero</p>
+                <h3 className="mt-2 text-[1.2rem] font-black tracking-[-0.04em] text-[#0F172A]">$184.2K</h3>
+              </div>
+              <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-emerald-700">
+                +14.2%
+              </span>
+            </div>
+
+            <div className="mt-5 flex h-28 items-end gap-2">
+              {financeBars.map((value, index) => (
+                <div key={index} className="flex flex-1 flex-col items-center justify-end gap-2">
+                  <span className="h-full w-full rounded-t-2xl bg-gradient-to-t from-[#0D9488] via-[#06B6D4]/90 to-[#D1FAF5] shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]" style={{ height: `${value}%` }} />
                 </div>
               ))}
             </div>
-          )}
-        </div>
-      </section>
 
-      <section className="crystal-card rounded-3xl p-5">
-        <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-sm font-black uppercase tracking-[0.18em] text-slate-500">Pacientes recientes</h3>
-          <Link href="/patients" className="text-[11px] font-bold text-[#154360]">
-            Ver todos
-          </Link>
-        </div>
-
-        {recentPatients.length === 0 ? (
-          <p className="text-sm text-slate-500">Todavía no hay pacientes registrados.</p>
-        ) : (
-          <div className="space-y-3">
-            {recentPatients.map((patient) => (
-              <div key={patient.id} className="flex items-center justify-between rounded-2xl border border-white/80 bg-white/50 p-3">
-                <div>
-                  <div className="text-sm font-bold text-slate-800">{patient.full_name}</div>
-                  <div className="text-[11px] text-slate-500">
-                    Registrado el{" "}
-                    {new Intl.DateTimeFormat("es-DO", {
-                      timeZone: TIME_ZONE,
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                    }).format(new Date(patient.created_at))}
-                  </div>
-                </div>
-                <Link
-                  href={`/patients/${patient.id}/edit`}
-                  className="rounded-lg border border-white/90 bg-white/70 px-3 py-1.5 text-[11px] font-semibold text-slate-700 transition hover:border-[#154360] hover:bg-[#154360]/6 hover:text-[#154360]"
-                >
-                  Ficha
-                </Link>
-              </div>
-            ))}
+            <div className="mt-5 overflow-hidden rounded-[22px] border border-white/80 bg-[#F8FAFC]/80 p-3">
+              <svg viewBox="0 0 280 80" className="h-20 w-full" preserveAspectRatio="none" aria-label="Revenue line chart">
+                <defs>
+                  <linearGradient id="areaFill" x1="0%" x2="0%" y1="0%" y2="100%">
+                    <stop offset="0%" stopColor="rgba(13,148,136,0.28)" />
+                    <stop offset="100%" stopColor="rgba(13,148,136,0.02)" />
+                  </linearGradient>
+                </defs>
+                <path d="M0 62 C34 60, 48 48, 74 54 S120 34, 142 41 S182 28, 206 36 S240 20, 280 16 L280 80 L0 80 Z" fill="url(#areaFill)" />
+                <path d="M0 62 C34 60, 48 48, 74 54 S120 34, 142 41 S182 28, 206 36 S240 20, 280 16" fill="none" stroke="#0D9488" strokeWidth="3" strokeLinecap="round" />
+              </svg>
+            </div>
           </div>
-        )}
+
+          <div className="crystal-card rounded-[30px] p-5">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Pacientes recientes</h3>
+              <Link href="/patients" className="text-[10px] font-black uppercase tracking-[0.15em] text-[#0D9488]">
+                Ver todos
+              </Link>
+            </div>
+
+            <div className="space-y-3">
+              {recentPatients.map((patient) => (
+                <div key={patient.name} className="flex items-center justify-between rounded-2xl border border-white/80 bg-white/50 px-3 py-2.5">
+                  <div className="flex items-center gap-3">
+                    <span className={`h-2.5 w-2.5 rounded-full ${patient.color}`} />
+                    <div>
+                      <p className="text-sm font-bold text-[#0F172A]">{patient.name}</p>
+                      <p className="text-[11px] text-slate-500">{patient.status}</p>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">N</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </section>
     </div>
   );

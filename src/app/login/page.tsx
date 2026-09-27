@@ -9,7 +9,7 @@ export default function LoginPage() {
     <main className="flex flex-1 items-center justify-center px-4 py-12">
       <div className="glass-card w-full max-w-sm p-8">
         <div className="mb-8 text-center">
-          <div className="relative mx-auto mb-5 flex h-[140px] w-[140px] items-center justify-center">
+          <div className="relative mx-auto mb-5 flex h-[180px] w-[180px] items-center justify-center">
             <div
               aria-hidden="true"
               className="absolute inset-0 rounded-full blur-xl"
@@ -19,11 +19,12 @@ export default function LoginPage() {
               }}
             />
             <Image
-              src="/dentalflow-mark.png"
+              src="/dentalflow-app-icon.png"
               alt="DentalFlow"
-              width={389}
+              width={512}
               height={512}
-              className="relative h-[120px] w-auto drop-shadow-[0_12px_20px_rgba(21,67,96,0.28)]"
+              priority
+              className="relative h-[164px] w-[164px] drop-shadow-[0_12px_20px_rgba(21,67,96,0.28)]"
             />
           </div>
           <h1 className="text-3xl font-black tracking-tight text-[#154360]">DentalFlow</h1>
