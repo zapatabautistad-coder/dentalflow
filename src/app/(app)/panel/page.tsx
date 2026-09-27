@@ -80,7 +80,7 @@ export default async function PanelPage() {
     <div className="w-full">
       <header className="mb-3 flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-between">
         <div>
-          <p className="text-[9px] font-black uppercase tracking-[0.24em] text-slate-500" data-i18n="panel.title">Panel general</p>
+          <p className="text-xs font-black uppercase tracking-[0.08em] text-slate-500" data-i18n="panel.title">Panel general</p>
           <h1
             className="mt-1 text-[1.7rem] font-black tracking-[-0.05em] text-[#0F172A]"
             data-i18n-name="panel.welcome"
@@ -89,11 +89,11 @@ export default async function PanelPage() {
           >
             Hola, {profile.fullName}
           </h1>
-          <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">{formatDateLong(dateKey)}</p>
+          <p className="mt-1 text-[13px] font-bold uppercase tracking-[0.08em] text-slate-500">{formatDateLong(dateKey)}</p>
         </div>
 
         {canManageAgenda && (
-          <Link href="/appointments/new" className="glass-button self-start px-3 py-1.75 text-[9px] font-bold uppercase tracking-[0.14em] xl:self-auto" data-i18n="panel.newAppointment">
+          <Link href="/appointments/new" className="glass-button self-start px-3 py-1.75 text-xs font-bold uppercase tracking-[0.08em] xl:self-auto" data-i18n="panel.newAppointment">
             + nueva cita
           </Link>
         )}
@@ -108,7 +108,7 @@ export default async function PanelPage() {
       <section className="grid grid-cols-2 gap-2.5 xl:grid-cols-4">
         {metrics.map((metric) => (
           <div key={metric.key} className="crystal-card rounded-[22px] p-3.5 shadow-[0_18px_42px_-28px_rgba(15,23,42,0.6)]">
-            <p className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-500" data-i18n={metric.key}>{metric.label}</p>
+            <p className="text-xs font-black uppercase tracking-[0.08em] text-slate-500" data-i18n={metric.key}>{metric.label}</p>
             <p className="mt-2.5 text-[1.6rem] font-black tracking-[-0.06em] text-[#154360]">{metric.value}</p>
           </div>
         ))}
@@ -118,10 +118,10 @@ export default async function PanelPage() {
         <div className="crystal-card rounded-[24px] p-3.5">
           <div className="flex items-center justify-between gap-4 border-b border-white/70 pb-2.5">
             <div>
-              <h2 className="text-[0.94rem] font-black tracking-[-0.03em] text-[#0F172A]" data-i18n="panel.agenda">Agenda de Hoy</h2>
-              <p className="mt-1 text-[9px] font-semibold uppercase tracking-[0.18em] text-slate-500" data-i18n="panel.agenda.subtitle">Citas programadas</p>
+              <h2 className="text-base font-black tracking-[-0.03em] text-[#0F172A]" data-i18n="panel.agenda">Agenda de Hoy</h2>
+              <p className="mt-1 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500" data-i18n="panel.agenda.subtitle">Citas programadas</p>
             </div>
-            <Link href="/appointments" className="text-[9px] font-bold uppercase tracking-[0.15em] text-[#154360] hover:underline" data-i18n="panel.agenda.view">
+            <Link href="/appointments" className="text-xs font-bold uppercase tracking-[0.08em] text-[#154360] hover:underline" data-i18n="panel.agenda.view">
               Ver todo
             </Link>
           </div>
@@ -134,13 +134,13 @@ export default async function PanelPage() {
                 const content = (
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex min-w-0 items-center gap-2.5">
-                      <div className="min-w-[46px] text-[0.72rem] font-black tracking-[0.08em] text-[#154360]">
+                      <div className="min-w-[46px] text-[13px] font-black tracking-[0.08em] text-[#154360]">
                         {formatHour(item.starts_at)}
                       </div>
                       <div className="h-8 w-px bg-slate-200" />
                       <div className="min-w-0">
-                        <p className="truncate text-[0.84rem] font-black text-[#0F172A]">{item.patients?.full_name ?? "Paciente"}</p>
-                        <p className="mt-0.5 truncate text-[10px] text-slate-500">
+                        <p className="truncate text-[15px] font-black text-[#0F172A]">{item.patients?.full_name ?? "Paciente"}</p>
+                        <p className="mt-0.5 truncate text-[13px] text-slate-500">
                           {item.profiles?.full_name ?? "Sin doctor"}
                           {item.reason ? ` · ${item.reason}` : ""}
                         </p>
@@ -167,8 +167,8 @@ export default async function PanelPage() {
 
         <div className="crystal-card rounded-[22px] p-3.5">
           <div className="mb-2.5 flex items-center justify-between">
-            <h3 className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-500" data-i18n="panel.recent">Pacientes recientes</h3>
-            <Link href="/patients" className="text-[8px] font-black uppercase tracking-[0.15em] text-[#154360] hover:underline" data-i18n="panel.recent.view">
+            <h3 className="text-xs font-black uppercase tracking-[0.08em] text-slate-500" data-i18n="panel.recent">Pacientes recientes</h3>
+            <Link href="/patients" className="text-xs font-black uppercase tracking-[0.08em] text-[#154360] hover:underline" data-i18n="panel.recent.view">
               Ver todos
             </Link>
           </div>
@@ -181,10 +181,10 @@ export default async function PanelPage() {
                 const content = (
                   <>
                     <div className="min-w-0">
-                      <p className="truncate text-[11px] font-bold text-[#0F172A]">{patient.full_name}</p>
-                      <p className="truncate text-[9px] text-slate-500">{insuranceLabel(patient)}</p>
+                      <p className="truncate text-[13px] font-bold text-[#0F172A]">{patient.full_name}</p>
+                      <p className="truncate text-xs text-slate-500">{insuranceLabel(patient)}</p>
                     </div>
-                    <span className="shrink-0 text-[9px] font-black tracking-[0.12em] text-[#154360]">
+                    <span className="shrink-0 text-xs font-black tracking-[0.12em] text-[#154360]">
                       N.° {String(patient.record_number).padStart(4, "0")}
                     </span>
                   </>

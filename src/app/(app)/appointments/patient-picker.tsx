@@ -51,7 +51,7 @@ export function PatientPicker({
             setSelected(null);
             setTerm("");
           }}
-          className="shrink-0 rounded-lg border border-white/90 bg-white/70 px-3 py-1.5 text-[11px] font-semibold text-slate-700 transition hover:border-[#154360] hover:text-[#154360]"
+          className="shrink-0 rounded-lg border border-white/90 bg-white/70 px-3 py-1.5 text-[13px] font-semibold text-slate-700 transition hover:border-[#154360] hover:text-[#154360]"
           data-i18n="patient.change"
         >
           Cambiar

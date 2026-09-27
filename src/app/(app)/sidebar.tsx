@@ -166,7 +166,7 @@ const NAV: NavItem[] = [
 ];
 
 const NAV_ITEM =
-  "group relative flex items-center gap-3.5 overflow-hidden rounded-[22px] border px-3.5 py-2.5 text-[10px] font-black uppercase tracking-[0.22em] shadow-[0_12px_24px_-18px_rgba(15,23,42,0.65)] transition-all duration-200 [@media(max-height:800px)]:py-1.5";
+  "group relative flex items-center gap-3.5 overflow-hidden rounded-[22px] border px-3.5 py-2.5 text-[13px] font-black uppercase tracking-[0.08em] shadow-[0_12px_24px_-18px_rgba(15,23,42,0.65)] transition-all duration-200 [@media(max-height:800px)]:py-1.5";
 
 type ProfileProps = { fullName: string; roleLabel: string };
 
@@ -209,7 +209,7 @@ function Brand({ compact = false }: { compact?: boolean }) {
           DentalFlow
         </span>
         <span aria-hidden="true" className="my-2 block h-px w-7 bg-gradient-to-r from-[#8FD3C4] to-transparent" />
-        <span className="line-clamp-2 text-[9.5px] font-medium uppercase leading-[1.55] tracking-[0.22em] text-[#B8E6DE]/80">
+        <span className="line-clamp-2 text-xs font-medium uppercase leading-[1.55] tracking-[0.08em] text-[#B8E6DE]/80">
           {CLINIC_NAME}
         </span>
       </div>
@@ -302,8 +302,8 @@ function LanguageToggle() {
           open ? "border-white/45 bg-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.28),0_0_0_1px_rgba(143,211,196,0.18)]" : "border-white/20 bg-white/5 hover:border-white/35 hover:bg-white/8"
         }`}
       >
-        <span className="text-[8px] font-black uppercase tracking-[0.28em] text-white/60">Idioma</span>
-        <span className="flex items-center gap-2 rounded-full border border-white/15 bg-white/6 px-2 py-0.5 text-[9px] font-bold tracking-[0.18em] text-white/90 shadow-[inset_0_1px_0_rgba(255,255,255,0.14)]">
+        <span className="text-xs font-black uppercase tracking-[0.08em] text-white/60">Idioma</span>
+        <span className="flex items-center gap-2 rounded-full border border-white/15 bg-white/6 px-2 py-0.5 text-xs font-bold tracking-[0.08em] text-white/90 shadow-[inset_0_1px_0_rgba(255,255,255,0.14)]">
           <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#8FD3C4] shadow-[0_0_10px_rgba(143,211,196,0.8)]" />
           {selected.code.toUpperCase()}
         </span>
@@ -347,7 +347,7 @@ function LanguageToggle() {
                   applySelectedLanguage(lang);
                   setOpen(false);
                 }}
-                className={`relative flex w-full items-center justify-between overflow-hidden rounded-xl px-2.5 py-2 text-left text-[11px] transition-all duration-150 ${
+                className={`relative flex w-full items-center justify-between overflow-hidden rounded-xl px-2.5 py-2 text-left text-[13px] transition-all duration-150 ${
                   active ? "text-white" : "text-white/80 hover:text-white"
                 }`}
                 style={{
@@ -357,7 +357,7 @@ function LanguageToggle() {
               >
                 <span className="relative z-10">{lang.name}</span>
                 <span
-                  className={`relative z-10 text-[8px] font-black uppercase tracking-[0.18em] transition-opacity duration-150 ${
+                  className={`relative z-10 text-xs font-black uppercase tracking-[0.08em] transition-opacity duration-150 ${
                     active ? "text-[#8FD3C4] opacity-100" : "opacity-0"
                   }`}
                 >

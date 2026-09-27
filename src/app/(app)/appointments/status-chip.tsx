@@ -61,7 +61,7 @@ export function StatusChip({ status }: { status: string }) {
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-bold ${meta.border} ${meta.bg} ${meta.text}`}
+      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[13px] font-bold ${meta.border} ${meta.bg} ${meta.text}`}
     >
       <span className={`h-1.5 w-1.5 rounded-full ${meta.dot}`} />
       {label}

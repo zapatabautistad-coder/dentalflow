@@ -76,12 +76,12 @@ export default async function PatientsPage({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-[1.6rem] font-black tracking-[-0.05em] text-[#0F172A]" data-i18n="patients.title">Pacientes</h1>
-          <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500" data-i18n="patients.subtitle">
+          <p className="mt-1 text-[13px] font-bold uppercase tracking-[0.08em] text-slate-500" data-i18n="patients.subtitle">
             Clínicas / pacientes
           </p>
         </div>
         {canManage && (
-          <Link href="/patients/new" className="glass-button px-3 py-2 text-[9px] font-black uppercase tracking-[0.14em]" data-i18n="patients.new">
+          <Link href="/patients/new" className="glass-button px-3 py-2 text-xs font-black uppercase tracking-[0.08em]" data-i18n="patients.new">
             + Nuevo paciente
           </Link>
         )}
@@ -89,15 +89,15 @@ export default async function PatientsPage({
 
       <div className="grid gap-2.5 md:grid-cols-3">
         <div className="crystal-card rounded-[18px] p-3">
-          <p className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-500">Total</p>
+          <p className="text-xs font-black uppercase tracking-[0.08em] text-slate-500">Total</p>
           <p className="mt-2 text-xl font-black tracking-[-0.06em] text-[#0F172A]">{patients?.length ?? 0}</p>
         </div>
         <div className="crystal-card rounded-[18px] p-3">
-          <p className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-500">Atención</p>
+          <p className="text-xs font-black uppercase tracking-[0.08em] text-slate-500">Atención</p>
           <p className="mt-2 text-xl font-black tracking-[-0.06em] text-[#0F172A]">0</p>
         </div>
         <div className="crystal-card rounded-[18px] p-3">
-          <p className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-500">Contacto</p>
+          <p className="text-xs font-black uppercase tracking-[0.08em] text-slate-500">Contacto</p>
           <p className="mt-2 text-xl font-black tracking-[-0.06em] text-[#0F172A]">0</p>
         </div>
       </div>
@@ -117,7 +117,7 @@ export default async function PatientsPage({
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead>
-                <tr className="border-b border-white/60 text-[9px] uppercase tracking-[0.18em] text-slate-500">
+                <tr className="border-b border-white/60 text-xs uppercase tracking-[0.08em] text-slate-500">
                   <th className="px-4 py-2.5 font-medium" data-i18n="patients.table.record">Expediente</th>
                   <th className="px-4 py-2.5 font-medium" data-i18n="patients.table.name">Nombre</th>
                   <th className="px-4 py-2.5 font-medium" data-i18n="patients.table.document">Cédula</th>
@@ -140,19 +140,19 @@ export default async function PatientsPage({
                       href={`/patients/${patient.id}`}
                       clickable
                     >
-                      <td className="px-4 py-2.5 text-[11px] text-slate-600">
+                      <td className="px-4 py-2.5 text-[13px] text-slate-600">
                         {String(patient.record_number).padStart(4, "0")}
                       </td>
-                      <td className="px-4 py-2.5 text-[12px] font-medium">{patient.full_name}</td>
-                      <td className="px-4 py-2.5 text-[11px] text-slate-600">
+                      <td className="px-4 py-2.5 text-sm font-medium">{patient.full_name}</td>
+                      <td className="px-4 py-2.5 text-[13px] text-slate-600">
                         {patient.document_id
                           ? formatDominicanDocumentId(patient.document_id)
                           : "—"}
                       </td>
-                      <td className="px-4 py-2.5 text-[11px] text-slate-600">
+                      <td className="px-4 py-2.5 text-[13px] text-slate-600">
                         {patient.phone ? formatDominicanPhone(patient.phone) : "—"}
                       </td>
-                      <td className="px-4 py-2.5 text-[11px] text-slate-600">
+                      <td className="px-4 py-2.5 text-[13px] text-slate-600">
                         {patient.insurance_type === "ars"
                           ? `ARS: ${patient.insurance_provider}`
                           : patient.insurance_type === "privado"
@@ -192,7 +192,7 @@ export default async function PatientsPage({
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-2.5 text-[11px] text-slate-600">
+                      <td className="px-4 py-2.5 text-[13px] text-slate-600">
                         {new Date(patient.created_at).toLocaleDateString("es", {
                           year: "numeric",
                           month: "short",

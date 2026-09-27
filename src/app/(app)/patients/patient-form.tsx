@@ -105,7 +105,7 @@ export function PatientForm({
       )}
 
       <div className="grid gap-2 sm:grid-cols-[1.3fr_0.9fr]">
-        <label className="flex flex-col gap-1 text-[11px] font-medium text-slate-700" data-i18n="patient.form.fullName">
+        <label className="flex flex-col gap-1 text-[13px] font-medium text-slate-700" data-i18n="patient.form.fullName">
           Nombre completo
           <input
             name="full_name"
@@ -117,7 +117,7 @@ export function PatientForm({
           />
         </label>
 
-        <label className="flex flex-col gap-1 text-[11px] font-medium text-slate-700" data-i18n="patient.form.documentLabel">
+        <label className="flex flex-col gap-1 text-[13px] font-medium text-slate-700" data-i18n="patient.form.documentLabel">
           Cédula {isAdult ? "(obligatoria)" : "(opcional)"}
           <input
             name="document_id"
@@ -132,7 +132,7 @@ export function PatientForm({
       </div>
 
       <div className="grid gap-2 sm:grid-cols-2">
-        <label className="flex flex-col gap-1 text-[11px] font-medium text-slate-700">
+        <label className="flex flex-col gap-1 text-[13px] font-medium text-slate-700">
           Teléfono
           <input
             name="phone"
@@ -146,7 +146,7 @@ export function PatientForm({
           />
         </label>
 
-        <label className="flex flex-col gap-1 text-[11px] font-medium text-slate-700">
+        <label className="flex flex-col gap-1 text-[13px] font-medium text-slate-700">
           Fecha de nacimiento
           <input
             name="birth_date"
@@ -159,7 +159,7 @@ export function PatientForm({
       </div>
 
       <div className="grid gap-2 sm:grid-cols-2">
-        <label className="flex flex-col gap-1 text-[11px] font-medium text-slate-700">
+        <label className="flex flex-col gap-1 text-[13px] font-medium text-slate-700">
           Correo (opcional)
           <input
             name="email"
@@ -170,7 +170,7 @@ export function PatientForm({
           />
         </label>
 
-        <label className="flex flex-col gap-1 text-[11px] font-medium text-slate-700">
+        <label className="flex flex-col gap-1 text-[13px] font-medium text-slate-700">
           Aseguradora
           <select
             name="insurance_type"
@@ -189,7 +189,7 @@ export function PatientForm({
 
       {insuranceType === "ars" && (
         <div className="grid gap-2 sm:grid-cols-2">
-          <label className="flex flex-col gap-1 text-[11px] font-medium text-slate-700">
+          <label className="flex flex-col gap-1 text-[13px] font-medium text-slate-700">
             Nombre de la ARS
             <input
               name="insurance_provider"
@@ -200,7 +200,7 @@ export function PatientForm({
             />
           </label>
 
-          <label className="flex flex-col gap-1 text-[11px] font-medium text-slate-700">
+          <label className="flex flex-col gap-1 text-[13px] font-medium text-slate-700">
             Afiliado
             <input
               name="affiliate_number"
@@ -212,13 +212,13 @@ export function PatientForm({
         </div>
       )}
 
-      <p className="-mt-0.5 text-[10px] text-slate-500">
+      <p className="-mt-0.5 text-[13px] text-slate-500">
         {isAdult
           ? "La cédula es obligatoria para mayores de edad."
           : "La cédula es opcional para menores de edad."}
       </p>
 
-      <label className="flex flex-col gap-1 text-[11px] font-medium text-slate-700">
+      <label className="flex flex-col gap-1 text-[13px] font-medium text-slate-700">
         Notas (opcional)
         <textarea
           name="notes"
