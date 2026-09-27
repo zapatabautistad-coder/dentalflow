@@ -163,9 +163,9 @@ const NAV: NavItem[] = [
   { label: "PANEL", key: "sidebar.panel", icon: "home", href: "/panel" },
   { label: "PACIENTES", key: "sidebar.patients", icon: "users", href: "/patients" },
   { label: "CITAS", key: "sidebar.appointments", icon: "calendar", href: "/appointments" },
-  { label: "HORARIOS", key: "sidebar.schedule", icon: "clock" },
-  { label: "REPORTES", key: "sidebar.reports", icon: "chart" },
-  { label: "CONFIGURACIÓN", key: "sidebar.settings", icon: "settings" },
+  { label: "HORARIOS", key: "sidebar.schedule", icon: "clock", href: "/schedule" },
+  { label: "REPORTES", key: "sidebar.reports", icon: "chart", href: "/reports" },
+  { label: "CONFIGURACIÓN", key: "sidebar.settings", icon: "settings", href: "/settings" },
 ];
 
 const NAV_ITEM =
@@ -271,7 +271,6 @@ function LanguageToggle() {
     return LANGUAGE_OPTIONS.find((language) => language.code === stored) ?? LANGUAGE_OPTIONS[0];
   });
   const [open, setOpen] = useState(false);
-  const [placement, setPlacement] = useState<"top" | "bottom">("bottom");
 
   useEffect(() => {
     document.documentElement.lang = selected.code;
@@ -280,19 +279,13 @@ function LanguageToggle() {
     window.localStorage.setItem("dentalflow-language", selected.code);
   }, [selected]);
 
-  const handleOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
-    const rect = event.currentTarget.getBoundingClientRect();
-    setPlacement(rect.top > window.innerHeight / 2 ? "top" : "bottom");
-    setOpen((value) => !value);
-  };
-
   return (
     <div className="relative">
       <button
         type="button"
         aria-expanded={open}
         aria-label="Seleccionar idioma"
-        onClick={handleOpen}
+        onClick={() => setOpen((value) => !value)}
         className="lang-toggle flex w-full items-center justify-between gap-3 rounded-2xl px-3 py-2 text-left text-white"
       >
         <span className="text-[9px] font-black uppercase tracking-[0.28em] text-white/60">Idioma</span>
@@ -301,11 +294,11 @@ function LanguageToggle() {
 
       {open && (
         <div
-          className="absolute inset-x-0 z-20 rounded-2xl border border-white/20 bg-[#0f3149]/95 p-1.5 shadow-[0_18px_42px_-20px_rgba(15,23,42,0.8)] backdrop-blur-xl"
-          style={{ [placement === "top" ? "bottom" : "top"]: "calc(100% + 0.5rem)" }}
-          onMouseMove={(event) => {
-            const relativeY = event.clientY / window.innerHeight;
-            setPlacement(relativeY < 0.5 ? "bottom" : "top");
+          className="absolute inset-x-0 top-[calc(100%+0.5rem)] z-20 max-h-64 overflow-y-auto rounded-2xl border border-white/20 bg-[#0f3149]/95 p-1.5 shadow-[0_18px_42px_-20px_rgba(15,23,42,0.8)] backdrop-blur-xl"
+          onMouseLeave={() => setOpen(false)}
+          onWheel={(event) => {
+            event.preventDefault();
+            event.currentTarget.scrollTop += event.deltaY;
           }}
         >
           {LANGUAGE_OPTIONS.map((lang) => {
