@@ -136,8 +136,8 @@ export default async function PatientsPage({
                   return (
                     <PatientRow
                       key={patient.id}
-                      href={`/patients/${patient.id}/edit`}
-                      clickable={canManage}
+                      href={`/patients/${patient.id}`}
+                      clickable
                     >
                       <td className="px-4 py-2.5 text-[11px] text-slate-600">
                         {String(patient.record_number).padStart(4, "0")}

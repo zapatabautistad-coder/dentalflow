@@ -97,17 +97,17 @@ export default async function AppointmentsPage({
                   <div className="hidden h-8 w-[2px] rounded-full bg-slate-200 sm:block" />
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <div className="text-sm font-black text-slate-900" data-i18n="appointments.patientFallback">
+                      <div className="text-sm font-black text-slate-900">
                         {appointment.patients?.full_name ?? "Paciente"}
                       </div>
                       <StatusChip status={appointment.status} />
                     </div>
                     <div className="mt-1 text-[10px] text-slate-500">
-                      <span data-i18n="appointments.reasonMissing">{appointment.reason ?? "Sin motivo registrado"}</span>
+                      <span>{appointment.reason ?? "Sin motivo registrado"}</span>
                       {appointment.profiles?.full_name ? (
                         <>
                           {" "}
-                          · <span className="font-semibold text-slate-700" data-i18n="appointments.doctor">{appointment.profiles.full_name}</span>
+                          · <span className="font-semibold text-slate-700">{appointment.profiles.full_name}</span>
                         </>
                       ) : null}
                     </div>

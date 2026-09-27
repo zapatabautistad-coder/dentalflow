@@ -119,14 +119,18 @@ export async function createPatient(
   if (!parsed.ok) return { error: parsed.error };
 
   const supabase = await createClient();
-  const { error } = await supabase.from("patients").insert(parsed.values);
+  const { data: created, error } = await supabase
+    .from("patients")
+    .insert(parsed.values)
+    .select("id")
+    .single();
 
-  if (error) {
+  if (error || !created) {
     return { error: "No se pudo guardar el paciente. Inténtalo de nuevo." };
   }
 
   revalidatePath("/patients");
-  redirect("/patients");
+  redirect(`/patients/${created.id}`);
 }
 
 export async function updatePatient(
@@ -153,5 +157,56 @@ export async function updatePatient(
   }
 
   revalidatePath("/patients");
-  redirect("/patients");
+  revalidatePath(`/patients/${patientId}`);
+  redirect(`/patients/${patientId}`);
+}
+
+export type MedicalHistoryState = { error: string } | { saved: true } | undefined;
+
+const MEDICAL_FLAGS = [
+  "allergy_penicillin",
+  "allergy_local_anesthetic",
+  "allergy_latex",
+  "allergy_nsaids",
+  "takes_anticoagulants",
+  "takes_bisphosphonates",
+  "has_diabetes",
+  "has_hypertension",
+  "has_heart_disease",
+  "is_pregnant",
+] as const;
+
+const MEDICAL_TEXT_FIELDS = ["allergies_other", "current_medications", "conditions_other"] as const;
+const MEDICAL_TEXT_MAX = 1000;
+
+export async function saveMedicalHistory(
+  patientId: string,
+  _prev: MedicalHistoryState,
+  formData: FormData
+): Promise<MedicalHistoryState> {
+  await requireProfile();
+
+  const values: Record<string, boolean | string | null> = { patient_id: patientId };
+  for (const flag of MEDICAL_FLAGS) {
+    values[flag] = formData.get(flag) === "on";
+  }
+  for (const field of MEDICAL_TEXT_FIELDS) {
+    const text = String(formData.get(field) ?? "").trim();
+    if (text.length > MEDICAL_TEXT_MAX) {
+      return { error: `Cada campo de texto admite hasta ${MEDICAL_TEXT_MAX} caracteres.` };
+    }
+    values[field] = text || null;
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("patient_medical_history")
+    .upsert(values, { onConflict: "patient_id" });
+
+  if (error) {
+    return { error: "No se pudo guardar el historial médico. Inténtalo de nuevo." };
+  }
+
+  revalidatePath(`/patients/${patientId}`);
+  return { saved: true };
 }

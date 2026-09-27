@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { canManageAppointments, canManagePatients, requireProfile } from "@/lib/auth";
+import { canManageAppointments, requireProfile } from "@/lib/auth";
 import { dayBoundsUtc, formatDateLong, formatHour, todayDateKey } from "@/lib/timezone";
 import { StatusChip } from "../appointments/status-chip";
 
@@ -9,6 +9,7 @@ export const metadata: Metadata = { title: "Panel · DentalFlow" };
 
 type AgendaRow = {
   id: string;
+  patient_id: string;
   starts_at: string;
   duration_minutes: number;
   reason: string | null;
@@ -34,7 +35,6 @@ function insuranceLabel(patient: RecentPatient) {
 export default async function PanelPage() {
   const profile = await requireProfile();
   const canManageAgenda = canManageAppointments(profile.role);
-  const canEditPatients = canManagePatients(profile.role);
 
   const dateKey = todayDateKey();
   const { start, end } = dayBoundsUtc(dateKey);
@@ -44,7 +44,7 @@ export default async function PanelPage() {
     supabase.from("patients").select("id", { count: "exact", head: true }),
     supabase
       .from("appointments")
-      .select("id, starts_at, duration_minutes, reason, status, patients(full_name), profiles(full_name)")
+      .select("id, patient_id, starts_at, duration_minutes, reason, status, patients(full_name), profiles(full_name)")
       .gte("starts_at", start)
       .lt("starts_at", end)
       .order("starts_at", { ascending: true })
@@ -151,18 +151,12 @@ export default async function PanelPage() {
 
                 return (
                   <li key={item.id}>
-                    {canManageAgenda ? (
-                      <Link
-                        href={`/appointments/${item.id}/edit`}
-                        className="block rounded-[16px] border border-white/80 bg-white/40 p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] transition hover:border-[#8FD3C4] hover:bg-white/70"
-                      >
-                        {content}
-                      </Link>
-                    ) : (
-                      <div className="rounded-[16px] border border-white/80 bg-white/40 p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
-                        {content}
-                      </div>
-                    )}
+                    <Link
+                      href={canManageAgenda ? `/appointments/${item.id}/edit` : `/patients/${item.patient_id}`}
+                      className="block rounded-[16px] border border-white/80 bg-white/40 p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] transition hover:border-[#8FD3C4] hover:bg-white/70"
+                    >
+                      {content}
+                    </Link>
                   </li>
                 );
               })}
@@ -197,18 +191,12 @@ export default async function PanelPage() {
 
                 return (
                   <li key={patient.id}>
-                    {canEditPatients ? (
-                      <Link
-                        href={`/patients/${patient.id}/edit`}
-                        className="flex items-center justify-between gap-2 rounded-lg border border-white/80 bg-white/50 px-2.5 py-2 transition hover:border-[#8FD3C4] hover:bg-white/70"
-                      >
-                        {content}
-                      </Link>
-                    ) : (
-                      <div className="flex items-center justify-between gap-2 rounded-lg border border-white/80 bg-white/50 px-2.5 py-2">
-                        {content}
-                      </div>
-                    )}
+                    <Link
+                      href={`/patients/${patient.id}`}
+                      className="flex items-center justify-between gap-2 rounded-lg border border-white/80 bg-white/50 px-2.5 py-2 transition hover:border-[#8FD3C4] hover:bg-white/70"
+                    >
+                      {content}
+                    </Link>
                   </li>
                 );
               })}

@@ -1,0 +1,281 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { canManageAppointments, canManagePatients, requireProfile } from "@/lib/auth";
+import { formatDominicanDocumentId, formatDominicanPhone } from "@/lib/phone";
+import {
+  TIME_ZONE,
+  formatHour,
+  formatShortDate,
+  splitLocalDateTime,
+  todayDateKey,
+} from "@/lib/timezone";
+import { StatusChip } from "../../appointments/status-chip";
+import { saveMedicalHistory } from "../actions";
+import { MedicalHistoryForm, type MedicalHistoryValues } from "./medical-history-form";
+
+export const metadata: Metadata = { title: "Ficha del paciente · DentalFlow" };
+
+type Patient = {
+  id: string;
+  full_name: string;
+  document_id: string | null;
+  birth_date: string | null;
+  phone: string | null;
+  email: string | null;
+  notes: string | null;
+  record_number: number;
+  insurance_type: "ars" | "privado" | null;
+  insurance_provider: string | null;
+  affiliate_number: string | null;
+};
+
+type MedicalHistory = MedicalHistoryValues & {
+  updated_at: string;
+  profiles: { full_name: string } | null;
+};
+
+type PatientAppointment = {
+  id: string;
+  starts_at: string;
+  reason: string | null;
+  status: string;
+  profiles: { full_name: string } | null;
+};
+
+function ageFrom(birthDate: string | null): number | null {
+  if (!birthDate) return null;
+  const [by, bm, bd] = birthDate.split("-").map(Number);
+  const [ty, tm, td] = todayDateKey().split("-").map(Number);
+  let age = ty - by;
+  if (tm < bm || (tm === bm && td < bd)) age -= 1;
+  return age >= 0 ? age : null;
+}
+
+function activeAlerts(history: MedicalHistoryValues): string[] {
+  const alerts: string[] = [];
+  if (history.allergy_penicillin) alerts.push("Alergia a penicilina / amoxicilina");
+  if (history.allergy_local_anesthetic) alerts.push("Alergia a anestésicos locales");
+  if (history.allergy_nsaids) alerts.push("Alergia a AINEs");
+  if (history.allergy_latex) alerts.push("Alergia al látex");
+  if (history.allergies_other) alerts.push(`Alergia: ${history.allergies_other}`);
+  if (history.takes_anticoagulants) alerts.push("Toma anticoagulantes / antiagregantes");
+  if (history.takes_bisphosphonates) alerts.push("Toma bifosfonatos");
+  if (history.has_diabetes) alerts.push("Diabetes");
+  if (history.has_hypertension) alerts.push("Hipertensión");
+  if (history.has_heart_disease) alerts.push("Cardiopatía");
+  if (history.is_pregnant) alerts.push("Embarazo");
+  if (history.conditions_other) alerts.push(history.conditions_other);
+  return alerts;
+}
+
+function formatStamp(iso: string): string {
+  return new Intl.DateTimeFormat("es-DO", {
+    timeZone: TIME_ZONE,
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(new Date(iso));
+}
+
+function AppointmentList({ items, empty }: { items: PatientAppointment[]; empty: string }) {
+  if (items.length === 0) {
+    return <p className="text-sm text-slate-500">{empty}</p>;
+  }
+  return (
+    <ul className="flex flex-col gap-2">
+      {items.map((item) => (
+        <li key={item.id} className="flex items-center justify-between gap-3 rounded-xl border border-white/80 bg-white/50 px-3 py-2.5">
+          <div className="min-w-0">
+            <p className="text-[15px] font-semibold text-[#0F172A]">
+              {formatShortDate(splitLocalDateTime(item.starts_at).dateKey)} · {formatHour(item.starts_at)}
+            </p>
+            <p className="truncate text-sm text-slate-600">
+              {item.profiles?.full_name ?? "Sin doctor"}
+              {item.reason ? ` · ${item.reason}` : ""}
+            </p>
+          </div>
+          <StatusChip status={item.status} />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+export default async function PatientChartPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const profile = await requireProfile();
+  const supabase = await createClient();
+
+  const { data: patient } = await supabase
+    .from("patients")
+    .select(
+      "id, full_name, document_id, birth_date, phone, email, notes, record_number, insurance_type, insurance_provider, affiliate_number"
+    )
+    .eq("id", id)
+    .maybeSingle<Patient>();
+
+  if (!patient) notFound();
+
+  const nowIso = new Date().toISOString();
+  const [historyResult, upcomingResult, pastResult] = await Promise.all([
+    supabase
+      .from("patient_medical_history")
+      .select(
+        "allergy_penicillin, allergy_local_anesthetic, allergy_latex, allergy_nsaids, allergies_other, takes_anticoagulants, takes_bisphosphonates, current_medications, has_diabetes, has_hypertension, has_heart_disease, is_pregnant, conditions_other, updated_at, profiles(full_name)"
+      )
+      .eq("patient_id", id)
+      .maybeSingle<MedicalHistory>(),
+    supabase
+      .from("appointments")
+      .select("id, starts_at, reason, status, profiles(full_name)")
+      .eq("patient_id", id)
+      .gte("starts_at", nowIso)
+      .order("starts_at", { ascending: true })
+      .limit(5)
+      .returns<PatientAppointment[]>(),
+    supabase
+      .from("appointments")
+      .select("id, starts_at, reason, status, profiles(full_name)")
+      .eq("patient_id", id)
+      .lt("starts_at", nowIso)
+      .order("starts_at", { ascending: false })
+      .limit(5)
+      .returns<PatientAppointment[]>(),
+  ]);
+
+  const history = historyResult.data;
+  const historyFailed = Boolean(historyResult.error);
+  const alerts = history ? activeAlerts(history) : [];
+  const age = ageFrom(patient.birth_date);
+  const saveHistory = saveMedicalHistory.bind(null, patient.id);
+
+  const identity = [
+    `Expediente N.° ${String(patient.record_number).padStart(4, "0")}`,
+    patient.document_id ? `Cédula ${formatDominicanDocumentId(patient.document_id)}` : null,
+    age !== null ? `${age} años` : null,
+  ].filter(Boolean);
+
+  return (
+    <div className="flex flex-col gap-4">
+      <Link href="/patients" className="self-start text-sm font-semibold text-[#154360] hover:underline" data-i18n="chart.back">
+        ← Pacientes
+      </Link>
+
+      <header className="glass-card flex flex-col gap-4 p-5 sm:flex-row sm:items-start sm:justify-between sm:p-6">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-bold tracking-tight text-[#0F172A] sm:text-3xl">{patient.full_name}</h1>
+          <p className="mt-1.5 text-[15px] text-slate-600">{identity.join(" · ")}</p>
+          <p className="mt-1 text-[15px] text-slate-600">
+            {patient.insurance_type === "ars"
+              ? `ARS ${patient.insurance_provider} · Afiliado ${patient.affiliate_number}`
+              : patient.insurance_type === "privado"
+                ? "Privado"
+                : "Sin aseguradora registrada"}
+          </p>
+          {(patient.phone || patient.email) && (
+            <p className="mt-1 text-[15px] text-slate-600">
+              {[patient.phone ? formatDominicanPhone(patient.phone) : null, patient.email].filter(Boolean).join(" · ")}
+            </p>
+          )}
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          {canManageAppointments(profile.role) && (
+            <Link href="/appointments/new" className="glass-button min-h-11 text-[15px]" data-i18n="chart.newAppointment">
+              Nueva cita
+            </Link>
+          )}
+          {canManagePatients(profile.role) && (
+            <Link href={`/patients/${patient.id}/edit`} className="glass-button-light min-h-11 text-[15px]" data-i18n="chart.editData">
+              Editar datos
+            </Link>
+          )}
+        </div>
+      </header>
+
+      {historyFailed ? (
+        <section role="alert" className="rounded-2xl border border-rose-300 bg-rose-50 p-4 text-[15px] text-rose-800">
+          No se pudo cargar el historial médico. Recarga la página antes de atender al paciente.
+        </section>
+      ) : !history ? (
+        <section role="alert" className="rounded-2xl border-2 border-amber-300 bg-amber-50 p-4">
+          <p className="text-base font-bold text-amber-900" data-i18n="chart.noHistory">Historial médico no registrado</p>
+          <p className="mt-1 text-[15px] text-amber-900" data-i18n="chart.noHistory.hint">
+            Pregunte por alergias, medicamentos y enfermedades antes de cualquier procedimiento, y regístrelo abajo.
+          </p>
+        </section>
+      ) : alerts.length > 0 ? (
+        <section role="alert" className="rounded-2xl border-2 border-rose-400 bg-rose-50 p-4">
+          <p className="text-base font-bold text-rose-800" data-i18n="chart.alerts">Alertas médicas</p>
+          <ul className="mt-2 flex flex-wrap gap-2">
+            {alerts.map((alert) => (
+              <li key={alert} className="rounded-full border border-rose-300 bg-white px-3 py-1 text-[15px] font-semibold text-rose-800">
+                {alert}
+              </li>
+            ))}
+          </ul>
+          {history.current_medications && (
+            <p className="mt-3 text-[15px] text-rose-900">
+              <span className="font-semibold">Medicamentos:</span> {history.current_medications}
+            </p>
+          )}
+          <p className="mt-2 text-sm text-rose-700">
+            Actualizado {formatStamp(history.updated_at)}
+            {history.profiles?.full_name ? ` por ${history.profiles.full_name}` : ""}
+          </p>
+        </section>
+      ) : (
+        <section className="rounded-2xl border border-[#8FD3C4] bg-white/60 p-4">
+          <p className="text-base font-bold text-[#154360]" data-i18n="chart.noAlerts">Sin alertas médicas registradas</p>
+          {history.current_medications && (
+            <p className="mt-1 text-[15px] text-slate-700">
+              <span className="font-semibold">Medicamentos:</span> {history.current_medications}
+            </p>
+          )}
+          <p className="mt-1 text-sm text-slate-600">
+            Actualizado {formatStamp(history.updated_at)}
+            {history.profiles?.full_name ? ` por ${history.profiles.full_name}` : ""}
+          </p>
+        </section>
+      )}
+
+      <div className="grid gap-4 xl:grid-cols-[1.25fr_1fr]">
+        <section className="glass-card p-5 sm:p-6">
+          <h2 className="text-lg font-bold text-[#0F172A]" data-i18n="chart.history">Historial médico</h2>
+          <p className="mb-4 mt-1 text-sm text-slate-600" data-i18n="chart.history.hint">
+            Marque lo que aplique. Quien guarde queda registrado con fecha y hora.
+          </p>
+          {historyFailed ? (
+            <p className="text-sm text-slate-600">Disponible cuando el historial cargue correctamente.</p>
+          ) : (
+            <MedicalHistoryForm action={saveHistory} defaultValues={history} />
+          )}
+        </section>
+
+        <div className="flex flex-col gap-4">
+          <section className="glass-card p-5 sm:p-6">
+            <h2 className="mb-3 text-lg font-bold text-[#0F172A]" data-i18n="chart.upcoming">Próximas citas</h2>
+            <AppointmentList items={upcomingResult.data ?? []} empty="No tiene citas programadas." />
+          </section>
+
+          <section className="glass-card p-5 sm:p-6">
+            <h2 className="mb-3 text-lg font-bold text-[#0F172A]" data-i18n="chart.past">Citas anteriores</h2>
+            <AppointmentList items={pastResult.data ?? []} empty="Sin citas anteriores." />
+          </section>
+
+          {patient.notes && (
+            <section className="glass-card p-5 sm:p-6">
+              <h2 className="mb-2 text-lg font-bold text-[#0F172A]" data-i18n="chart.notes">Notas</h2>
+              <p className="whitespace-pre-line text-[15px] text-slate-700">{patient.notes}</p>
+            </section>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

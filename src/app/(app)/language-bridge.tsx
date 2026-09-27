@@ -201,7 +201,7 @@ function applyTranslations(lang: string) {
     const value = dictionary[key];
     if (!value) return;
 
-    node.textContent = value;
+    setOwnText(node, value);
   });
 
   const placeholderNodes = document.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>("[data-i18n-placeholder]");
@@ -224,8 +224,29 @@ function applyTranslations(lang: string) {
     if (!template) return;
 
     const userName = node.dataset.userName ?? "";
-    node.textContent = template.replace("{name}", userName);
+    setOwnText(node, template.replace("{name}", userName));
   });
+}
+
+// Cambia solo el texto propio del elemento, sin tocar sus hijos (inputs,
+// selects) y reutilizando el nodo de texto existente para no romper a React.
+function setOwnText(node: HTMLElement, value: string) {
+  const textNodes = Array.from(node.childNodes).filter(
+    (child): child is Text => child.nodeType === Node.TEXT_NODE
+  );
+  const target = textNodes.find((child) => child.data.trim() !== "") ?? textNodes[0];
+
+  if (!target) {
+    if (node.childElementCount === 0) node.textContent = value;
+    return;
+  }
+
+  target.data = node.childElementCount === 0 ? value : `${value} `;
+  if (node.childElementCount === 0) {
+    textNodes.forEach((child) => {
+      if (child !== target) child.data = "";
+    });
+  }
 }
 
 export function LanguageBridge() {
