@@ -95,8 +95,8 @@ function AppointmentList({ items, empty }: { items: PatientAppointment[]; empty:
   return (
     <ul className="flex flex-col gap-2">
       {items.map((item) => (
-        <li key={item.id} className="flex items-center justify-between gap-3 rounded-xl border border-white/80 bg-white/50 px-3 py-2.5">
-          <div className="min-w-0">
+        <li key={item.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/80 bg-white/50 px-3 py-2.5">
+          <div className="min-w-0 flex-1">
             <p className="text-[15px] font-semibold text-[#0F172A]">
               {formatShortDate(splitLocalDateTime(item.starts_at).dateKey)} · {formatHour(item.starts_at)}
             </p>

@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "Iniciar sesión · DentalFlow" };
 export default function LoginPage() {
   return (
     <main className="flex flex-1 items-center justify-center px-4 py-12">
-      <div className="glass-card w-full max-w-sm p-8">
+      <div className="glass-card w-full max-w-sm p-5 sm:p-8">
         <div className="mb-8 text-center">
           <div className="relative mx-auto mb-4 flex h-[240px] w-[240px] items-center justify-center">
             <div

@@ -46,6 +46,68 @@ type PatientRow = {
   insurance_provider: string | null;
 };
 
+function insuranceText(patient: PatientRow): string {
+  if (patient.insurance_type === "ars") return `ARS: ${patient.insurance_provider}`;
+  if (patient.insurance_type === "privado") return "Privado";
+  return "Sin aseguradora";
+}
+
+function contactLinks(patient: PatientRow) {
+  const phoneDigits = patient.phone?.replace(/\D/g, "") ?? "";
+  return {
+    whatsapp: phoneDigits ? `https://wa.me/1${phoneDigits}` : "",
+    email: patient.email ? `mailto:${patient.email}` : "",
+    tel: patient.phone ? `tel:${patient.phone}` : "",
+  };
+}
+
+function ContactButtons({
+  patient,
+  links,
+  size,
+}: {
+  patient: PatientRow;
+  links: ReturnType<typeof contactLinks>;
+  size: "sm" | "lg";
+}) {
+  if (!links.whatsapp && !links.email && !links.tel) return null;
+  const box = size === "lg" ? "h-11 w-11" : "h-8 w-8";
+
+  return (
+    <div className={`flex items-center gap-2 ${size === "lg" ? "mt-2" : ""}`}>
+      {links.whatsapp && (
+        <a
+          href={links.whatsapp}
+          target="_blank"
+          rel="noreferrer"
+          aria-label={`WhatsApp de ${patient.full_name}`}
+          className={`flex ${box} items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700 transition hover:bg-emerald-100`}
+        >
+          <WhatsAppIcon />
+        </a>
+      )}
+      {links.email && (
+        <a
+          href={links.email}
+          aria-label={`Correo de ${patient.full_name}`}
+          className={`flex ${box} items-center justify-center rounded-lg border border-slate-200 bg-white/70 text-[#154360] transition hover:bg-white`}
+        >
+          <EmailIcon />
+        </a>
+      )}
+      {links.tel && (
+        <a
+          href={links.tel}
+          aria-label={`Llamar a ${patient.full_name}`}
+          className={`flex ${box} items-center justify-center rounded-lg border border-slate-200 bg-white/70 text-[#154360] transition hover:bg-white`}
+        >
+          <PhoneIcon />
+        </a>
+      )}
+    </div>
+  );
+}
+
 export default async function PatientsPage({
   searchParams,
 }: {
@@ -87,21 +149,6 @@ export default async function PatientsPage({
         )}
       </div>
 
-      <div className="grid gap-2.5 md:grid-cols-3">
-        <div className="crystal-card rounded-[18px] p-3">
-          <p className="text-xs font-black uppercase tracking-[0.08em] text-slate-500">Total</p>
-          <p className="mt-2 text-xl font-black tracking-[-0.06em] text-[#0F172A]">{patients?.length ?? 0}</p>
-        </div>
-        <div className="crystal-card rounded-[18px] p-3">
-          <p className="text-xs font-black uppercase tracking-[0.08em] text-slate-500">Atención</p>
-          <p className="mt-2 text-xl font-black tracking-[-0.06em] text-[#0F172A]">0</p>
-        </div>
-        <div className="crystal-card rounded-[18px] p-3">
-          <p className="text-xs font-black uppercase tracking-[0.08em] text-slate-500">Contacto</p>
-          <p className="mt-2 text-xl font-black tracking-[-0.06em] text-[#0F172A]">0</p>
-        </div>
-      </div>
-
       <div className="glass-card p-3">
         <SearchBox defaultValue={q ?? ""} />
       </div>
@@ -114,8 +161,30 @@ export default async function PatientsPage({
               : "Todavía no hay pacientes registrados."}
           </p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
+          <>
+            <ul className="flex flex-col divide-y divide-white/60 md:hidden">
+              {patients.map((patient) => {
+                const contact = contactLinks(patient);
+                return (
+                  <li key={patient.id} className="p-3">
+                    <Link href={`/patients/${patient.id}`} className="block rounded-xl active:bg-white/40">
+                      <p className="text-base font-semibold text-[#0F172A]">{patient.full_name}</p>
+                      <p className="mt-0.5 text-sm text-slate-600">
+                        N.° {String(patient.record_number).padStart(4, "0")}
+                        {patient.document_id ? ` · ${formatDominicanDocumentId(patient.document_id)}` : ""}
+                      </p>
+                      <p className="text-sm text-slate-600">
+                        {insuranceText(patient)}
+                        {patient.phone ? ` · ${formatDominicanPhone(patient.phone)}` : ""}
+                      </p>
+                    </Link>
+                    <ContactButtons patient={patient} links={contact} size="lg" />
+                  </li>
+                );
+              })}
+            </ul>
+
+            <table className="hidden w-full text-left text-sm md:table">
               <thead>
                 <tr className="border-b border-white/60 text-xs uppercase tracking-[0.08em] text-slate-500">
                   <th className="px-4 py-2.5 font-medium" data-i18n="patients.table.record">Expediente</th>
@@ -124,87 +193,30 @@ export default async function PatientsPage({
                   <th className="px-4 py-2.5 font-medium" data-i18n="patients.table.phone">Teléfono</th>
                   <th className="px-4 py-2.5 font-medium" data-i18n="patients.table.insurance">Aseguradora</th>
                   <th className="px-4 py-2.5 font-medium">Contacto</th>
-                  <th className="px-4 py-2.5 font-medium" data-i18n="patients.table.registered">Registrado</th>
                 </tr>
               </thead>
               <tbody>
-                {patients.map((patient) => {
-                  const phoneDigits = patient.phone?.replace(/\D/g, "") ?? "";
-                  const whatsappHref = phoneDigits ? `https://wa.me/1${phoneDigits}` : "";
-                  const emailHref = patient.email ? `mailto:${patient.email}` : "";
-                  const telHref = patient.phone ? `tel:${patient.phone}` : "";
-
-                  return (
-                    <PatientRow
-                      key={patient.id}
-                      href={`/patients/${patient.id}`}
-                      clickable
-                    >
-                      <td className="px-4 py-2.5 text-[13px] text-slate-600">
-                        {String(patient.record_number).padStart(4, "0")}
-                      </td>
-                      <td className="px-4 py-2.5 text-sm font-medium">{patient.full_name}</td>
-                      <td className="px-4 py-2.5 text-[13px] text-slate-600">
-                        {patient.document_id
-                          ? formatDominicanDocumentId(patient.document_id)
-                          : "—"}
-                      </td>
-                      <td className="px-4 py-2.5 text-[13px] text-slate-600">
-                        {patient.phone ? formatDominicanPhone(patient.phone) : "—"}
-                      </td>
-                      <td className="px-4 py-2.5 text-[13px] text-slate-600">
-                        {patient.insurance_type === "ars"
-                          ? `ARS: ${patient.insurance_provider}`
-                          : patient.insurance_type === "privado"
-                            ? "Privado"
-                            : "—"}
-                      </td>
-                      <td className="px-4 py-2.5">
-                        <div className="flex items-center gap-1.5">
-                          {whatsappHref && (
-                            <a
-                              href={whatsappHref}
-                              target="_blank"
-                              rel="noreferrer"
-                              aria-label={`WhatsApp de ${patient.full_name}`}
-                              className="flex h-7 w-7 items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700 transition hover:bg-emerald-100"
-                            >
-                              <WhatsAppIcon />
-                            </a>
-                          )}
-                          {emailHref && (
-                            <a
-                              href={emailHref}
-                              aria-label={`Correo de ${patient.full_name}`}
-                              className="flex h-7 w-7 items-center justify-center rounded-lg border border-indigo-200 bg-indigo-50 text-indigo-700 transition hover:bg-indigo-100"
-                            >
-                              <EmailIcon />
-                            </a>
-                          )}
-                          {telHref && (
-                            <a
-                              href={telHref}
-                              aria-label={`Llamar a ${patient.full_name}`}
-                              className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-slate-100 text-slate-700 transition hover:bg-slate-200"
-                            >
-                              <PhoneIcon />
-                            </a>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-4 py-2.5 text-[13px] text-slate-600">
-                        {new Date(patient.created_at).toLocaleDateString("es", {
-                          year: "numeric",
-                          month: "short",
-                          day: "numeric",
-                        })}
-                      </td>
-                    </PatientRow>
-                  );
-                })}
+                {patients.map((patient) => (
+                  <PatientRow key={patient.id} href={`/patients/${patient.id}`} clickable>
+                    <td className="px-4 py-2.5 text-[13px] text-slate-600">
+                      {String(patient.record_number).padStart(4, "0")}
+                    </td>
+                    <td className="px-4 py-2.5 text-sm font-medium">{patient.full_name}</td>
+                    <td className="px-4 py-2.5 text-[13px] text-slate-600">
+                      {patient.document_id ? formatDominicanDocumentId(patient.document_id) : "—"}
+                    </td>
+                    <td className="px-4 py-2.5 text-[13px] text-slate-600">
+                      {patient.phone ? formatDominicanPhone(patient.phone) : "—"}
+                    </td>
+                    <td className="px-4 py-2.5 text-[13px] text-slate-600">{insuranceText(patient)}</td>
+                    <td className="px-4 py-2.5">
+                      <ContactButtons patient={patient} links={contactLinks(patient)} size="sm" />
+                    </td>
+                  </PatientRow>
+                ))}
               </tbody>
             </table>
-          </div>
+          </>
         )}
       </div>
     </div>

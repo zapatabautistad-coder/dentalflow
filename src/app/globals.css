@@ -9,6 +9,11 @@
   --color-sidebar-aqua: #8fd3c4;
 }
 
+html,
+body {
+  overflow-x: clip;
+}
+
 body {
   /* Ambiente fresco: brillos aguamarina y blancos para que el vidrio tenga qué refractar */
   background:

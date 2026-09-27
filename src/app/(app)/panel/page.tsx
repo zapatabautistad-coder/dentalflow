@@ -132,8 +132,8 @@ export default async function PanelPage() {
             <ul className="mt-3 space-y-2">
               {agenda.map((item) => {
                 const content = (
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex min-w-0 items-center gap-2.5">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex min-w-0 flex-1 items-center gap-2.5">
                       <div className="min-w-[46px] text-[13px] font-black tracking-[0.08em] text-[#154360]">
                         {formatHour(item.starts_at)}
                       </div>

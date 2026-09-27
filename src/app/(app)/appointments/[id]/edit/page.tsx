@@ -52,7 +52,7 @@ export default async function EditAppointmentPage({
 
   if (!canManage) {
     return (
-      <div className="crystal-card mx-auto w-full max-w-lg rounded-3xl p-8">
+      <div className="crystal-card mx-auto w-full max-w-lg rounded-3xl p-5 sm:p-8">
         <h1 className="text-xl font-bold">Cita de {appointment.patients?.full_name ?? "paciente"}</h1>
         <p className="mt-1 text-sm text-slate-500">{formatDateLong(dateKey)}</p>
 
@@ -84,7 +84,7 @@ export default async function EditAppointmentPage({
     .returns<{ id: string; full_name: string }[]>();
 
   return (
-    <div className="crystal-card mx-auto w-full max-w-lg rounded-3xl p-8">
+    <div className="crystal-card mx-auto w-full max-w-lg rounded-3xl p-5 sm:p-8">
       <h1 className="text-xl font-bold">Editar cita</h1>
       <p className="mt-1 text-sm text-slate-500">
         {appointment.patients?.full_name}

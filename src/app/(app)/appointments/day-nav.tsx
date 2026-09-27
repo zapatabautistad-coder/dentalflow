@@ -11,12 +11,12 @@ export function DayNav({ dateKey }: { dateKey: string }) {
   }
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex w-full min-w-0 items-center gap-2 sm:w-auto">
       <button
         type="button"
         aria-label="Día anterior"
         onClick={() => goTo(addDaysToDateKey(dateKey, -1))}
-        className="glass-button-light h-10 w-10 px-0 text-lg"
+        className="glass-button-light h-11 w-11 shrink-0 px-0 text-lg"
       >
         ‹
       </button>
@@ -25,7 +25,7 @@ export function DayNav({ dateKey }: { dateKey: string }) {
         type="date"
         value={dateKey}
         onChange={(event) => event.target.value && goTo(event.target.value)}
-        className="glass-input"
+        className="glass-input min-w-0 flex-1"
         aria-label="Elegir fecha"
       />
 
@@ -33,7 +33,7 @@ export function DayNav({ dateKey }: { dateKey: string }) {
         type="button"
         aria-label="Día siguiente"
         onClick={() => goTo(addDaysToDateKey(dateKey, 1))}
-        className="glass-button-light h-10 w-10 px-0 text-lg"
+        className="glass-button-light h-11 w-11 shrink-0 px-0 text-lg"
       >
         ›
       </button>
