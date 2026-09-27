@@ -20,38 +20,6 @@ const STATUS_TEXT_BY_LANGUAGE: Record<string, Record<string, string>> = {
     cancelada: "Cancelled",
     no_asistio: "No-show",
   },
-  pt: {
-    programada: "Agendada",
-    confirmada: "Confirmada",
-    en_curso: "Em andamento",
-    completada: "Concluída",
-    cancelada: "Cancelada",
-    no_asistio: "Não compareceu",
-  },
-  fr: {
-    programada: "Planifiée",
-    confirmada: "Confirmée",
-    en_curso: "En cours",
-    completada: "Terminée",
-    cancelada: "Annulée",
-    no_asistio: "Absent",
-  },
-  de: {
-    programada: "Geplant",
-    confirmada: "Bestätigt",
-    en_curso: "In Bearbeitung",
-    completada: "Abgeschlossen",
-    cancelada: "Abgebrochen",
-    no_asistio: "Nicht erschienen",
-  },
-  it: {
-    programada: "Pianificata",
-    confirmada: "Confermata",
-    en_curso: "In corso",
-    completada: "Completata",
-    cancelada: "Annullata",
-    no_asistio: "Assente",
-  },
 };
 
 function getStoredLanguage(): string {

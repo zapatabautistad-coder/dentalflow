@@ -8,7 +8,12 @@ Sistema de gestión para clínicas dentales. Stack: Next.js (App Router, TypeScr
 
 ## Cómo trabajar
 - Responder siempre en **español**, breve y paso a paso.
-- Proyecto de **portafolio**: nunca inventar métricas, testimonios ni certificaciones (nada de "HIPAA compliant" ni similares).
+- **Producto real** para clínicas dentales en República Dominicana (no es demo ni portafolio). Lo usan doctores con pacientes reales.
+- Nunca mostrar datos inventados: todo número, lista o estado en pantalla sale de Supabase. Si no hay datos, se muestra un estado vacío honesto.
+- Nunca inventar métricas, testimonios ni certificaciones (nada de "HIPAA compliant" ni similares).
+- Nada de botones u opciones de menú que no hagan nada: si una función no existe todavía, no se muestra.
+- El diseño está congelado: no cambiar barra lateral, ícono ni paleta sin que se pida explícitamente.
+- Idiomas: solo español e inglés.
 - Antes de decir que una tarea está terminada, ejecuta `npm run build` y `npm run lint`, corrige todos los errores que salgan y repite hasta que pasen sin errores. Luego haz commit.
 
 ## Referencia: demo HTML (v6)
@@ -18,7 +23,7 @@ Sistema de gestión para clínicas dentales. Stack: Next.js (App Router, TypeScr
 
 ## Diseño
 - Fondo: degradado `#F5F7FA` → `#C3CFE2`.
-- Barra lateral: paleta del logo, azul marino `#154360` (base) + aguamarina `#8FD3C4` (acento: bordes, iconos activos, detalles), texto blanco. Efecto vidrio esmerilado (fondo semitransparente con blur, brillo sutil en el borde superior, borde delgado claro). Clase `sidebar-glass` en `src/app/globals.css`. Pendiente: decidir si el resto de la app (login, tarjetas, botones) migra a esta paleta o se queda con el morado actual.
+- Barra lateral: paleta del logo, azul marino `#154360` (base) + aguamarina `#8FD3C4` (acento: bordes, iconos activos, detalles), texto blanco. Efecto vidrio esmerilado (fondo semitransparente con blur, brillo sutil en el borde superior, borde delgado claro). Clase `sidebar-glass` en `src/app/globals.css`. Toda la app usa esta paleta (botones, enlaces y acentos); verde solo con significado (estado "completada", diente sano, WhatsApp).
 - Tipografía: Inter.
 - Botones estilo vidrio (glassmorphism).
 - El color **teal se reserva solo para funciones de IA**.
@@ -28,8 +33,11 @@ Sistema de gestión para clínicas dentales. Stack: Next.js (App Router, TypeScr
 - **Después:** Odontograma, Facturación, WhatsApp (y el resto de vistas del demo).
 
 ## Estado
-- Supabase conectado (sin tablas todavía). Claves en `.env.local` (ignorado por git):
+- En producción: https://dentalflow-navy.vercel.app (Vercel, se publica solo con cada push a `main`).
+- Supabase con migraciones en `supabase/migrations/` (se ejecutan a mano en el SQL Editor). Claves en `.env.local` (ignorado por git) y en Vercel:
   `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
+- Menú: Panel, Pacientes, Citas. Horarios, Reportes y Configuración eran pantallas de relleno: fuera del menú, pendientes de borrar o rehacer con datos reales.
+- Odontograma, periodontograma y plan de tratamiento no guardan datos y muestran valores inventados; no tienen enlace desde la app hasta rehacerlos.
 - Clientes: `src/lib/supabase/client.ts` (navegador) y `src/lib/supabase/server.ts` (servidor).
 - En Next 16 `middleware` se llama `proxy`: el refresco de sesión del login irá en `src/proxy.ts`.
 - Toda tabla nueva necesita GRANT a `authenticated`, porque la exposición automática de tablas está desactivada.

@@ -40,6 +40,8 @@ export default async function AppointmentsPage({
     .returns<AppointmentRow[]>();
 
   const appointments = data ?? [];
+  const pendingCount = appointments.filter((item) => item.status === "programada").length;
+  const confirmedCount = appointments.filter((item) => item.status === "confirmada").length;
 
   return (
     <div className="flex flex-col gap-4">
@@ -57,16 +59,16 @@ export default async function AppointmentsPage({
 
       <div className="grid gap-2.5 md:grid-cols-3">
         <div className="crystal-card rounded-[18px] p-3">
-          <p className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-500">Hoy</p>
+          <p className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-500" data-i18n="appointments.kpi.total">Total del día</p>
           <p className="mt-2 text-xl font-black tracking-[-0.06em] text-[#0F172A]">{appointments.length}</p>
         </div>
         <div className="crystal-card rounded-[18px] p-3">
-          <p className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-500">Pendientes</p>
-          <p className="mt-2 text-xl font-black tracking-[-0.06em] text-[#0F172A]">0</p>
+          <p className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-500" data-i18n="appointments.kpi.pending">Por confirmar</p>
+          <p className="mt-2 text-xl font-black tracking-[-0.06em] text-[#0F172A]">{pendingCount}</p>
         </div>
         <div className="crystal-card rounded-[18px] p-3">
-          <p className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-500">Confirmadas</p>
-          <p className="mt-2 text-xl font-black tracking-[-0.06em] text-[#0F172A]">0</p>
+          <p className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-500" data-i18n="appointments.kpi.confirmed">Confirmadas</p>
+          <p className="mt-2 text-xl font-black tracking-[-0.06em] text-[#0F172A]">{confirmedCount}</p>
         </div>
       </div>
 

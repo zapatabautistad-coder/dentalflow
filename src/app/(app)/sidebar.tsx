@@ -163,9 +163,6 @@ const NAV: NavItem[] = [
   { label: "PANEL", key: "sidebar.panel", icon: "home", href: "/panel" },
   { label: "PACIENTES", key: "sidebar.patients", icon: "users", href: "/patients" },
   { label: "CITAS", key: "sidebar.appointments", icon: "calendar", href: "/appointments" },
-  { label: "HORARIOS", key: "sidebar.schedule", icon: "clock", href: "/schedule" },
-  { label: "REPORTES", key: "sidebar.reports", icon: "chart", href: "/reports" },
-  { label: "CONFIGURACIÓN", key: "sidebar.settings", icon: "settings", href: "/settings" },
 ];
 
 const NAV_ITEM =
@@ -202,8 +199,8 @@ function Brand({ compact = false }: { compact?: boolean }) {
         />
 
         <span className={`absolute flex h-3 w-3 ${compact ? "right-0 top-0" : "right-1.5 top-1.5"}`}>
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-          <span className="relative inline-flex h-3 w-3 rounded-full border-2 border-white bg-emerald-500 shadow-sm" />
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#8FD3C4] opacity-75" />
+          <span className="relative inline-flex h-3 w-3 rounded-full border-2 border-white bg-[#8FD3C4] shadow-sm" />
         </span>
       </div>
 
@@ -248,7 +245,7 @@ function NavList({ pathname, onNavigate }: { pathname: string; onNavigate?: () =
             aria-current={active ? "page" : undefined}
             className={`${NAV_ITEM} ${
               active
-                ? "border-white/30 bg-white/10 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.28),0_14px_28px_-18px_rgba(16,185,129,0.9)] before:absolute before:inset-x-2 before:top-0 before:h-8 before:rounded-full before:bg-[radial-gradient(circle,_rgba(143,211,196,0.52),_transparent_68%)] before:blur-lg before:content-['']"
+                ? "border-white/30 bg-white/10 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.28),0_14px_28px_-18px_rgba(143,211,196,0.9)] before:absolute before:inset-x-2 before:top-0 before:h-8 before:rounded-full before:bg-[radial-gradient(circle,_rgba(143,211,196,0.52),_transparent_68%)] before:blur-lg before:content-['']"
                 : "border-transparent bg-white/[0.03] text-white/85 hover:border-white/20 hover:bg-white/8 hover:text-white"
             }`}
           >
@@ -272,16 +269,6 @@ function NavList({ pathname, onNavigate }: { pathname: string; onNavigate?: () =
 const LANGUAGE_OPTIONS = [
   { code: "es", name: "Español" },
   { code: "en", name: "English" },
-  { code: "pt", name: "Português" },
-  { code: "fr", name: "Français" },
-  { code: "de", name: "Deutsch" },
-  { code: "it", name: "Italiano" },
-  { code: "nl", name: "Nederlands" },
-  { code: "ar", name: "العربية" },
-  { code: "ja", name: "日本語" },
-  { code: "ko", name: "한국어" },
-  { code: "zh", name: "中文" },
-  { code: "ru", name: "Русский" },
 ];
 
 function applySelectedLanguage(lang: (typeof LANGUAGE_OPTIONS)[number]) {
