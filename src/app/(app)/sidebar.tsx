@@ -262,6 +262,12 @@ const LANGUAGE_OPTIONS = [
   { code: "fr", name: "Français" },
   { code: "de", name: "Deutsch" },
   { code: "it", name: "Italiano" },
+  { code: "nl", name: "Nederlands" },
+  { code: "ar", name: "العربية" },
+  { code: "ja", name: "日本語" },
+  { code: "ko", name: "한국어" },
+  { code: "zh", name: "中文" },
+  { code: "ru", name: "Русский" },
 ];
 
 function LanguageToggle() {
@@ -286,21 +292,26 @@ function LanguageToggle() {
         aria-expanded={open}
         aria-label="Seleccionar idioma"
         onClick={() => setOpen((value) => !value)}
-        className="lang-toggle flex w-full items-center justify-between gap-3 rounded-2xl px-3 py-2 text-left text-white"
+        className={`lang-toggle relative flex w-full items-center justify-between gap-2 rounded-xl border px-2.5 py-2 text-left text-white transition-all duration-200 ease-out ${
+          open ? "border-white/45 bg-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.28),0_0_0_1px_rgba(143,211,196,0.18)]" : "border-white/20 bg-white/5 hover:border-white/35 hover:bg-white/8"
+        }`}
       >
-        <span className="text-[9px] font-black uppercase tracking-[0.28em] text-white/60">Idioma</span>
-        <span className="text-[11px] font-bold text-white">{selected.name}</span>
+        <span className="text-[8px] font-black uppercase tracking-[0.28em] text-white/60">Idioma</span>
+        <span className="flex items-center gap-2 rounded-full border border-white/15 bg-white/6 px-2 py-0.5 text-[9px] font-bold tracking-[0.18em] text-white/90 shadow-[inset_0_1px_0_rgba(255,255,255,0.14)]">
+          <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#8FD3C4] shadow-[0_0_10px_rgba(143,211,196,0.8)]" />
+          {selected.code.toUpperCase()}
+        </span>
       </button>
 
-      {open && (
-        <div
-          className="absolute inset-x-0 top-[calc(100%+0.5rem)] z-20 max-h-64 overflow-y-auto rounded-2xl border border-white/20 bg-[#0f3149]/95 p-1.5 shadow-[0_18px_42px_-20px_rgba(15,23,42,0.8)] backdrop-blur-xl"
-          onMouseLeave={() => setOpen(false)}
-          onWheel={(event) => {
-            event.preventDefault();
-            event.currentTarget.scrollTop += event.deltaY;
-          }}
-        >
+      <div
+        className={`absolute inset-x-0 top-[calc(100%+0.55rem)] z-20 origin-top overflow-hidden rounded-2xl border border-white/15 bg-[#0f3149]/96 p-1.5 shadow-[0_18px_42px_-20px_rgba(15,23,42,0.8)] backdrop-blur-xl transition-all duration-220 ease-[cubic-bezier(0.2,0.8,0.2,1)] ${
+          open
+            ? "pointer-events-auto scale-y-100 opacity-100 translate-y-0"
+            : "pointer-events-none scale-y-95 opacity-0 -translate-y-1"
+        }`}
+        onMouseLeave={() => setOpen(false)}
+      >
+        <div className="max-h-72 overflow-y-auto overscroll-contain scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
           {LANGUAGE_OPTIONS.map((lang) => {
             const active = selected.code === lang.code;
 
@@ -315,11 +326,11 @@ function LanguageToggle() {
                   event.currentTarget.style.setProperty("--x", `${x}%`);
                   event.currentTarget.style.setProperty("--y", `${y}%`);
                   event.currentTarget.style.background = active
-                    ? "linear-gradient(135deg, rgba(255,255,255,0.12), rgba(143,211,196,0.18))"
-                    : "radial-gradient(circle at var(--x) var(--y), rgba(143,211,196,0.28), transparent 38%), rgba(255,255,255,0.04)";
+                    ? "linear-gradient(135deg, rgba(255,255,255,0.12), rgba(143,211,196,0.14))"
+                    : "radial-gradient(circle at var(--x) var(--y), rgba(143,211,196,0.22), transparent 26%), rgba(255,255,255,0.02)";
                   event.currentTarget.style.boxShadow = active
                     ? "inset 0 0 0 1px rgba(255,255,255,0.12), 0 0 18px rgba(143,211,196,0.18)"
-                    : "inset 0 0 0 1px rgba(255,255,255,0.06), 0 0 12px rgba(143,211,196,0.12)";
+                    : "inset 0 0 0 1px rgba(255,255,255,0.04)";
                 }}
                 onMouseLeave={(event) => {
                   event.currentTarget.style.background = active ? "rgba(255,255,255,0.12)" : "transparent";
@@ -329,7 +340,7 @@ function LanguageToggle() {
                   setSelected(lang);
                   setOpen(false);
                 }}
-                className={`relative flex w-full items-center justify-between overflow-hidden rounded-xl px-2.5 py-2 text-left text-[11px] transition ${
+                className={`relative flex w-full items-center justify-between overflow-hidden rounded-xl px-2.5 py-2 text-left text-[11px] transition-all duration-150 ${
                   active ? "text-white" : "text-white/80 hover:text-white"
                 }`}
                 style={{
@@ -338,12 +349,18 @@ function LanguageToggle() {
                 }}
               >
                 <span className="relative z-10">{lang.name}</span>
-                {active && <span className="relative z-10 text-[9px] font-black uppercase tracking-[0.18em] text-[#8FD3C4]">ON</span>}
+                <span
+                  className={`relative z-10 text-[8px] font-black uppercase tracking-[0.18em] transition-opacity duration-150 ${
+                    active ? "text-[#8FD3C4] opacity-100" : "opacity-0"
+                  }`}
+                >
+                  {active ? "ON" : ""}
+                </span>
               </button>
             );
           })}
         </div>
-      )}
+      </div>
     </div>
   );
 }

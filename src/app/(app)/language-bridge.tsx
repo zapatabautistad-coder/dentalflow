@@ -103,6 +103,12 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     "language.fr": "Français",
     "language.de": "Deutsch",
     "language.it": "Italiano",
+    "language.nl": "Nederlands",
+    "language.ar": "العربية",
+    "language.ja": "日本語",
+    "language.ko": "한국어",
+    "language.zh": "中文",
+    "language.ru": "Русский",
   },
   en: {
     "sidebar.lang": "Language",
@@ -202,6 +208,12 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     "language.fr": "French",
     "language.de": "German",
     "language.it": "Italian",
+    "language.nl": "Dutch",
+    "language.ar": "Arabic",
+    "language.ja": "Japanese",
+    "language.ko": "Korean",
+    "language.zh": "Chinese",
+    "language.ru": "Russian",
   },
 };
 
