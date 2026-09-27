@@ -284,20 +284,25 @@ const LANGUAGE_OPTIONS = [
   { code: "ru", name: "Русский" },
 ];
 
+function applySelectedLanguage(lang: (typeof LANGUAGE_OPTIONS)[number]) {
+  document.documentElement.lang = lang.code;
+  const event = new CustomEvent("dentalflow-language-change", { detail: lang.code });
+  document.dispatchEvent(event);
+  window.localStorage.setItem("dentalflow-language", lang.code);
+}
+
 function LanguageToggle() {
-  const [selected, setSelected] = useState(() => {
-    if (typeof window === "undefined") return LANGUAGE_OPTIONS[0];
-    const stored = window.localStorage.getItem("dentalflow-language") ?? "es";
-    return LANGUAGE_OPTIONS.find((language) => language.code === stored) ?? LANGUAGE_OPTIONS[0];
-  });
+  const [selected, setSelected] = useState(LANGUAGE_OPTIONS[0]);
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    document.documentElement.lang = selected.code;
-    const event = new CustomEvent("dentalflow-language-change", { detail: selected.code });
-    document.dispatchEvent(event);
-    window.localStorage.setItem("dentalflow-language", selected.code);
-  }, [selected]);
+    const syncFromStorage = () => {
+      const stored = window.localStorage.getItem("dentalflow-language") ?? "es";
+      const storedOption = LANGUAGE_OPTIONS.find((language) => language.code === stored);
+      if (storedOption) setSelected(storedOption);
+    };
+    syncFromStorage();
+  }, []);
 
   return (
     <div className="relative">
@@ -352,6 +357,7 @@ function LanguageToggle() {
                 }}
                 onClick={() => {
                   setSelected(lang);
+                  applySelectedLanguage(lang);
                   setOpen(false);
                 }}
                 className={`relative flex w-full items-center justify-between overflow-hidden rounded-xl px-2.5 py-2 text-left text-[11px] transition-all duration-150 ${
