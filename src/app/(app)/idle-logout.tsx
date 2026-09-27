@@ -14,6 +14,7 @@ export function IdleLogout() {
   const isOpenRef = useRef(false);
   const lastActivityRef = useRef(0);
   const lastScrollRef = useRef(0);
+  const loggingOutRef = useRef(false);
 
   const updateLastActivity = (nextTimestamp = Date.now()) => {
     lastActivityRef.current = nextTimestamp;
@@ -72,7 +73,10 @@ export function IdleLogout() {
       const inactivity = now - lastActivityRef.current;
 
       if (inactivity >= LOGOUT_AFTER_MS) {
-        void logout();
+        if (!loggingOutRef.current) {
+          loggingOutRef.current = true;
+          void logout();
+        }
         return;
       }
 
@@ -95,8 +99,10 @@ export function IdleLogout() {
       }
     };
 
+    // Cargar la página es actividad real (alguien la abrió); lo que no cuenta
+    // es volver a una pestaña que quedó abierta (ver visibilitychange abajo).
     readLastActivity();
-    updateLastActivity(lastActivityRef.current);
+    updateLastActivity();
 
     const activityEvents = ["mousemove", "keydown", "pointerdown", "touchstart", "scroll"] as const;
     activityEvents.forEach((eventName) => {
@@ -104,11 +110,12 @@ export function IdleLogout() {
     });
 
     window.addEventListener("storage", handleStorage);
-    document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "visible") {
-        updateLastActivity();
-      }
-    });
+    // Volver a la pestaña o desbloquear el celular no es actividad: se revisa
+    // cuánto tiempo pasó (los temporizadores se pausan en segundo plano).
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") handleTick();
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
 
     const timer = window.setInterval(handleTick, 1000);
 
@@ -117,6 +124,7 @@ export function IdleLogout() {
         window.removeEventListener(eventName, handleActivity);
       });
       window.removeEventListener("storage", handleStorage);
+      document.removeEventListener("visibilitychange", handleVisibility);
       window.clearInterval(timer);
     };
   }, []);
@@ -133,11 +141,11 @@ export function IdleLogout() {
             role="alertdialog"
             aria-modal="true"
             aria-labelledby="idle-logout-title"
-            className="w-full max-w-md rounded-[28px] border border-[#8FD3C4]/70 bg-white/90 p-6 shadow-[0_28px_60px_-30px_rgba(21,67,96,0.7)]"
+            className="w-full max-w-md rounded-[28px] border border-[#8FD3C4]/70 bg-white/90 p-5 sm:p-6 shadow-[0_28px_60px_-30px_rgba(21,67,96,0.7)]"
           >
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-[11px] font-black uppercase tracking-[0.22em] text-[#154360]/70">Sesión</p>
+                <p className="text-xs font-black uppercase tracking-[0.08em] text-[#154360]/70">Sesión</p>
                 <h2 id="idle-logout-title" className="mt-2 text-[15px] font-black leading-6 text-[#154360]">
                   Tu sesión se cerrará en {timeLeft} segundos por inactividad
                 </h2>
@@ -148,14 +156,14 @@ export function IdleLogout() {
             </div>
 
             <p className="mt-4 text-[14px] leading-6 text-slate-600">
-              Has estado inactivo durante demasiado tiempo. Si quieres seguir usando DentalFlow, mantén la sesión activa.
+              No hubo actividad en los últimos 14 minutos. Por seguridad de los pacientes, la sesión se cerrará si nadie la usa.
             </p>
 
             <div className="mt-5 flex justify-end">
               <button
                 type="button"
                 onClick={handleStayConnected}
-                className="glass-button px-5 py-2.5 text-[14px] font-semibold"
+                className="glass-button min-h-11 px-5 py-2.5 text-[15px] font-semibold"
               >
                 Seguir conectado
               </button>
