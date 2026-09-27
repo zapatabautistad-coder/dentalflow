@@ -34,10 +34,11 @@ Sistema de gestión para clínicas dentales. Stack: Next.js (App Router, TypeScr
 
 ## Estado
 - En producción: https://dentalflow-navy.vercel.app (Vercel, se publica solo con cada push a `main`).
-- Supabase con migraciones en `supabase/migrations/`. Aplicadas en producción: 001, 002, 003, 004. **No ejecutar 005 ni 006** (ver aviso en cada archivo). Antes de escribir una migración nueva, revisar el esquema real de la base, no solo los archivos. Claves en `.env.local` (ignorado por git) y en Vercel:
+- Supabase con migraciones en `supabase/migrations/`. Aplicadas en producción: 001, 002, 003, 004, 007. **No ejecutar 005 ni 006** (ver aviso en cada archivo). Antes de escribir una migración nueva, revisar el esquema real de la base, no solo los archivos. Claves en `.env.local` (ignorado por git) y en Vercel:
   `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
 - Menú: Panel, Pacientes, Citas. Horarios, Reportes y Configuración eran pantallas de relleno: fuera del menú, pendientes de borrar o rehacer con datos reales.
 - Odontograma, periodontograma y plan de tratamiento no guardan datos y muestran valores inventados; no tienen enlace desde la app hasta rehacerlos.
+- Contraseñas (Supabase Auth): mínimo 10 caracteres con minúsculas, mayúsculas, números y símbolos. Pendiente al pasar a plan Pro: activar "Prevent use of leaked passwords".
 - Clientes: `src/lib/supabase/client.ts` (navegador) y `src/lib/supabase/server.ts` (servidor).
 - En Next 16 `middleware` se llama `proxy`: el refresco de sesión del login irá en `src/proxy.ts`.
 - Toda tabla nueva necesita GRANT a `authenticated`, porque la exposición automática de tablas está desactivada.
