@@ -229,7 +229,11 @@ export default async function PatientChartPage({ params }: { params: Promise<{ i
 
         <div className="flex flex-wrap gap-2">
           {canManageAppointments(profile.role) && (
-            <Link href="/appointments/new" className="glass-button min-h-11 text-[15px]" data-i18n="chart.newAppointment">
+            <Link
+              href={`/appointments/new?patient=${patient.id}`}
+              className="glass-button min-h-11 text-[15px]"
+              data-i18n="chart.newAppointment"
+            >
               Nueva cita
             </Link>
           )}
