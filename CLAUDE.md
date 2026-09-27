@@ -38,7 +38,7 @@ Sistema de gestión para clínicas dentales. Stack: Next.js (App Router, TypeScr
 
 ## Estado
 - En producción: https://dentalflow-navy.vercel.app (Vercel, se publica solo con cada push a `main`).
-- Supabase con migraciones en `supabase/migrations/`. Aplicadas en producción: 001, 002, 003, 004, 007. Pendientes de aplicar, en orden: 008, 009, 010 (el código de la ficha y de archivar depende de ellas). **No ejecutar 005 ni 006** (ver aviso en cada archivo). Antes de escribir una migración nueva, revisar el esquema real de la base, no solo los archivos. Claves en `.env.local` (ignorado por git) y en Vercel:
+- Supabase con migraciones en `supabase/migrations/`. Aplicadas en producción: 001, 002, 003, 004, 007, 008, 009, 010, 011. **No ejecutar 005 ni 006** (ver aviso en cada archivo). Antes de escribir una migración nueva, revisar el esquema real de la base, no solo los archivos. Claves en `.env.local` (ignorado por git) y en Vercel:
   `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
 - Menú: Panel, Pacientes, Citas. Horarios, Reportes y Configuración eran pantallas de relleno: fuera del menú, pendientes de borrar o rehacer con datos reales.
 - Odontograma, periodontograma y plan de tratamiento no guardan datos y muestran valores inventados; no tienen enlace desde la app hasta rehacerlos.
