@@ -5,25 +5,25 @@ import { requireProfile } from "@/lib/auth";
 export const metadata: Metadata = { title: "Panel · DentalFlow" };
 
 const metrics = [
-  { label: "Pacientes registrados", value: "2,580", delta: "+12.4%", tint: "bg-[#0D9488]/10 text-[#0D9488]" },
-  { label: "Citas de hoy", value: "75", delta: "18 programadas", tint: "bg-[#06B6D4]/10 text-[#0F172A]" },
-  { label: "En sala de espera", value: "12", delta: "3 en consulta", tint: "bg-[#F59E0B]/10 text-[#B45309]" },
-  { label: "Planes activos", value: "310", delta: "24 nuevos", tint: "bg-[#8FD3C4]/20 text-[#154360]" },
+  { label: "Pacientes registrados", value: "0", delta: "Sin registros", tint: "bg-[#0D9488]/10 text-[#0D9488]" },
+  { label: "Citas de hoy", value: "0", delta: "Sin agenda", tint: "bg-[#06B6D4]/10 text-[#0F172A]" },
+  { label: "En sala de espera", value: "0", delta: "Sin pacientes", tint: "bg-[#F59E0B]/10 text-[#B45309]" },
+  { label: "Planes activos", value: "0", delta: "Sin planes", tint: "bg-[#8FD3C4]/20 text-[#154360]" },
 ];
 
 const agenda = [
-  { time: "10:00", end: "10:30", patient: "Marta Solís", doctor: "Dr. Ariza", status: "Confirmada", tone: "emerald" },
-  { time: "11:30", end: "12:30", patient: "Leandro Rojas", doctor: "Dra. Peña", status: "En revisión", tone: "amber" },
-  { time: "14:30", end: "15:00", patient: "Sofía Vega", doctor: "Dr. Torres", status: "Pendiente", tone: "slate" },
+  { time: "--:--", end: "--:--", patient: "Paciente", doctor: "Doctor", status: "Pendiente", tone: "slate" },
+  { time: "--:--", end: "--:--", patient: "Paciente", doctor: "Doctor", status: "Sin asignar", tone: "amber" },
+  { time: "--:--", end: "--:--", patient: "Paciente", doctor: "Doctor", status: "Pendiente", tone: "slate" },
 ];
 
-const financeBars = [52, 75, 64, 88, 93, 82, 118, 136, 121, 144, 128, 158];
+const financeBars = [16, 20, 18, 22, 19, 25, 21, 24, 23, 20, 18, 22];
 
 const recentPatients = [
-  { name: "Ana García", status: "En tratamiento", color: "bg-emerald-500" },
-  { name: "José Mota", status: "Control final", color: "bg-sky-500" },
-  { name: "Lucía Pérez", status: "Retención", color: "bg-amber-500" },
-  { name: "Rafael Díaz", status: "Nueva visita", color: "bg-violet-500" },
+  { name: "Paciente", status: "Sin registro", color: "bg-emerald-500" },
+  { name: "Paciente", status: "Sin registro", color: "bg-sky-500" },
+  { name: "Paciente", status: "Sin registro", color: "bg-amber-500" },
+  { name: "Paciente", status: "Sin registro", color: "bg-violet-500" },
 ];
 
 export default async function PanelPage() {
@@ -39,7 +39,7 @@ export default async function PanelPage() {
 
         <div className="flex items-center gap-3 self-start xl:self-auto">
           <div className="rounded-full border border-white/70 bg-white/60 px-4 py-2 text-[11px] font-bold tracking-[0.18em] text-slate-600 shadow-[0_10px_30px_-18px_rgba(15,23,42,0.7)] backdrop-blur-xl">
-            HOY · 26 SEP
+            HOY
           </div>
           <Link href="/appointments/new" className="glass-button px-4 py-2.5 text-xs font-bold tracking-[0.14em] uppercase">
             + nueva cita
