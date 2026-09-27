@@ -185,33 +185,36 @@ function initialsOf(fullName: string) {
 
 function Brand({ compact = false }: { compact?: boolean }) {
   return (
-    <div className="flex min-w-0 items-center gap-3">
-      <span
-        className={`brand-glow flex shrink-0 items-center justify-center ${compact ? "h-11 w-11" : "h-[72px] w-[72px]"}`}
+    <div className={`flex min-w-0 items-center gap-3.5 ${compact ? "" : "select-none border-b border-white/10 px-1 pb-5"}`}>
+      <div
+        className={`relative flex shrink-0 items-center justify-center transition-transform duration-200 hover:scale-105 ${
+          compact ? "h-12 w-12" : "h-20 w-20"
+        }`}
       >
+        {/* Ícono 3D: disco de vidrio con el diente, con sombra de profundidad y brillo aguamarina */}
         <Image
           src="/dentalflow-app-icon.png"
           alt="DentalFlow"
           width={512}
           height={512}
           priority
-          className="h-full w-full"
+          className="h-full w-full [filter:drop-shadow(0_12px_14px_rgba(4,20,30,0.55))_drop-shadow(0_0_10px_rgba(143,211,196,0.6))]"
         />
-      </span>
-      <div className="min-w-0">
-        <p
-          className={`truncate font-black leading-none tracking-[-0.04em] text-[#EAFBF8] ${
-            compact ? "text-lg" : "text-[22px]"
-          }`}
-          style={{
-            textShadow: "0 8px 18px rgba(7, 33, 43, 0.34), 0 1px 0 rgba(255,255,255,0.18)",
-          }}
-        >
+
+        <span className={`absolute flex h-3 w-3 ${compact ? "right-0 top-0" : "right-1.5 top-1.5"}`}>
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+          <span className="relative inline-flex h-3 w-3 rounded-full border-2 border-white bg-emerald-500 shadow-sm" />
+        </span>
+      </div>
+
+      <div className="flex min-w-0 flex-col">
+        <span className="text-[20px] font-semibold leading-none tracking-[-0.03em] text-white drop-shadow-sm">
           DentalFlow
-        </p>
-        <p className={`truncate font-medium text-[#B8E6DE] ${compact ? "text-[11px]" : "text-[13px]"}`}>
+        </span>
+        <span aria-hidden="true" className="my-2 block h-px w-7 bg-gradient-to-r from-[#8FD3C4] to-transparent" />
+        <span className="line-clamp-2 text-[9.5px] font-medium uppercase leading-[1.55] tracking-[0.22em] text-[#B8E6DE]/80">
           {CLINIC_NAME}
-        </p>
+        </span>
       </div>
     </div>
   );

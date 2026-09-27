@@ -42,26 +42,41 @@ export default async function AppointmentsPage({
   const appointments = data ?? [];
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold" data-i18n="appointments.title">Citas</h1>
-          <p className="mt-1 text-sm text-slate-500">{formatDateLong(dateKey)}</p>
+          <h1 className="text-[1.6rem] font-black tracking-[-0.05em] text-[#0F172A]" data-i18n="appointments.title">Citas</h1>
+          <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">{formatDateLong(dateKey)}</p>
         </div>
         {canManage && (
-          <Link href={`/appointments/new?date=${dateKey}`} className="glass-button" data-i18n="appointments.new">
+          <Link href={`/appointments/new?date=${dateKey}`} className="glass-button px-3 py-2 text-[9px] font-black uppercase tracking-[0.14em]" data-i18n="appointments.new">
             + Nueva cita
           </Link>
         )}
       </div>
 
-      <div className="crystal-card flex flex-wrap items-center justify-between gap-4 rounded-3xl p-4">
+      <div className="grid gap-2.5 md:grid-cols-3">
+        <div className="crystal-card rounded-[18px] p-3">
+          <p className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-500">Hoy</p>
+          <p className="mt-2 text-xl font-black tracking-[-0.06em] text-[#0F172A]">{appointments.length}</p>
+        </div>
+        <div className="crystal-card rounded-[18px] p-3">
+          <p className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-500">Pendientes</p>
+          <p className="mt-2 text-xl font-black tracking-[-0.06em] text-[#0F172A]">0</p>
+        </div>
+        <div className="crystal-card rounded-[18px] p-3">
+          <p className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-500">Confirmadas</p>
+          <p className="mt-2 text-xl font-black tracking-[-0.06em] text-[#0F172A]">0</p>
+        </div>
+      </div>
+
+      <div className="crystal-card flex flex-wrap items-center justify-between gap-4 rounded-[20px] p-3">
         <DayNav dateKey={dateKey} />
       </div>
 
-      <div className="crystal-card overflow-hidden rounded-3xl">
+      <div className="crystal-card overflow-hidden rounded-[20px]">
         {appointments.length === 0 ? (
-          <p className="p-8 text-center text-sm text-slate-500" data-i18n="appointments.empty">
+          <p className="p-6 text-center text-sm text-slate-500" data-i18n="appointments.empty">
             No hay citas para este día.
           </p>
         ) : (
@@ -70,16 +85,14 @@ export default async function AppointmentsPage({
               <Link
                 key={appointment.id}
                 href={`/appointments/${appointment.id}/edit`}
-                className="flex flex-col gap-3 px-5 py-4 transition hover:bg-white/40 sm:flex-row sm:items-center sm:justify-between"
+                className="flex flex-col gap-2 px-4 py-3 transition hover:bg-white/40 sm:flex-row sm:items-center sm:justify-between"
               >
-                <div className="flex items-center gap-4">
-                  <div className="w-16 shrink-0 text-center">
-                    <div className="text-sm font-black text-slate-900">{formatHour(appointment.starts_at)}</div>
-                    <div className="text-[10px] font-semibold text-slate-400">
-                      {appointment.duration_minutes} min
-                    </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-14 shrink-0 text-center">
+                    <div className="text-[11px] font-black text-slate-900">{formatHour(appointment.starts_at)}</div>
+                    <div className="text-[9px] font-semibold text-slate-400">{appointment.duration_minutes} min</div>
                   </div>
-                  <div className="hidden h-10 w-[2px] rounded-full bg-slate-200 sm:block" />
+                  <div className="hidden h-8 w-[2px] rounded-full bg-slate-200 sm:block" />
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <div className="text-sm font-black text-slate-900" data-i18n="appointments.patientFallback">
@@ -87,7 +100,7 @@ export default async function AppointmentsPage({
                       </div>
                       <StatusChip status={appointment.status} />
                     </div>
-                    <div className="mt-1 text-xs text-slate-500">
+                    <div className="mt-1 text-[10px] text-slate-500">
                       <span data-i18n="appointments.reasonMissing">{appointment.reason ?? "Sin motivo registrado"}</span>
                       {appointment.profiles?.full_name ? (
                         <>
