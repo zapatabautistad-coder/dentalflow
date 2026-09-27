@@ -28,6 +28,7 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     "panel.agenda": "Agenda de Hoy",
     "panel.agenda.subtitle": "Turnos programados",
     "panel.agenda.view": "Ver todo",
+    "panel.agenda.action": "Ver",
     "panel.agenda.new": "+ nueva cita",
     "panel.agenda.pending": "Pendiente",
     "panel.agenda.unassigned": "Sin asignar",
@@ -133,6 +134,7 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     "panel.agenda": "Today’s Agenda",
     "panel.agenda.subtitle": "Scheduled visits",
     "panel.agenda.view": "View all",
+    "panel.agenda.action": "View",
     "panel.agenda.new": "+ new appointment",
     "panel.agenda.pending": "Pending",
     "panel.agenda.unassigned": "Unassigned",
@@ -273,6 +275,7 @@ export function LanguageBridge() {
     };
 
     const initialLanguage = getStoredLanguage();
+    document.documentElement.lang = initialLanguage;
     localStorage.setItem(STORAGE_KEY, initialLanguage);
     applyTranslations(initialLanguage);
 
