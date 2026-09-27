@@ -56,12 +56,12 @@ export function AppointmentForm({
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
-      <label className="flex flex-col gap-1.5 text-sm font-medium">
+      <label className="flex flex-col gap-1.5 text-sm font-medium" data-i18n="appointments.form.patient">
         Paciente
         <PatientPicker defaultPatient={defaultPatient} />
       </label>
 
-      <label className="flex flex-col gap-1.5 text-sm font-medium">
+      <label className="flex flex-col gap-1.5 text-sm font-medium" data-i18n="appointments.form.doctor">
         Doctor
         <select
           key={`doctor-${attempt}`}
@@ -70,7 +70,7 @@ export function AppointmentForm({
           defaultValue={doctorId}
           className="glass-input"
         >
-          <option value="" disabled>
+          <option value="" disabled data-i18n="appointments.form.selectDoctor">
             Selecciona un doctor
           </option>
           {doctors.map((doctor) => (
@@ -82,7 +82,7 @@ export function AppointmentForm({
       </label>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <label className="flex flex-col gap-1.5 text-sm font-medium">
+        <label className="flex flex-col gap-1.5 text-sm font-medium" data-i18n="appointments.form.date">
           Fecha
           <input
             key={`date-${attempt}`}
@@ -94,7 +94,7 @@ export function AppointmentForm({
           />
         </label>
 
-        <label className="flex flex-col gap-1.5 text-sm font-medium">
+        <label className="flex flex-col gap-1.5 text-sm font-medium" data-i18n="appointments.form.time">
           Hora
           <input
             key={`time-${attempt}`}
@@ -107,7 +107,7 @@ export function AppointmentForm({
         </label>
       </div>
 
-      <label className="flex flex-col gap-1.5 text-sm font-medium">
+      <label className="flex flex-col gap-1.5 text-sm font-medium" data-i18n="appointments.form.duration">
         Duración
         <select
           key={`duration-${attempt}`}
@@ -124,19 +124,20 @@ export function AppointmentForm({
         </select>
       </label>
 
-      <label className="flex flex-col gap-1.5 text-sm font-medium">
+      <label className="flex flex-col gap-1.5 text-sm font-medium" data-i18n="appointments.form.reason">
         Motivo (opcional)
         <input
           key={`reason-${attempt}`}
           name="reason"
           defaultValue={reason}
           placeholder="Limpieza, revisión, dolor…"
+          data-i18n-placeholder="appointments.form.reasonPlaceholder"
           className="glass-input"
         />
       </label>
 
       {showStatus && (
-        <label className="flex flex-col gap-1.5 text-sm font-medium">
+        <label className="flex flex-col gap-1.5 text-sm font-medium" data-i18n="appointments.form.status">
           Estado
           <select
             key={`status-${attempt}`}
@@ -164,10 +165,10 @@ export function AppointmentForm({
       )}
 
       <div className="mt-2 flex gap-3">
-        <button type="submit" disabled={pending} className="glass-button flex-1">
+        <button type="submit" disabled={pending} className="glass-button flex-1" data-i18n="appointments.form.save">
           {pending ? pendingLabel : submitLabel}
         </button>
-        <Link href="/appointments" className="glass-button-light flex-1 text-center">
+        <Link href="/appointments" className="glass-button-light flex-1 text-center" data-i18n="appointments.form.cancel">
           Cancelar
         </Link>
       </div>

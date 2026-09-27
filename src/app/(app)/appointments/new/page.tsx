@@ -29,8 +29,8 @@ export default async function NewAppointmentPage({
 
   return (
     <div className="crystal-card mx-auto w-full max-w-lg rounded-3xl p-8">
-      <h1 className="text-xl font-bold">Nueva cita</h1>
-      <p className="mt-1 text-sm text-slate-500">Programa una cita para un paciente.</p>
+      <h1 className="text-xl font-bold" data-i18n="appointments.form.title">Nueva cita</h1>
+      <p className="mt-1 text-sm text-slate-500" data-i18n="appointments.form.subtitle">Programa una cita para un paciente.</p>
       <div className="mt-6">
         <AppointmentForm
           action={createAppointment}

@@ -18,7 +18,7 @@ export function StatusForm({
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
-      <label className="flex flex-col gap-1.5 text-sm font-medium">
+      <label className="flex flex-col gap-1.5 text-sm font-medium" data-i18n="appointments.form.status">
         Estado de la cita
         <select
           name="status"
@@ -46,7 +46,7 @@ export function StatusForm({
         </p>
       )}
 
-      <button type="submit" disabled={pending} className="glass-button">
+      <button type="submit" disabled={pending} className="glass-button" data-i18n={pending ? "appointments.status.updating" : "appointments.status.update"}>
         {pending ? "Actualizando…" : "Actualizar estado"}
       </button>
     </form>

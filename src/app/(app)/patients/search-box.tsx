@@ -28,6 +28,8 @@ export function SearchBox({ defaultValue }: { defaultValue: string }) {
       placeholder="Buscar por nombre o teléfono…"
       className="glass-input"
       aria-label="Buscar pacientes"
+      data-i18n-placeholder="patients.search.placeholder"
+      data-i18n-aria="patients.search.aria"
     />
   );
 }

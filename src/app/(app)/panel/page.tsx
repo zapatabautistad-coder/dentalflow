@@ -5,25 +5,25 @@ import { requireProfile } from "@/lib/auth";
 export const metadata: Metadata = { title: "Panel · DentalFlow" };
 
 const metrics = [
-  { label: "Pacientes registrados", value: "0", delta: "Sin registros", tint: "bg-[#0D9488]/10 text-[#0D9488]" },
-  { label: "Citas de hoy", value: "0", delta: "Sin agenda", tint: "bg-[#06B6D4]/10 text-[#0F172A]" },
-  { label: "En sala de espera", value: "0", delta: "Sin pacientes", tint: "bg-[#F59E0B]/10 text-[#B45309]" },
-  { label: "Planes activos", value: "0", delta: "Sin planes", tint: "bg-[#8FD3C4]/20 text-[#154360]" },
+  { key: "panel.kpi.patients", label: "Pacientes registrados", value: "0", delta: "Sin registros", tint: "bg-[#0D9488]/10 text-[#0D9488]" },
+  { key: "panel.kpi.appointments", label: "Citas de hoy", value: "0", delta: "Sin agenda", tint: "bg-[#06B6D4]/10 text-[#0F172A]" },
+  { key: "panel.kpi.waiting", label: "En sala de espera", value: "0", delta: "Sin pacientes", tint: "bg-[#F59E0B]/10 text-[#B45309]" },
+  { key: "panel.kpi.plans", label: "Planes activos", value: "0", delta: "Sin planes", tint: "bg-[#8FD3C4]/20 text-[#154360]" },
 ];
 
 const agenda = [
-  { time: "--:--", end: "--:--", patient: "Paciente", doctor: "Doctor", status: "Pendiente", tone: "slate" },
-  { time: "--:--", end: "--:--", patient: "Paciente", doctor: "Doctor", status: "Sin asignar", tone: "amber" },
-  { time: "--:--", end: "--:--", patient: "Paciente", doctor: "Doctor", status: "Pendiente", tone: "slate" },
+  { id: "slot-1", time: "--:--", end: "--:--", patient: "Paciente", doctor: "Doctor", status: "Pendiente", tone: "slate" },
+  { id: "slot-2", time: "--:--", end: "--:--", patient: "Paciente", doctor: "Doctor", status: "Sin asignar", tone: "amber" },
+  { id: "slot-3", time: "--:--", end: "--:--", patient: "Paciente", doctor: "Doctor", status: "Pendiente", tone: "slate" },
 ];
 
 const financeBars = [16, 20, 18, 22, 19, 25, 21, 24, 23, 20, 18, 22];
 
 const recentPatients = [
-  { name: "Paciente", status: "Sin registro", color: "bg-emerald-500" },
-  { name: "Paciente", status: "Sin registro", color: "bg-sky-500" },
-  { name: "Paciente", status: "Sin registro", color: "bg-amber-500" },
-  { name: "Paciente", status: "Sin registro", color: "bg-violet-500" },
+  { id: "patient-1", name: "Paciente", status: "Sin registro", color: "bg-emerald-500" },
+  { id: "patient-2", name: "Paciente", status: "Sin registro", color: "bg-sky-500" },
+  { id: "patient-3", name: "Paciente", status: "Sin registro", color: "bg-amber-500" },
+  { id: "patient-4", name: "Paciente", status: "Sin registro", color: "bg-violet-500" },
 ];
 
 export default async function PanelPage() {
@@ -33,15 +33,15 @@ export default async function PanelPage() {
     <div className="min-h-[calc(100dvh-2rem)] w-full">
       <header className="mb-6 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
         <div>
-          <p className="text-[11px] font-black uppercase tracking-[0.28em] text-slate-500">Panel general</p>
-          <h1 className="mt-2 text-[2.25rem] font-black tracking-[-0.06em] text-[#0F172A]">Bienvenida, {profile.fullName}</h1>
+          <p className="text-[11px] font-black uppercase tracking-[0.28em] text-slate-500" data-i18n="panel.title">Panel general</p>
+          <h1 className="mt-2 text-[2.25rem] font-black tracking-[-0.06em] text-[#0F172A]" data-i18n-name="panel.welcome" data-user-name={profile.fullName}>Bienvenida, {profile.fullName}</h1>
         </div>
 
         <div className="flex items-center gap-3 self-start xl:self-auto">
-          <div className="rounded-full border border-white/70 bg-white/60 px-4 py-2 text-[11px] font-bold tracking-[0.18em] text-slate-600 shadow-[0_10px_30px_-18px_rgba(15,23,42,0.7)] backdrop-blur-xl">
+          <div className="rounded-full border border-white/70 bg-white/60 px-4 py-2 text-[11px] font-bold tracking-[0.18em] text-slate-600 shadow-[0_10px_30px_-18px_rgba(15,23,42,0.7)] backdrop-blur-xl" data-i18n="panel.today">
             HOY
           </div>
-          <Link href="/appointments/new" className="glass-button px-4 py-2.5 text-xs font-bold tracking-[0.14em] uppercase">
+          <Link href="/appointments/new" className="glass-button px-4 py-2.5 text-xs font-bold tracking-[0.14em] uppercase" data-i18n="panel.newAppointment">
             + nueva cita
           </Link>
         </div>
@@ -52,7 +52,7 @@ export default async function PanelPage() {
           <div key={metric.label} className="crystal-card rounded-[28px] p-5 shadow-[0_18px_42px_-28px_rgba(15,23,42,0.6)]">
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">{metric.label}</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500" data-i18n={metric.key}>{metric.label}</p>
                 <p className="mt-4 text-[2rem] font-black tracking-[-0.06em] text-[#0F172A]">{metric.value}</p>
               </div>
               <span className={`inline-flex h-12 w-12 items-center justify-center rounded-2xl text-lg font-black ${metric.tint}`}>
@@ -71,10 +71,10 @@ export default async function PanelPage() {
         <div className="crystal-card rounded-[30px] p-5">
           <div className="flex items-center justify-between gap-4 border-b border-white/70 pb-4">
             <div>
-              <h2 className="text-[1.05rem] font-black tracking-[-0.03em] text-[#0F172A]">Agenda de Hoy</h2>
-              <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Turnos programados</p>
+              <h2 className="text-[1.05rem] font-black tracking-[-0.03em] text-[#0F172A]" data-i18n="panel.agenda">Agenda de Hoy</h2>
+              <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500" data-i18n="panel.agenda.subtitle">Turnos programados</p>
             </div>
-            <Link href="/appointments" className="text-[11px] font-bold uppercase tracking-[0.15em] text-[#0D9488]">
+            <Link href="/appointments" className="text-[11px] font-bold uppercase tracking-[0.15em] text-[#0D9488]" data-i18n="panel.agenda.view">
               Ver todo
             </Link>
           </div>
@@ -89,7 +89,7 @@ export default async function PanelPage() {
                     : "border-slate-200 bg-slate-100 text-slate-700";
 
               return (
-                <div key={item.patient} className="rounded-[22px] border border-white/80 bg-white/40 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] backdrop-blur-xl">
+                <div key={item.id} className="rounded-[22px] border border-white/80 bg-white/40 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] backdrop-blur-xl">
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-4">
                       <div className="min-w-[68px] text-left">
@@ -110,7 +110,7 @@ export default async function PanelPage() {
                       </div>
                     </div>
 
-                    <button type="button" className="rounded-xl border border-[#0D9488]/20 bg-[#0D9488]/5 px-3 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-[#0D9488] transition hover:bg-[#0D9488]/10">
+                    <button type="button" className="rounded-xl border border-[#0D9488]/20 bg-[#0D9488]/5 px-3 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-[#0D9488] transition hover:bg-[#0D9488]/10" data-i18n="panel.agenda.view">
                       Ver
                     </button>
                   </div>
@@ -120,7 +120,7 @@ export default async function PanelPage() {
           </div>
 
           <div className="mt-5 flex justify-end">
-            <button type="button" className="glass-button px-4 py-2.5 text-[10px] font-black uppercase tracking-[0.18em]">
+            <button type="button" className="glass-button px-4 py-2.5 text-[10px] font-black uppercase tracking-[0.18em]" data-i18n="panel.agenda.new">
               + nueva cita
             </button>
           </div>
@@ -130,7 +130,7 @@ export default async function PanelPage() {
           <div className="crystal-card rounded-[30px] p-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Panel financiero</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500" data-i18n="panel.financial">Panel financiero</p>
                 <h3 className="mt-2 text-[1.2rem] font-black tracking-[-0.04em] text-[#0F172A]">$184.2K</h3>
               </div>
               <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-emerald-700">
@@ -162,15 +162,15 @@ export default async function PanelPage() {
 
           <div className="crystal-card rounded-[30px] p-5">
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Pacientes recientes</h3>
-              <Link href="/patients" className="text-[10px] font-black uppercase tracking-[0.15em] text-[#0D9488]">
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500" data-i18n="panel.recent">Pacientes recientes</h3>
+              <Link href="/patients" className="text-[10px] font-black uppercase tracking-[0.15em] text-[#0D9488]" data-i18n="panel.financial.view">
                 Ver todos
               </Link>
             </div>
 
             <div className="space-y-3">
               {recentPatients.map((patient) => (
-                <div key={patient.name} className="flex items-center justify-between rounded-2xl border border-white/80 bg-white/50 px-3 py-2.5">
+                <div key={patient.id} className="flex items-center justify-between rounded-2xl border border-white/80 bg-white/50 px-3 py-2.5">
                   <div className="flex items-center gap-3">
                     <span className={`h-2.5 w-2.5 rounded-full ${patient.color}`} />
                     <div>

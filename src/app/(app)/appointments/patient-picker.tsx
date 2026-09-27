@@ -52,6 +52,7 @@ export function PatientPicker({
             setTerm("");
           }}
           className="shrink-0 rounded-lg border border-white/90 bg-white/70 px-3 py-1.5 text-[11px] font-semibold text-slate-700 transition hover:border-[#154360] hover:text-[#154360]"
+          data-i18n="patient.change"
         >
           Cambiar
         </button>
@@ -74,12 +75,13 @@ export function PatientPicker({
         placeholder="Buscar paciente por nombre, cédula o teléfono…"
         className="glass-input"
         autoComplete="off"
+        data-i18n-placeholder="patient.search.placeholder"
       />
 
       {open && (
         <div className="absolute z-20 mt-1.5 w-full overflow-hidden rounded-xl border border-white/80 bg-white/95 shadow-[0_12px_30px_-12px_rgba(21,67,96,0.4)] backdrop-blur-md">
           {results.length === 0 ? (
-            <p className="px-4 py-3 text-sm text-slate-500">Sin resultados.</p>
+            <p className="px-4 py-3 text-sm text-slate-500" data-i18n="patient.search.empty">Sin resultados.</p>
           ) : (
             results.map((patient) => (
               <button

@@ -6,6 +6,67 @@ export type AppointmentStatus =
   | "cancelada"
   | "no_asistio";
 
+const STATUS_LABELS_BY_LANGUAGE: Record<string, Record<AppointmentStatus, string>> = {
+  es: {
+    programada: "Programada",
+    confirmada: "Confirmada",
+    en_curso: "En curso",
+    completada: "Completada",
+    cancelada: "Cancelada",
+    no_asistio: "No asistió",
+  },
+  en: {
+    programada: "Scheduled",
+    confirmada: "Confirmed",
+    en_curso: "In progress",
+    completada: "Completed",
+    cancelada: "Cancelled",
+    no_asistio: "No-show",
+  },
+  pt: {
+    programada: "Agendada",
+    confirmada: "Confirmada",
+    en_curso: "Em andamento",
+    completada: "Concluída",
+    cancelada: "Cancelada",
+    no_asistio: "Não compareceu",
+  },
+  fr: {
+    programada: "Planifiée",
+    confirmada: "Confirmée",
+    en_curso: "En cours",
+    completada: "Terminée",
+    cancelada: "Annulée",
+    no_asistio: "Absent",
+  },
+  de: {
+    programada: "Geplant",
+    confirmada: "Bestätigt",
+    en_curso: "In Bearbeitung",
+    completada: "Abgeschlossen",
+    cancelada: "Abgebrochen",
+    no_asistio: "Nicht erschienen",
+  },
+  it: {
+    programada: "Pianificata",
+    confirmada: "Confermata",
+    en_curso: "In corso",
+    completada: "Completata",
+    cancelada: "Annullata",
+    no_asistio: "Assente",
+  },
+};
+
+export function getCurrentLanguage(): string {
+  if (typeof window === "undefined") return "es";
+  return localStorage.getItem("dentalflow-language") ?? "es";
+}
+
+export function getStatusLabel(status: string, lang = getCurrentLanguage()): string {
+  const normalized = status as AppointmentStatus;
+  return STATUS_LABELS_BY_LANGUAGE[lang]?.[normalized] ?? STATUS_LABELS_BY_LANGUAGE.es[normalized] ?? status;
+}
+
 export const STATUS_ORDER: AppointmentStatus[] = [
   "programada",
   "confirmada",

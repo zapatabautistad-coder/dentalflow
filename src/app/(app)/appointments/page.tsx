@@ -45,11 +45,11 @@ export default async function AppointmentsPage({
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Citas</h1>
+          <h1 className="text-2xl font-bold" data-i18n="appointments.title">Citas</h1>
           <p className="mt-1 text-sm text-slate-500">{formatDateLong(dateKey)}</p>
         </div>
         {canManage && (
-          <Link href={`/appointments/new?date=${dateKey}`} className="glass-button">
+          <Link href={`/appointments/new?date=${dateKey}`} className="glass-button" data-i18n="appointments.new">
             + Nueva cita
           </Link>
         )}
@@ -61,7 +61,9 @@ export default async function AppointmentsPage({
 
       <div className="crystal-card overflow-hidden rounded-3xl">
         {appointments.length === 0 ? (
-          <p className="p-8 text-center text-sm text-slate-500">No hay citas para este día.</p>
+          <p className="p-8 text-center text-sm text-slate-500" data-i18n="appointments.empty">
+            No hay citas para este día.
+          </p>
         ) : (
           <div className="divide-y divide-white/70">
             {appointments.map((appointment) => (
@@ -80,17 +82,17 @@ export default async function AppointmentsPage({
                   <div className="hidden h-10 w-[2px] rounded-full bg-slate-200 sm:block" />
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <div className="text-sm font-black text-slate-900">
+                      <div className="text-sm font-black text-slate-900" data-i18n="appointments.patientFallback">
                         {appointment.patients?.full_name ?? "Paciente"}
                       </div>
                       <StatusChip status={appointment.status} />
                     </div>
                     <div className="mt-1 text-xs text-slate-500">
-                      {appointment.reason ?? "Sin motivo registrado"}
+                      <span data-i18n="appointments.reasonMissing">{appointment.reason ?? "Sin motivo registrado"}</span>
                       {appointment.profiles?.full_name ? (
                         <>
                           {" "}
-                          · <span className="font-semibold text-slate-700">{appointment.profiles.full_name}</span>
+                          · <span className="font-semibold text-slate-700" data-i18n="appointments.doctor">{appointment.profiles.full_name}</span>
                         </>
                       ) : null}
                     </div>

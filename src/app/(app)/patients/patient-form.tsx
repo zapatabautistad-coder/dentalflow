@@ -107,7 +107,7 @@ export function PatientForm({
         </p>
       )}
 
-      <label className="flex flex-col gap-1.5 text-sm font-medium">
+      <label className="flex flex-col gap-1.5 text-sm font-medium" data-i18n="patient.form.fullName">
         Nombre completo
         <input
           name="full_name"
@@ -115,10 +115,11 @@ export function PatientForm({
           defaultValue={defaultValues?.full_name}
           placeholder="Nombre y apellidos"
           className="glass-input"
+          data-i18n-placeholder="patient.form.fullNamePlaceholder"
         />
       </label>
 
-      <label className="flex flex-col gap-1.5 text-sm font-medium">
+      <label className="flex flex-col gap-1.5 text-sm font-medium" data-i18n="patient.form.documentLabel">
         Cédula {isAdult ? "(obligatoria)" : "(opcional)"}
         <input
           name="document_id"

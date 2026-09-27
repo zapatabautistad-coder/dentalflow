@@ -48,13 +48,13 @@ export default async function PatientsPage({
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Pacientes</h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <h1 className="text-2xl font-bold" data-i18n="patients.title">Pacientes</h1>
+          <p className="mt-1 text-sm text-slate-500" data-i18n="patients.subtitle">
             Gestiona la lista de pacientes de la clínica.
           </p>
         </div>
         {canManage && (
-          <Link href="/patients/new" className="glass-button">
+          <Link href="/patients/new" className="glass-button" data-i18n="patients.new">
             + Nuevo paciente
           </Link>
         )}
@@ -66,7 +66,7 @@ export default async function PatientsPage({
 
       <div className="glass-card overflow-hidden">
         {!patients || patients.length === 0 ? (
-          <p className="p-8 text-center text-sm text-slate-500">
+          <p className="p-8 text-center text-sm text-slate-500" data-i18n={searchFilter ? "patients.empty.search" : "patients.empty.none"}>
             {searchFilter
               ? "No se encontraron pacientes con ese criterio de búsqueda."
               : "Todavía no hay pacientes registrados."}
@@ -76,12 +76,12 @@ export default async function PatientsPage({
             <table className="w-full text-left text-sm">
               <thead>
                 <tr className="border-b border-white/60 text-xs uppercase tracking-wide text-slate-500">
-                  <th className="px-6 py-3 font-medium">Expediente</th>
-                  <th className="px-6 py-3 font-medium">Nombre</th>
-                  <th className="px-6 py-3 font-medium">Cédula</th>
-                  <th className="px-6 py-3 font-medium">Teléfono</th>
-                  <th className="px-6 py-3 font-medium">Aseguradora</th>
-                  <th className="px-6 py-3 font-medium">Registrado</th>
+                  <th className="px-6 py-3 font-medium" data-i18n="patients.table.record">Expediente</th>
+                  <th className="px-6 py-3 font-medium" data-i18n="patients.table.name">Nombre</th>
+                  <th className="px-6 py-3 font-medium" data-i18n="patients.table.document">Cédula</th>
+                  <th className="px-6 py-3 font-medium" data-i18n="patients.table.phone">Teléfono</th>
+                  <th className="px-6 py-3 font-medium" data-i18n="patients.table.insurance">Aseguradora</th>
+                  <th className="px-6 py-3 font-medium" data-i18n="patients.table.registered">Registrado</th>
                 </tr>
               </thead>
               <tbody>

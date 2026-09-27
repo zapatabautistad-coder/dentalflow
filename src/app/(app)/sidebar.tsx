@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { logout } from "./actions";
 
 // Nombre de la clínica bajo el logo y en el perfil. Se cambia con
@@ -157,15 +157,15 @@ function Icon({
 
 // Módulos del menú, en el mismo orden del diseño. Los que no tienen `href`
 // todavía no existen en la app: se ven igual pero no llevan a ninguna parte.
-type NavItem = { label: string; icon: IconName; href?: string };
+type NavItem = { label: string; key?: string; icon: IconName; href?: string };
 
 const NAV: NavItem[] = [
-  { label: "PANEL", icon: "home", href: "/panel" },
-  { label: "PACIENTES", icon: "users", href: "/patients" },
-  { label: "CITAS", icon: "calendar", href: "/appointments" },
-  { label: "HORARIOS", icon: "clock" },
-  { label: "REPORTES", icon: "chart" },
-  { label: "CONFIGURACIÓN", icon: "settings" },
+  { label: "PANEL", key: "sidebar.panel", icon: "home", href: "/panel" },
+  { label: "PACIENTES", key: "sidebar.patients", icon: "users", href: "/patients" },
+  { label: "CITAS", key: "sidebar.appointments", icon: "calendar", href: "/appointments" },
+  { label: "HORARIOS", key: "sidebar.schedule", icon: "clock" },
+  { label: "REPORTES", key: "sidebar.reports", icon: "chart" },
+  { label: "CONFIGURACIÓN", key: "sidebar.settings", icon: "settings" },
 ];
 
 const NAV_ITEM =
@@ -226,7 +226,7 @@ function NavList({ pathname, onNavigate }: { pathname: string; onNavigate?: () =
               className={`${NAV_ITEM} cursor-default border-transparent text-white/90`}
             >
               <Icon name={item.icon} className="h-[22px] w-[22px] shrink-0" />
-              <span className="min-w-0 flex-1 truncate">{item.label}</span>
+              <span className="min-w-0 flex-1 truncate" data-i18n={item.key ?? item.label}>{item.label}</span>
             </div>
           );
         }
@@ -247,7 +247,7 @@ function NavList({ pathname, onNavigate }: { pathname: string; onNavigate?: () =
             }`}
           >
             <Icon name={item.icon} className="h-[22px] w-[22px] shrink-0" />
-            <span className="min-w-0 flex-1 truncate">{item.label}</span>
+            <span className="min-w-0 flex-1 truncate" data-i18n={item.key ?? item.label}>{item.label}</span>
           </Link>
         );
       })}
@@ -255,26 +255,102 @@ function NavList({ pathname, onNavigate }: { pathname: string; onNavigate?: () =
   );
 }
 
-// La app todavía está solo en español: EN se muestra pero no está activo.
+const LANGUAGE_OPTIONS = [
+  { code: "es", name: "Español" },
+  { code: "en", name: "English" },
+  { code: "pt", name: "Português" },
+  { code: "fr", name: "Français" },
+  { code: "de", name: "Deutsch" },
+  { code: "it", name: "Italiano" },
+];
+
 function LanguageToggle() {
+  const [selected, setSelected] = useState(() => {
+    if (typeof window === "undefined") return LANGUAGE_OPTIONS[0];
+    const stored = window.localStorage.getItem("dentalflow-language") ?? "es";
+    return LANGUAGE_OPTIONS.find((language) => language.code === stored) ?? LANGUAGE_OPTIONS[0];
+  });
+  const [open, setOpen] = useState(false);
+  const [placement, setPlacement] = useState<"top" | "bottom">("bottom");
+
+  useEffect(() => {
+    document.documentElement.lang = selected.code;
+    const event = new CustomEvent("dentalflow-language-change", { detail: selected.code });
+    document.dispatchEvent(event);
+    window.localStorage.setItem("dentalflow-language", selected.code);
+  }, [selected]);
+
+  const handleOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    setPlacement(rect.top > window.innerHeight / 2 ? "top" : "bottom");
+    setOpen((value) => !value);
+  };
+
   return (
-    <div
-      role="group"
-      aria-label="Idioma"
-      className="lang-toggle grid grid-cols-2 rounded-full p-1 text-xs font-semibold"
-    >
-      <button type="button" aria-pressed="true" className="lang-active rounded-full py-1.5 text-[#154360]">
-        ES
-      </button>
+    <div className="relative">
       <button
         type="button"
-        aria-pressed="false"
-        aria-disabled="true"
-        title="Inglés: próximamente"
-        className="cursor-not-allowed rounded-full py-1.5 text-white/70"
+        aria-expanded={open}
+        aria-label="Seleccionar idioma"
+        onClick={handleOpen}
+        className="lang-toggle flex w-full items-center justify-between gap-3 rounded-2xl px-3 py-2 text-left text-white"
       >
-        EN
+        <span className="text-[9px] font-black uppercase tracking-[0.28em] text-white/60">Idioma</span>
+        <span className="text-[11px] font-bold text-white">{selected.name}</span>
       </button>
+
+      {open && (
+        <div
+          className="absolute inset-x-0 z-20 rounded-2xl border border-white/20 bg-[#0f3149]/95 p-1.5 shadow-[0_18px_42px_-20px_rgba(15,23,42,0.8)] backdrop-blur-xl"
+          style={{ [placement === "top" ? "bottom" : "top"]: "calc(100% + 0.5rem)" }}
+          onMouseMove={(event) => {
+            const relativeY = event.clientY / window.innerHeight;
+            setPlacement(relativeY < 0.5 ? "bottom" : "top");
+          }}
+        >
+          {LANGUAGE_OPTIONS.map((lang) => {
+            const active = selected.code === lang.code;
+
+            return (
+              <button
+                key={lang.code}
+                type="button"
+                onMouseMove={(event) => {
+                  const rect = event.currentTarget.getBoundingClientRect();
+                  const x = ((event.clientX - rect.left) / rect.width) * 100;
+                  const y = ((event.clientY - rect.top) / rect.height) * 100;
+                  event.currentTarget.style.setProperty("--x", `${x}%`);
+                  event.currentTarget.style.setProperty("--y", `${y}%`);
+                  event.currentTarget.style.background = active
+                    ? "linear-gradient(135deg, rgba(255,255,255,0.12), rgba(143,211,196,0.18))"
+                    : "radial-gradient(circle at var(--x) var(--y), rgba(143,211,196,0.28), transparent 38%), rgba(255,255,255,0.04)";
+                  event.currentTarget.style.boxShadow = active
+                    ? "inset 0 0 0 1px rgba(255,255,255,0.12), 0 0 18px rgba(143,211,196,0.18)"
+                    : "inset 0 0 0 1px rgba(255,255,255,0.06), 0 0 12px rgba(143,211,196,0.12)";
+                }}
+                onMouseLeave={(event) => {
+                  event.currentTarget.style.background = active ? "rgba(255,255,255,0.12)" : "transparent";
+                  event.currentTarget.style.boxShadow = active ? "inset 0 0 0 1px rgba(255,255,255,0.12), 0 0 18px rgba(143,211,196,0.18)" : "none";
+                }}
+                onClick={() => {
+                  setSelected(lang);
+                  setOpen(false);
+                }}
+                className={`relative flex w-full items-center justify-between overflow-hidden rounded-xl px-2.5 py-2 text-left text-[11px] transition ${
+                  active ? "text-white" : "text-white/80 hover:text-white"
+                }`}
+                style={{
+                  background: active ? "rgba(255,255,255,0.12)" : "transparent",
+                  boxShadow: active ? "inset 0 0 0 1px rgba(255,255,255,0.12), 0 0 18px rgba(143,211,196,0.18)" : "none",
+                }}
+              >
+                <span className="relative z-10">{lang.name}</span>
+                {active && <span className="relative z-10 text-[9px] font-black uppercase tracking-[0.18em] text-[#8FD3C4]">ON</span>}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
