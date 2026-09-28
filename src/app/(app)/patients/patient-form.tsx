@@ -1,12 +1,28 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useState } from "react";
+import { useActionState, useRef, useState } from "react";
 import {
   formatDominicanDocumentId,
   formatDominicanPhone,
 } from "@/lib/phone";
+import { validateCedula } from "@/lib/cedula";
 import type { PatientFormState } from "./actions";
+
+type CedulaLookupState =
+  | { status: "idle" }
+  | { status: "invalid" }
+  | { status: "checking" }
+  | { status: "found"; message: string }
+  | { status: "existing"; message: string; patientId: string }
+  | { status: "not-found"; message: string };
+
+type LookupPayload = {
+  success: boolean;
+  data: { nombres: string; apellidos: string; fechaNacimiento?: string } | null;
+  message?: string;
+  existingPatient?: { id: string; fullName: string; recordNumber: number };
+};
 
 type PatientFormValues = {
   full_name: string;
@@ -79,6 +95,14 @@ export function PatientForm({
     defaultValues?.insurance_type ?? ""
   );
 
+  // La búsqueda automática por cédula solo aplica a pacientes nuevos: en
+  // edición ya hay una ficha real y no se debe pisar con datos de otra
+  // fuente.
+  const isNewPatient = defaultValues?.record_number == null;
+  const [cedulaLookup, setCedulaLookup] = useState<CedulaLookupState>({ status: "idle" });
+  const lastLookedUpRef = useRef<string | null>(null);
+  const fullNameRef = useRef<HTMLInputElement>(null);
+
   // La inicialización del estado debe ser estable entre render y hidratación.
   // Si se cambia de paciente en la misma instancia, se puede forzar un remount
   // con una key externa en la página, pero no se debe re-sincronizar el estado
@@ -89,9 +113,81 @@ export function PatientForm({
     setPhoneValue(formatDominicanPhone(digitsOnly));
   };
 
+  const lookupCedula = async (digits: string) => {
+    if (!isNewPatient || lastLookedUpRef.current === digits) return;
+    lastLookedUpRef.current = digits;
+    setCedulaLookup({ status: "checking" });
+
+    try {
+      const response = await fetch(`/api/patients/lookup-cedula?cedula=${digits}`);
+      const payload = (await response.json()) as LookupPayload;
+
+      if (payload.existingPatient) {
+        setCedulaLookup({
+          status: "existing",
+          message: `Ya existe: ${payload.existingPatient.fullName} (expediente N.° ${String(
+            payload.existingPatient.recordNumber
+          ).padStart(4, "0")}).`,
+          patientId: payload.existingPatient.id,
+        });
+        return;
+      }
+
+      if (payload.success && payload.data) {
+        const { nombres, apellidos, fechaNacimiento } = payload.data;
+        const fullName = [nombres, apellidos].filter(Boolean).join(" ").trim();
+
+        if (fullNameRef.current && !fullNameRef.current.value.trim() && fullName) {
+          fullNameRef.current.value = fullName;
+        }
+
+        const normalizedBirthDate = fechaNacimiento?.match(/^\d{4}-\d{2}-\d{2}/)?.[0];
+        if (normalizedBirthDate && !birthDate) {
+          setBirthDate(normalizedBirthDate);
+        }
+
+        setCedulaLookup({ status: "found", message: "Datos completados automáticamente. Verifica antes de guardar." });
+        return;
+      }
+
+      setCedulaLookup({
+        status: "not-found",
+        message: payload.message || "No se encontró información automática. Completa los datos manualmente.",
+      });
+    } catch {
+      setCedulaLookup({
+        status: "not-found",
+        message: "No se pudo consultar el servicio. Completa los datos manualmente.",
+      });
+    }
+  };
+
   const handleDocumentIdChange = (value: string) => {
     const digitsOnly = value.replace(/\D/g, "").slice(0, 11);
     setDocumentIdValue(formatDominicanDocumentId(digitsOnly));
+
+    if (!isNewPatient) return;
+
+    if (digitsOnly.length < 11) {
+      lastLookedUpRef.current = null;
+      setCedulaLookup({ status: "idle" });
+      return;
+    }
+
+    if (!validateCedula(digitsOnly)) {
+      setCedulaLookup({ status: "invalid" });
+      return;
+    }
+
+    void lookupCedula(digitsOnly);
+  };
+
+  const handleDocumentIdBlur = () => {
+    if (!isNewPatient) return;
+    const digitsOnly = documentIdValue.replace(/\D/g, "");
+    if (digitsOnly.length === 11 && validateCedula(digitsOnly)) {
+      void lookupCedula(digitsOnly);
+    }
   };
 
   const isAdult = isAdultFromBirthDate(birthDate);
@@ -108,6 +204,7 @@ export function PatientForm({
         <label className="flex flex-col gap-1 text-[13px] font-medium text-slate-700" data-i18n="patient.form.fullName">
           Nombre completo
           <input
+            ref={fullNameRef}
             name="full_name"
             required
             defaultValue={defaultValues?.full_name}
@@ -123,11 +220,38 @@ export function PatientForm({
             name="document_id"
             value={documentIdValue}
             onChange={(event) => handleDocumentIdChange(event.target.value)}
+            onBlur={handleDocumentIdBlur}
             placeholder="001-2345678-9"
             inputMode="numeric"
             maxLength={13}
-            className="glass-input h-8 px-2.5 py-1.5 text-sm"
+            aria-invalid={cedulaLookup.status === "invalid"}
+            className={`glass-input h-8 px-2.5 py-1.5 text-sm ${
+              cedulaLookup.status === "invalid" ? "border-red-300 focus:border-red-400" : ""
+            }`}
           />
+          {cedulaLookup.status === "invalid" && (
+            <span className="text-xs font-medium text-red-600">La cédula no es válida.</span>
+          )}
+          {cedulaLookup.status === "checking" && (
+            <span className="flex items-center gap-1.5 text-xs text-slate-500">
+              <span className="h-3 w-3 animate-spin rounded-full border-2 border-slate-300 border-t-[#154360]" aria-hidden="true" />
+              Buscando datos…
+            </span>
+          )}
+          {cedulaLookup.status === "found" && (
+            <span className="text-xs font-medium text-emerald-600">✓ {cedulaLookup.message}</span>
+          )}
+          {cedulaLookup.status === "existing" && (
+            <span className="text-xs font-medium text-amber-600">
+              {cedulaLookup.message}{" "}
+              <Link href={`/patients/${cedulaLookup.patientId}`} className="underline">
+                Ver ficha
+              </Link>
+            </span>
+          )}
+          {cedulaLookup.status === "not-found" && (
+            <span className="text-xs text-slate-500">{cedulaLookup.message}</span>
+          )}
         </label>
       </div>
 
