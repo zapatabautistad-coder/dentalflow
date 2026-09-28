@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { canManagePatients, canWriteClinicalEntries, requireProfile } from "@/lib/auth";
+import { canCreatePatients, canManagePatients, canWriteClinicalEntries, requireProfile } from "@/lib/auth";
 import { combineDateTime, isValidDateKey } from "@/lib/timezone";
 import { cleanDocumentIdDigits, cleanPhoneDigits } from "@/lib/phone";
 
@@ -112,7 +112,7 @@ export async function createPatient(
   formData: FormData
 ): Promise<PatientFormState> {
   const profile = await requireProfile();
-  if (!canManagePatients(profile.role)) {
+  if (!canCreatePatients(profile.role)) {
     return { error: "No tienes permiso para crear pacientes." };
   }
 

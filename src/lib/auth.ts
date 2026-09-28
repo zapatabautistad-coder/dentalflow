@@ -20,9 +20,15 @@ export const ROLE_LABELS: Record<Role, string> = {
   admin: "Admin",
 };
 
-// Roles que pueden crear/editar pacientes (ver RLS en 001_mvp.sql).
+// Roles que pueden editar y archivar pacientes (ver RLS en 001_mvp.sql).
 export function canManagePatients(role: Role) {
   return role === "admin" || role === "recepcion";
+}
+
+// Roles que pueden registrar pacientes nuevos (ver RLS en 013_enfermeria_crea_pacientes.sql).
+// Enfermería puede crear la ficha pero no editarla ni archivarla después.
+export function canCreatePatients(role: Role) {
+  return role === "admin" || role === "recepcion" || role === "enfermeria";
 }
 
 // Roles que pueden escribir en el registro clínico (ver RLS en 012_clinical_entries.sql).

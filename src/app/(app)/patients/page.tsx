@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { canManagePatients, requireProfile } from "@/lib/auth";
+import { canCreatePatients, requireProfile } from "@/lib/auth";
 import { formatDominicanDocumentId, formatDominicanPhone } from "@/lib/phone";
 import { buildPatientSearchFilter } from "@/lib/patient-search";
 import { PatientRow } from "./patient-row";
@@ -115,7 +115,7 @@ export default async function PatientsPage({
 }) {
   const { q } = await searchParams;
   const profile = await requireProfile();
-  const canManage = canManagePatients(profile.role);
+  const canCreate = canCreatePatients(profile.role);
 
   const supabase = await createClient();
   let query = supabase
@@ -142,7 +142,7 @@ export default async function PatientsPage({
             Clínicas / pacientes
           </p>
         </div>
-        {canManage && (
+        {canCreate && (
           <Link href="/patients/new" className="glass-button px-3 py-2 text-xs font-black uppercase tracking-[0.08em]" data-i18n="patients.new">
             + Nuevo paciente
           </Link>

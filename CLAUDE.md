@@ -39,7 +39,7 @@ Sistema de gestión para clínicas dentales. Stack: Next.js (App Router, TypeScr
 
 ## Estado
 - En producción: https://dentalflow-navy.vercel.app (Vercel, se publica solo con cada push a `main`).
-- Supabase con migraciones en `supabase/migrations/`. Aplicadas en producción: 001, 002, 003, 004, 007, 008, 009, 010, 011, 012. **No ejecutar 005 ni 006** (ver aviso en cada archivo). Antes de escribir una migración nueva, revisar el esquema real de la base, no solo los archivos. Claves en `.env.local` (ignorado por git) y en Vercel:
+- Supabase con migraciones en `supabase/migrations/`. Aplicadas en producción: 001, 002, 003, 004, 007, 008, 009, 010, 011, 012, 013. **No ejecutar 005 ni 006** (ver aviso en cada archivo). Antes de escribir una migración nueva, revisar el esquema real de la base, no solo los archivos. Claves en `.env.local` (ignorado por git) y en Vercel:
   `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
 - Menú: Panel, Pacientes, Citas. (Horarios, Reportes y Configuración se borraron por tener datos inventados; se rehacen con datos reales cuando toque.)
 - Cierre de sesión por inactividad a los 15 min (`src/app/(app)/idle-logout.tsx`): volver a una pestaña o desbloquear el celular NO cuenta como actividad.
@@ -48,3 +48,4 @@ Sistema de gestión para clínicas dentales. Stack: Next.js (App Router, TypeScr
 - Clientes: `src/lib/supabase/client.ts` (navegador) y `src/lib/supabase/server.ts` (servidor).
 - En Next 16 `middleware` se llama `proxy`: el refresco de sesión del login irá en `src/proxy.ts`.
 - Toda tabla nueva necesita GRANT a `authenticated`, porque la exposición automática de tablas está desactivada.
+- Pacientes: Enfermería puede **crear** pacientes nuevos (`canCreatePatients`, migración 013) pero no editarlos ni archivarlos (`canManagePatients`, solo admin/recepción).
