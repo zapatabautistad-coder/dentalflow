@@ -180,9 +180,14 @@ function initialsOf(fullName: string) {
     .toUpperCase();
 }
 
-function Brand({ compact = false }: { compact?: boolean }) {
+function Brand({ compact = false, onNavigate }: { compact?: boolean; onNavigate?: () => void }) {
   return (
-    <div className={`flex min-w-0 items-center gap-3.5 ${compact ? "" : "select-none border-b border-white/10 px-1 pb-5"}`}>
+    <Link
+      href="/panel"
+      onClick={onNavigate}
+      aria-label="Ir al panel"
+      className={`flex min-w-0 items-center gap-3.5 ${compact ? "" : "select-none border-b border-white/10 px-1 pb-5"}`}
+    >
       <div
         className={`relative flex shrink-0 items-center justify-center transition-transform duration-200 hover:scale-105 ${
           compact ? "h-12 w-12" : "h-20 w-20"
@@ -213,7 +218,7 @@ function Brand({ compact = false }: { compact?: boolean }) {
           {CLINIC_NAME}
         </span>
       </div>
-    </div>
+    </Link>
   );
 }
 
@@ -459,7 +464,7 @@ export function Sidebar({ fullName, roleLabel }: ProfileProps) {
 
             <div className="relative z-10 flex h-full flex-col px-4 py-4">
               <div className="mb-5 flex items-center justify-between gap-3">
-                <Brand compact />
+                <Brand compact onNavigate={() => setMobileOpen(false)} />
                 <button
                   type="button"
                   aria-label="Cerrar menú"
