@@ -45,7 +45,7 @@ Sistema de gestión para clínicas dentales. Stack: Next.js (App Router, TypeScr
 - Cuentas (`/accounts`, solo admin, 015): crear usuario (API de Auth con `SUPABASE_SERVICE_ROLE_KEY`, solo servidor en `src/lib/supabase/admin.ts`), cambiar rol, desactivar con motivo y reactivar. Nunca se borran. Usuario desactivado: `get_my_role()` devuelve null (sin acceso a nada por RLS) y queda bloqueado en Auth. El trigger `stamp_profile` impide cambiar el propio rol o desactivarse y exige al menos un admin activo; `profiles` tiene auditoría y no tiene DELETE.
 - Menú: Panel, Pacientes, Citas, Sala de espera, Cuentas (solo admin). (Horarios, Reportes y Configuración se borraron por tener datos inventados; se rehacen con datos reales cuando toque.)
 - Cierre de sesión por inactividad a los 15 min (`src/app/(app)/idle-logout.tsx`): volver a una pestaña o desbloquear el celular NO cuenta como actividad.
-- Odontograma, periodontograma y plan de tratamiento no guardan datos y muestran valores inventados; no tienen enlace desde la app hasta rehacerlos.
+- Odontograma, periodontograma y plan de tratamiento se borraron por tener datos inventados; se rehacen guardando datos reales en Supabase.
 - Contraseñas (Supabase Auth): mínimo 10 caracteres con minúsculas, mayúsculas, números y símbolos. Pendiente al pasar a plan Pro: activar "Prevent use of leaked passwords".
 - Clientes: `src/lib/supabase/client.ts` (navegador) y `src/lib/supabase/server.ts` (servidor).
 - En Next 16 `middleware` se llama `proxy`: el refresco de sesión del login irá en `src/proxy.ts`.
