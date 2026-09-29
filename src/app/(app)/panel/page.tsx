@@ -3,11 +3,10 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { canManageAppointments, requireProfile } from "@/lib/auth";
 import {
-  combineDateTime,
   dayBoundsUtc,
   formatDateLong,
   formatHour,
-  splitLocalDateTime,
+  subtractMonthsLocal,
   TIME_ZONE,
   todayDateKey,
 } from "@/lib/timezone";
@@ -57,32 +56,64 @@ function insuranceLabel(patient: RecentPatient) {
   return "Sin aseguradora";
 }
 
-function subtractMonths(dateKey: string, months: number): string {
-  const [year, month, day] = dateKey.split("-").map(Number);
-  const monthIndex = year * 12 + month - 1 - months;
-  const targetYear = Math.floor(monthIndex / 12);
-  const targetMonth = monthIndex - targetYear * 12 + 1;
-  const lastDay = new Date(Date.UTC(targetYear, targetMonth, 0)).getUTCDate();
-  const targetDay = Math.min(day, lastDay);
+type ReviewRpcRow = {
+  patient_id: string;
+  full_name: string;
+  phone: string | null;
+  last_visit: string;
+};
 
-  return `${targetYear}-${String(targetMonth).padStart(2, "0")}-${String(targetDay).padStart(2, "0")}`;
-}
+const REVIEW_LIMIT = 8;
+// Tope del respaldo en JS (solo si la migración 017 aún no está aplicada).
+const FALLBACK_PAGE_SIZE = 250;
+const FALLBACK_MAX_PAGES = 4;
 
-function sixMonthsAgo(nowIso: string): string {
-  const { dateKey, time } = splitLocalDateTime(nowIso);
-  return combineDateTime(subtractMonths(dateKey, 6), time);
-}
-
+// "Pendiente de revisión": última cita completada hace más de 6 meses,
+// sin citas completadas desde entonces, sin citas próximas (programada o
+// confirmada) y no archivado. La regla vive en la función SQL
+// `patients_for_review` (migración 017); el respaldo en JS la replica.
 async function findPatientsForReview(
   supabase: Awaited<ReturnType<typeof createClient>>,
   cutoffIso: string,
   nowIso: string
 ): Promise<ReviewPatientsResult> {
-  const pageSize = 250;
+  const { data, error } = await supabase.rpc("patients_for_review", {
+    p_cutoff: cutoffIso,
+    p_now: nowIso,
+    p_limit: REVIEW_LIMIT,
+  });
+
+  if (!error) {
+    const rows = (data ?? []) as ReviewRpcRow[];
+    return {
+      patients: rows.map((row) => ({
+        id: row.patient_id,
+        full_name: row.full_name,
+        phone: row.phone,
+        lastVisit: row.last_visit,
+      })),
+      error: false,
+    };
+  }
+
+  // PGRST202 / 42883: la función aún no existe en la base.
+  if (error.code === "PGRST202" || error.code === "42883") {
+    return findPatientsForReviewFallback(supabase, cutoffIso, nowIso);
+  }
+
+  return { patients: [], error: true };
+}
+
+async function findPatientsForReviewFallback(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  cutoffIso: string,
+  nowIso: string
+): Promise<ReviewPatientsResult> {
   const seenPatientIds = new Set<string>();
   const patients: ReviewPatient[] = [];
 
-  for (let offset = 0; ; offset += pageSize) {
+  for (let page = 0; page < FALLBACK_MAX_PAGES; page += 1) {
+    const offset = page * FALLBACK_PAGE_SIZE;
     const { data: visits, error } = await supabase
       .from("appointments")
       .select("patient_id, starts_at, patients!inner(full_name, phone, archived_at)")
@@ -90,7 +121,7 @@ async function findPatientsForReview(
       .lt("starts_at", cutoffIso)
       .is("patients.archived_at", null)
       .order("starts_at", { ascending: false })
-      .range(offset, offset + pageSize - 1)
+      .range(offset, offset + FALLBACK_PAGE_SIZE - 1)
       .returns<ReviewAppointmentRow[]>();
 
     if (error) return { patients: [], error: true };
@@ -131,11 +162,11 @@ async function findPatientsForReview(
       for (const patient of candidates) {
         if (hasRecentCompleted.has(patient.id) || hasUpcoming.has(patient.id)) continue;
         patients.push(patient);
-        if (patients.length === 8) return { patients, error: false };
+        if (patients.length === REVIEW_LIMIT) return { patients, error: false };
       }
     }
 
-    if (!visits || visits.length < pageSize) break;
+    if (!visits || visits.length < FALLBACK_PAGE_SIZE) break;
   }
 
   return { patients, error: false };
@@ -162,7 +193,10 @@ export default async function PanelPage() {
   const dateKey = todayDateKey();
   const { start, end } = dayBoundsUtc(dateKey);
   const nowIso = new Date().toISOString();
-  const reviewCutoff = sixMonthsAgo(nowIso);
+  // Corte de revisión: hace 6 meses, a la misma hora local (al minuto).
+  const reviewCutoffDate = subtractMonthsLocal(new Date(nowIso), 6);
+  reviewCutoffDate.setUTCSeconds(0, 0);
+  const reviewCutoff = reviewCutoffDate.toISOString();
   const supabase = await createClient();
 
   const [patientsCount, agendaResult, waitingCount, queueAppointmentsResult, recentResult, reviewPatientsResult] = await Promise.all([
@@ -180,7 +214,7 @@ export default async function PanelPage() {
       .eq("queue_date", dateKey)
       .eq("status", "en_espera"),
     canManageAgenda
-      ? supabase.from("queue").select("appointment_id").eq("queue_date", dateKey)
+      ? supabase.from("queue").select("appointment_id").eq("queue_date", dateKey).neq("status", "cancelado")
       : Promise.resolve({ data: [], error: null }),
     supabase
       .from("patients")
@@ -291,7 +325,7 @@ export default async function PanelPage() {
                       >
                         {content}
                       </Link>
-                      {canManageAgenda && !queueAppointmentsResult.error && !queueAppointmentIds.has(item.id) && (
+                      {canManageAgenda && !queueAppointmentsResult.error && (item.status === "programada" || item.status === "confirmada") && !queueAppointmentIds.has(item.id) && (
                         <form action={checkInAppointment.bind(null, item.id)}>
                           <button type="submit" className="glass-button min-h-11 w-full px-4 text-sm font-semibold sm:w-auto" data-i18n="waitingRoom.action.arrived">
                             Llegó

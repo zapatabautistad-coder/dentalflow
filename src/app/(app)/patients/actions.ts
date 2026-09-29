@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { canCreatePatients, canManagePatients, canWriteClinicalEntries, requireProfile } from "@/lib/auth";
 import { combineDateTime, isValidDateKey } from "@/lib/timezone";
 import { cleanDocumentIdDigits, cleanPhoneDigits } from "@/lib/phone";
+import { matchingMedicationAllergy, type MedicationAllergyHistory } from "@/lib/medication-allergy";
 
 export type PatientFormState = { error: string } | undefined;
 
@@ -296,95 +297,6 @@ function clinicalEntryFormValues(formData: FormData): ClinicalEntryFormValues {
     administered_time: field(formData, "administered_time"),
     correction_reason: field(formData, "correction_reason"),
   };
-}
-
-function normalizeAllergyText(value: string): string {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim();
-}
-
-function hasMedicationTerm(medication: string, term: string): boolean {
-  return ` ${normalizeAllergyText(medication)} `.includes(` ${normalizeAllergyText(term)} `);
-}
-
-type MedicationAllergyHistory = {
-  allergy_penicillin: boolean;
-  allergy_nsaids: boolean;
-  allergy_local_anesthetic: boolean;
-  allergies_other: string | null;
-};
-
-function matchingMedicationAllergy(
-  medication: string,
-  history: MedicationAllergyHistory
-): string | null {
-  const allergyGroups = [
-    {
-      recorded: history.allergy_penicillin,
-      label: "penicilina",
-      terms: [
-        "penicilina",
-        "amoxicilina",
-        "ampicilina",
-        "amoxicilina/clavulánico",
-        "augmentin",
-        "dicloxacilina",
-        "cefalexina",
-        "amoxil",
-        "clavulin",
-        "oxacilina",
-        "piperacilina",
-        "cefadroxilo",
-        "cefuroxima",
-        "ceftriaxona",
-      ],
-    },
-    {
-      recorded: history.allergy_nsaids,
-      label: "AINEs",
-      terms: [
-        "ibuprofeno",
-        "naproxeno",
-        "diclofenaco",
-        "ketorolaco",
-        "aspirina",
-        "ácido acetilsalicílico",
-        "meloxicam",
-        "nimesulida",
-        "advil",
-        "motrin",
-        "voltaren",
-        "cataflam",
-        "aspirin",
-      ],
-    },
-    {
-      recorded: history.allergy_local_anesthetic,
-      label: "anestésicos locales",
-      terms: ["lidocaína", "xilocaína", "xylocaína", "articaína", "septocaine", "mepivacaína", "carbocaína", "scandonest", "bupivacaína", "prilocaína", "citanest"],
-    },
-  ];
-
-  for (const group of allergyGroups) {
-    if (group.recorded && group.terms.some((term) => hasMedicationTerm(medication, term))) {
-      return group.label;
-    }
-  }
-
-  const otherAllergy = history.allergies_other?.trim();
-  if (otherAllergy) {
-    const medicationTerms = normalizeAllergyText(medication)
-      .split(" ")
-      .filter((term) => /[a-z]{4,}/.test(term));
-    const normalizedOther = ` ${normalizeAllergyText(otherAllergy)} `;
-    if (medicationTerms.some((term) => normalizedOther.includes(` ${term} `))) return otherAllergy;
-  }
-
-  return null;
 }
 
 export async function addClinicalEntry(

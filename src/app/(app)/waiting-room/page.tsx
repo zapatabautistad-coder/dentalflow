@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { AutoRefresh } from "./auto-refresh";
 import { createClient } from "@/lib/supabase/server";
 import { canManageAppointments, requireProfile } from "@/lib/auth";
 import { formatDateLong, todayDateKey } from "@/lib/timezone";
@@ -98,6 +99,7 @@ export default async function WaitingRoomPage({
 
   return (
     <div className="flex w-full min-w-0 flex-col gap-4">
+      <AutoRefresh />
       <header>
         <h1 className="text-[1.6rem] font-black text-[#0F172A]" data-i18n="waitingRoom.title">Sala de espera</h1>
         <p className="mt-1 text-[13px] font-bold uppercase text-slate-500">{formatDateLong(dateKey)}</p>

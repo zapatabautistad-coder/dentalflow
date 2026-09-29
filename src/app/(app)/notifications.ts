@@ -29,7 +29,12 @@ type TodayAppointment = {
   doctor_id: string;
   starts_at: string;
   status: string;
-  patients: { full_name: string } | null;
+  patients: {
+    full_name: string;
+    // Uno a uno (patient_id es la clave primaria); se acepta arreglo por si
+    // PostgREST lo devuelve como lista.
+    patient_medical_history: { patient_id: string } | { patient_id: string }[] | null;
+  } | null;
 };
 
 type WaitingQueueEntry = {
@@ -48,14 +53,20 @@ export async function getNotifications(): Promise<NotificationsResult> {
   const soonUntil = new Date(nowMs + 30 * 60_000).toISOString();
   const supabase = await createClient();
 
+  // Siempre 2 consultas: el historial médico viene embebido en la cita
+  // (misma RLS que consultarlo aparte), sin lotes adicionales por paciente.
   const [appointmentsResult, queueResult] = await Promise.all([
-    supabase
-      .from("appointments")
-      .select("id, patient_id, doctor_id, starts_at, status, patients(full_name)")
-      .gte("starts_at", start)
-      .lt("starts_at", end)
-      .order("starts_at", { ascending: true })
-      .returns<TodayAppointment[]>(),
+    (() => {
+      let query = supabase
+        .from("appointments")
+        .select("id, patient_id, doctor_id, starts_at, status, patients(full_name, patient_medical_history(patient_id))")
+        .gte("starts_at", start)
+        .lt("starts_at", end)
+        .order("starts_at", { ascending: true });
+      // El doctor solo recibe avisos de sus propias citas.
+      if (profile.role === "doctor") query = query.eq("doctor_id", profile.userId);
+      return query.returns<TodayAppointment[]>();
+    })(),
     (() => {
       let query = supabase
         .from("queue")
@@ -118,29 +129,18 @@ export async function getNotifications(): Promise<NotificationsResult> {
     });
   }
 
-  const patientsWithAppointments = new Map<string, string>();
+  const patientsWithoutHistory = new Map<string, string>();
   for (const appointment of appointments) {
     if (appointment.status === "cancelada" || !appointment.patients) continue;
     // El doctor solo recibe avisos de sus propios pacientes del día.
     if (profile.role === "doctor" && appointment.doctor_id !== profile.userId) continue;
-    patientsWithAppointments.set(appointment.patient_id, appointment.patients.full_name);
+    const history = appointment.patients.patient_medical_history;
+    const hasHistory = Array.isArray(history) ? history.length > 0 : Boolean(history);
+    if (hasHistory) continue;
+    patientsWithoutHistory.set(appointment.patient_id, appointment.patients.full_name);
   }
 
-  const patientIds = Array.from(patientsWithAppointments.keys());
-  const existingHistoryIds = new Set<string>();
-  for (let offset = 0; offset < patientIds.length; offset += 100) {
-    const batch = patientIds.slice(offset, offset + 100);
-    const { data, error } = await supabase
-      .from("patient_medical_history")
-      .select("patient_id")
-      .in("patient_id", batch);
-
-    if (error) return { items: [], error: true };
-    for (const history of data ?? []) existingHistoryIds.add(history.patient_id);
-  }
-
-  for (const [patientId, patientName] of patientsWithAppointments) {
-    if (existingHistoryIds.has(patientId)) continue;
+  for (const [patientId, patientName] of patientsWithoutHistory) {
     items.push({
       id: `history:${patientId}`,
       kind: "missingHistory",

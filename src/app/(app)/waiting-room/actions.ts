@@ -16,6 +16,8 @@ const QUEUE_STATUSES = new Set<QueueStatus>([
   "cancelado",
 ]);
 
+const CHECK_IN_STATUSES = new Set(["programada", "confirmada"]);
+
 function refreshQueueViews() {
   revalidatePath("/waiting-room");
   revalidatePath("/appointments");
@@ -32,6 +34,7 @@ async function hasAppointmentEntry(
     .select("id")
     .eq("queue_date", dateKey)
     .eq("appointment_id", appointmentId)
+    .neq("status", "cancelado")
     .limit(1);
 
   return { exists: Boolean(data?.length), error };
@@ -46,13 +49,23 @@ export async function checkInAppointment(appointmentId: string) {
   const supabase = await createClient();
   const { data: appointment, error: appointmentError } = await supabase
     .from("appointments")
-    .select("id, patient_id, doctor_id")
+    .select("id, patient_id, doctor_id, status, patients(archived_at)")
     .eq("id", appointmentId)
     .gte("starts_at", start)
     .lt("starts_at", end)
-    .maybeSingle();
+    .maybeSingle<{
+      id: string;
+      patient_id: string;
+      doctor_id: string;
+      status: string;
+      patients: { archived_at: string | null } | null;
+    }>();
 
   if (appointmentError || !appointment) redirect("/waiting-room?error=appointment");
+  // Solo citas vigentes de pacientes activos pueden entrar a la fila.
+  if (!CHECK_IN_STATUSES.has(appointment.status) || appointment.patients?.archived_at) {
+    redirect("/waiting-room?error=appointment");
+  }
 
   const existingEntry = await hasAppointmentEntry(supabase, dateKey, appointmentId);
   if (existingEntry.error) redirect("/waiting-room?error=save");
@@ -129,13 +142,14 @@ export async function setQueueStatus(queueId: string, status: string) {
   if (!isAllowedTransition) redirect("/waiting-room?error=save");
 
   // Las horas de llamado y fin las pone la base de datos (trigger stamp_queue).
-  const { error: updateError } = await supabase
+  const { data: updated, error: updateError } = await supabase
     .from("queue")
     .update({ status: nextStatus })
     .eq("id", queueId)
-    .eq("queue_date", dateKey);
+    .eq("queue_date", dateKey)
+    .select("id");
 
-  if (updateError) redirect("/waiting-room?error=save");
+  if (updateError || !updated?.length) redirect("/waiting-room?error=save");
 
   refreshQueueViews();
 }
@@ -157,12 +171,13 @@ export async function callNextPatient() {
   if (error) redirect("/waiting-room?error=save");
   if (!next) redirect("/waiting-room?error=empty");
 
-  const { error: updateError } = await supabase
+  const { data: called, error: updateError } = await supabase
     .from("queue")
     .update({ status: "llamado" })
     .eq("id", next.id)
-    .eq("status", "en_espera");
+    .eq("status", "en_espera")
+    .select("id");
 
-  if (updateError) redirect("/waiting-room?error=save");
+  if (updateError || !called?.length) redirect("/waiting-room?error=save");
   refreshQueueViews();
 }

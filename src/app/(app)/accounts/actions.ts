@@ -48,6 +48,8 @@ export async function createAccount(
     password,
     email_confirm: true,
     user_metadata: { full_name: fullName },
+    // Nace bloqueada: solo se desbloquea cuando el rol ya quedó asignado.
+    ban_duration: BAN_FOREVER,
   });
 
   if (error || !data.user) {
@@ -56,17 +58,30 @@ export async function createAccount(
     return { error: "No se pudo crear la cuenta. Inténtalo de nuevo." };
   }
 
-  // El trigger handle_new_user ya creó el perfil. El rol lo asigna el admin
-  // con su propia sesión para que la auditoría lo registre como autor.
+  // El trigger handle_new_user ya creó el perfil con el rol por defecto. El rol
+  // lo asigna el admin con su propia sesión para que la auditoría lo registre
+  // como autor. Mientras no quede asignado, la cuenta sigue bloqueada en Auth.
   const supabase = await createClient();
-  const { error: roleError } = await supabase
+  const { data: updated, error: roleError } = await supabase
     .from("profiles")
     .update({ role, full_name: fullName })
-    .eq("id", data.user.id);
+    .eq("id", data.user.id)
+    .select("id");
 
   revalidatePath("/accounts");
-  if (roleError) {
-    return { error: "La cuenta se creó, pero no se pudo asignar el rol. Cámbialo en la lista." };
+  if (roleError || !updated?.length) {
+    return {
+      error:
+        "La cuenta se creó pero quedó bloqueada porque no se pudo asignar el rol. Asígnalo en la lista y reactívala.",
+    };
+  }
+
+  const { error: unbanError } = await admin.auth.admin.updateUserById(data.user.id, { ban_duration: "none" });
+  if (unbanError) {
+    return {
+      error:
+        "La cuenta se creó con su rol, pero no se pudo desbloquear su inicio de sesión. Reactívala desde la lista.",
+    };
   }
   return { success: `Cuenta creada para ${fullName}. Entrégale la contraseña temporal en persona.` };
 }

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { formatHour } from "@/lib/timezone";
 import { logout } from "./actions";
 import { getNotifications, type NotificationItem } from "./notifications";
@@ -198,7 +198,44 @@ function NotificationPopover({
   error: boolean;
   loading: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+  // El panel recuerda en qué pantalla se abrió: al cambiar de pantalla
+  // (ir atrás, tocar un enlace) se considera cerrado.
+  const [openAt, setOpenAt] = useState<string | null>(null);
+  const open = openAt === pathname;
+  const setOpen = (next: boolean | ((value: boolean) => boolean)) => {
+    const value = typeof next === "function" ? next(open) : next;
+    setOpenAt(value ? pathname : null);
+  };
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Cerrar al tocar o hacer clic fuera del panel y con la tecla Escape.
+  useEffect(() => {
+    if (!open) return;
+    const closeOnOutside = (event: PointerEvent) => {
+      if (!containerRef.current?.contains(event.target as Node)) setOpenAt(null);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpenAt(null);
+    };
+    // Hacer scroll (rueda, dedo o teclado) fuera del panel también lo cierra;
+    // el scroll dentro del propio panel no.
+    const closeOnScroll = (event: Event) => {
+      const target = event.target;
+      if (target instanceof Node && containerRef.current?.contains(target)) return;
+      setOpenAt(null);
+    };
+    document.addEventListener("pointerdown", closeOnOutside);
+    document.addEventListener("keydown", closeOnEscape);
+    document.addEventListener("scroll", closeOnScroll, { capture: true, passive: true });
+    document.addEventListener("wheel", closeOnScroll, { capture: true, passive: true });
+    return () => {
+      document.removeEventListener("pointerdown", closeOnOutside);
+      document.removeEventListener("keydown", closeOnEscape);
+      document.removeEventListener("scroll", closeOnScroll, { capture: true });
+      document.removeEventListener("wheel", closeOnScroll, { capture: true });
+    };
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -210,7 +247,7 @@ function NotificationPopover({
   const label = hasItems ? `Notificaciones (${items.length})` : "Notificaciones";
 
   return (
-    <div className="relative shrink-0">
+    <div ref={containerRef} className="relative shrink-0">
       <button
         type="button"
         aria-label={label}
@@ -574,10 +611,13 @@ export function Sidebar({ fullName, roleLabel, isAdmin }: SidebarProps) {
     let active = true;
     let isFetching = false;
     let interval: ReturnType<typeof setInterval> | null = null;
+    let lastFetchedAt = 0;
+    const POLL_MS = 60_000;
 
     const refresh = async () => {
       if (!active || document.visibilityState !== "visible" || isFetching) return;
       isFetching = true;
+      lastFetchedAt = Date.now();
       try {
         const result = await getNotifications();
         if (!active) return;
@@ -599,10 +639,13 @@ export function Sidebar({ fullName, roleLabel, isAdmin }: SidebarProps) {
       interval = null;
     };
 
+    // Solo consulta con la pestaña visible. Al volver a la pestaña, pide
+    // datos solo si los últimos tienen 60 s o más (evita ráfagas al
+    // cambiar de pestaña).
     const startPolling = () => {
       if (document.visibilityState !== "visible" || interval) return;
-      void refresh();
-      interval = setInterval(() => void refresh(), 60_000);
+      if (Date.now() - lastFetchedAt >= POLL_MS) void refresh();
+      interval = setInterval(() => void refresh(), POLL_MS);
     };
 
     const handleVisibilityChange = () => {

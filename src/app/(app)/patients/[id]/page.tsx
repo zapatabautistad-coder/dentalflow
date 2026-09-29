@@ -9,6 +9,7 @@ import {
   formatHour,
   formatShortDate,
   splitLocalDateTime,
+  subtractMonthsLocal,
   todayDateKey,
 } from "@/lib/timezone";
 import { StatusChip } from "../../appointments/status-chip";
@@ -88,72 +89,10 @@ function formatStamp(iso: string): string {
   }).format(new Date(iso));
 }
 
-type LocalDateTimeParts = {
-  year: number;
-  month: number;
-  day: number;
-  hour: number;
-  minute: number;
-  second: number;
-  millisecond: number;
-};
-
-const LOCAL_DATE_TIME_FORMATTER = new Intl.DateTimeFormat("en-US", {
-  timeZone: TIME_ZONE,
-  year: "numeric",
-  month: "2-digit",
-  day: "2-digit",
-  hour: "2-digit",
-  minute: "2-digit",
-  second: "2-digit",
-  fractionalSecondDigits: 3,
-  hourCycle: "h23",
-});
-
-function localDateTimeParts(date: Date): LocalDateTimeParts {
-  const parts = LOCAL_DATE_TIME_FORMATTER.formatToParts(date);
-  const value = (type: Intl.DateTimeFormatPartTypes) =>
-    Number(parts.find((part) => part.type === type)?.value ?? 0);
-
-  return {
-    year: value("year"),
-    month: value("month"),
-    day: value("day"),
-    hour: value("hour"),
-    minute: value("minute"),
-    second: value("second"),
-    millisecond: value("fractionalSecond"),
-  };
-}
-
 function isHistoryMoreThan12MonthsOld(updatedAt: string): boolean {
   const updatedDate = new Date(updatedAt);
   if (Number.isNaN(updatedDate.getTime())) return false;
-
-  const current = localDateTimeParts(new Date());
-  const updated = localDateTimeParts(updatedDate);
-  const cutoffYear = current.year - 1;
-  const lastDayOfCutoffMonth = new Date(Date.UTC(cutoffYear, current.month, 0)).getUTCDate();
-  const cutoff = Date.UTC(
-    cutoffYear,
-    current.month - 1,
-    Math.min(current.day, lastDayOfCutoffMonth),
-    current.hour,
-    current.minute,
-    current.second,
-    current.millisecond
-  );
-  const updatedLocalTime = Date.UTC(
-    updated.year,
-    updated.month - 1,
-    updated.day,
-    updated.hour,
-    updated.minute,
-    updated.second,
-    updated.millisecond
-  );
-
-  return updatedLocalTime < cutoff;
+  return updatedDate.getTime() < subtractMonthsLocal(new Date(), 12).getTime();
 }
 
 function formatHistoryDate(iso: string): string {
