@@ -218,11 +218,22 @@ function NotificationPopover({
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") setOpenAt(null);
     };
+    // Hacer scroll (rueda, dedo o teclado) fuera del panel también lo cierra;
+    // el scroll dentro del propio panel no.
+    const closeOnScroll = (event: Event) => {
+      const target = event.target;
+      if (target instanceof Node && containerRef.current?.contains(target)) return;
+      setOpenAt(null);
+    };
     document.addEventListener("pointerdown", closeOnOutside);
     document.addEventListener("keydown", closeOnEscape);
+    document.addEventListener("scroll", closeOnScroll, { capture: true, passive: true });
+    document.addEventListener("wheel", closeOnScroll, { capture: true, passive: true });
     return () => {
       document.removeEventListener("pointerdown", closeOnOutside);
       document.removeEventListener("keydown", closeOnEscape);
+      document.removeEventListener("scroll", closeOnScroll, { capture: true });
+      document.removeEventListener("wheel", closeOnScroll, { capture: true });
     };
   }, [open]);
 
