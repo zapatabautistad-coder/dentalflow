@@ -2,6 +2,7 @@ export const TIME_ZONE = "America/Santo_Domingo";
 
 // Santo Domingo no observa horario de verano: el offset es -04:00 todo el año.
 const UTC_OFFSET = "-04:00";
+const UTC_OFFSET_MS = -4 * 60 * 60 * 1000;
 
 export function todayDateKey(now: Date = new Date()): string {
   return new Intl.DateTimeFormat("en-CA", {
@@ -90,4 +91,39 @@ export function splitLocalDateTime(iso: string): { dateKey: string; time: string
     hour12: false,
   }).format(date);
   return { dateKey, time };
+}
+
+// Resta meses calendario a una fecha local (YYYY-MM-DD). Si el día no existe
+// en el mes de destino se usa el último día de ese mes (31-mar − 1 mes = 28/29-feb).
+export function subtractMonthsFromDateKey(dateKey: string, months: number): string {
+  const [year, month, day] = dateKey.split("-").map(Number);
+  const monthIndex = year * 12 + month - 1 - months;
+  const targetYear = Math.floor(monthIndex / 12);
+  const targetMonth = monthIndex - targetYear * 12 + 1;
+  const lastDay = new Date(Date.UTC(targetYear, targetMonth, 0)).getUTCDate();
+  const targetDay = Math.min(day, lastDay);
+
+  return `${targetYear}-${String(targetMonth).padStart(2, "0")}-${String(targetDay).padStart(2, "0")}`;
+}
+
+// El mismo instante local (hora de Santo Domingo) `months` meses antes.
+// Conserva la hora local exacta y ajusta el fin de mes como subtractMonthsFromDateKey.
+export function subtractMonthsLocal(instant: Date, months: number): Date {
+  const local = new Date(instant.getTime() + UTC_OFFSET_MS);
+  const dateKey = [
+    local.getUTCFullYear(),
+    String(local.getUTCMonth() + 1).padStart(2, "0"),
+    String(local.getUTCDate()).padStart(2, "0"),
+  ].join("-");
+  const [year, month, day] = subtractMonthsFromDateKey(dateKey, months).split("-").map(Number);
+  const localMs = Date.UTC(
+    year,
+    month - 1,
+    day,
+    local.getUTCHours(),
+    local.getUTCMinutes(),
+    local.getUTCSeconds(),
+    local.getUTCMilliseconds()
+  );
+  return new Date(localMs - UTC_OFFSET_MS);
 }

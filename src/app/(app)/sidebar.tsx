@@ -574,10 +574,13 @@ export function Sidebar({ fullName, roleLabel, isAdmin }: SidebarProps) {
     let active = true;
     let isFetching = false;
     let interval: ReturnType<typeof setInterval> | null = null;
+    let lastFetchedAt = 0;
+    const POLL_MS = 60_000;
 
     const refresh = async () => {
       if (!active || document.visibilityState !== "visible" || isFetching) return;
       isFetching = true;
+      lastFetchedAt = Date.now();
       try {
         const result = await getNotifications();
         if (!active) return;
@@ -599,10 +602,13 @@ export function Sidebar({ fullName, roleLabel, isAdmin }: SidebarProps) {
       interval = null;
     };
 
+    // Solo consulta con la pestaña visible. Al volver a la pestaña, pide
+    // datos solo si los últimos tienen 60 s o más (evita ráfagas al
+    // cambiar de pestaña).
     const startPolling = () => {
       if (document.visibilityState !== "visible" || interval) return;
-      void refresh();
-      interval = setInterval(() => void refresh(), 60_000);
+      if (Date.now() - lastFetchedAt >= POLL_MS) void refresh();
+      interval = setInterval(() => void refresh(), POLL_MS);
     };
 
     const handleVisibilityChange = () => {
