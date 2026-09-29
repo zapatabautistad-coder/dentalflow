@@ -48,6 +48,7 @@ export default async function AppointmentsPage({
           .from("queue")
           .select("appointment_id")
           .eq("queue_date", dateKey)
+          .neq("status", "cancelado")
       : Promise.resolve({ data: [], error: null }),
   ]);
 
@@ -130,7 +131,7 @@ export default async function AppointmentsPage({
                     </div>
                   </div>
                 </Link>
-                {canManage && isToday && !queueResult.error && !queueAppointmentIds.has(appointment.id) && (
+                {canManage && isToday && !queueResult.error && (appointment.status === "programada" || appointment.status === "confirmada") && !queueAppointmentIds.has(appointment.id) && (
                   <form action={checkInAppointment.bind(null, appointment.id)}>
                     <button type="submit" className="glass-button min-h-11 w-full px-4 text-sm font-semibold sm:w-auto" data-i18n="waitingRoom.action.arrived">
                       Llegó

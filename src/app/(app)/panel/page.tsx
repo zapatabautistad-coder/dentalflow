@@ -180,7 +180,7 @@ export default async function PanelPage() {
       .eq("queue_date", dateKey)
       .eq("status", "en_espera"),
     canManageAgenda
-      ? supabase.from("queue").select("appointment_id").eq("queue_date", dateKey)
+      ? supabase.from("queue").select("appointment_id").eq("queue_date", dateKey).neq("status", "cancelado")
       : Promise.resolve({ data: [], error: null }),
     supabase
       .from("patients")
@@ -291,7 +291,7 @@ export default async function PanelPage() {
                       >
                         {content}
                       </Link>
-                      {canManageAgenda && !queueAppointmentsResult.error && !queueAppointmentIds.has(item.id) && (
+                      {canManageAgenda && !queueAppointmentsResult.error && (item.status === "programada" || item.status === "confirmada") && !queueAppointmentIds.has(item.id) && (
                         <form action={checkInAppointment.bind(null, item.id)}>
                           <button type="submit" className="glass-button min-h-11 w-full px-4 text-sm font-semibold sm:w-auto" data-i18n="waitingRoom.action.arrived">
                             Llegó
