@@ -186,12 +186,14 @@ function NotificationLabel({ item }: { item: NotificationItem }) {
 function NotificationPopover({
   id,
   mobile,
+  floating,
   items,
   error,
   loading,
 }: {
   id: string;
   mobile?: boolean;
+  floating?: boolean;
   items: NotificationItem[];
   error: boolean;
   loading: boolean;
@@ -204,21 +206,31 @@ function NotificationPopover({
     document.dispatchEvent(new CustomEvent("dentalflow-language-change", { detail: language }));
   }, [open, items, error, loading]);
 
+  const hasItems = items.length > 0;
+  const label = hasItems ? `Notificaciones (${items.length})` : "Notificaciones";
+
   return (
     <div className="relative shrink-0">
       <button
         type="button"
-        aria-label="Notificaciones"
+        aria-label={label}
         aria-expanded={open}
         aria-controls={id}
-        title="Notificaciones"
+        title={label}
         onClick={() => setOpen((value) => !value)}
-        className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/30 bg-white/10 text-white transition hover:bg-white/20"
+        className={`relative flex shrink-0 items-center justify-center text-white transition ${
+          floating
+            ? "h-12 w-12 rounded-2xl border border-[#8FD3C4]/70 bg-[#154360] shadow-[0_14px_30px_-12px_rgba(21,67,96,0.85)] hover:bg-[#1B5478]"
+            : "h-11 w-11 rounded-xl border border-white/30 bg-white/10 hover:bg-white/20"
+        } ${hasItems && !open ? "notify-blink" : ""}`}
       >
-        <Icon name="tooth" className="h-6 w-6" />
-        {items.length > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#8FD3C4] px-1 text-[11px] font-black leading-none text-[#154360]">
-            {items.length}
+        <Icon name="tooth" className={floating ? "h-7 w-7" : "h-6 w-6"} />
+        {hasItems && (
+          <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5">
+            <span className="notify-ping absolute inline-flex h-full w-full rounded-full bg-rose-500 opacity-75" />
+            <span className="relative flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-600 px-1 text-[11px] font-black leading-none text-white ring-2 ring-white">
+              {items.length}
+            </span>
           </span>
         )}
       </button>
@@ -229,7 +241,7 @@ function NotificationPopover({
           role="dialog"
           aria-label="Notificaciones"
           aria-labelledby={`${id}-title`}
-          className={`crystal-card fixed inset-x-4 top-[4.5rem] z-[60] max-h-[calc(100dvh-5rem)] min-w-0 overflow-x-hidden overflow-y-auto rounded-2xl border border-white/80 bg-white/95 p-3 text-[#0F172A] shadow-xl backdrop-blur-xl md:absolute md:inset-x-auto md:right-0 md:top-full md:z-50 md:mt-2 md:max-h-[calc(100dvh-9rem)] md:w-64 ${mobile ? "" : "max-md:hidden"}`}
+          className={`crystal-card fixed inset-x-4 top-[4.5rem] z-[60] max-h-[calc(100dvh-5rem)] min-w-0 overflow-x-hidden overflow-y-auto rounded-2xl border border-white/80 bg-white/95 p-3 text-[#0F172A] shadow-xl backdrop-blur-xl md:absolute md:inset-x-auto md:right-0 md:top-full md:z-50 md:mt-2 md:max-h-[calc(100dvh-7rem)] md:w-80 ${mobile ? "" : "max-md:hidden"}`}
         >
           <h2 id={`${id}-title`} className="mb-2 px-1 text-sm font-bold text-[#0F172A]" data-i18n="notifications.title">
             Notificaciones
@@ -653,15 +665,17 @@ export function Sidebar({ fullName, roleLabel, isAdmin }: SidebarProps) {
         )}
       </div>
 
+      {/* Notificaciones en computadora: arriba a la derecha, siempre a la vista. */}
+      <div className="fixed right-6 top-5 z-50 hidden md:block">
+        <NotificationPopover id="notifications-desktop" floating items={notifications} error={notificationsError} loading={notificationsLoading} />
+      </div>
+
       <aside className="sidebar-crystal hidden shrink-0 flex-col overflow-hidden rounded-[28px] md:sticky md:top-3 md:m-3 md:flex md:h-[calc(100dvh-1.5rem)] md:w-72">
         <Watermark className="-right-24 top-[48%] h-[54%]" />
 
         <div className="relative z-10 flex h-full flex-col px-3.5 py-5">
-          <div className="flex min-w-0 items-start gap-2 px-2.5 pb-6">
-            <div className="min-w-0 flex-1">
-              <Brand />
-            </div>
-            <NotificationPopover id="notifications-desktop" items={notifications} error={notificationsError} loading={notificationsLoading} />
+          <div className="px-2.5 pb-6">
+            <Brand />
           </div>
 
           <div className="sidebar-scroll -mx-1 min-h-0 flex-1 overflow-y-auto px-1">
