@@ -24,7 +24,9 @@ export async function login(
       error:
         error.code === "invalid_credentials"
           ? "Correo o contraseña incorrectos."
-          : "No se pudo iniciar sesión. Inténtalo de nuevo.",
+          : error.code === "user_banned"
+            ? "Esta cuenta está desactivada. Habla con el administrador de la clínica."
+            : "No se pudo iniciar sesión. Inténtalo de nuevo.",
     };
   }
 

@@ -3,21 +3,15 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { USER_EMAIL_HEADER, USER_ID_HEADER } from "@/lib/auth-headers";
+import type { Role } from "@/lib/auth-roles";
 
-export type Role = "doctor" | "recepcion" | "enfermeria" | "admin";
+export { ROLE_LABELS, type Role } from "@/lib/auth-roles";
 
 export type SessionProfile = {
   userId: string;
   email: string | null;
   fullName: string;
   role: Role;
-};
-
-export const ROLE_LABELS: Record<Role, string> = {
-  doctor: "Doctor",
-  recepcion: "Recepción",
-  enfermeria: "Enfermería",
-  admin: "Admin",
 };
 
 // Roles que pueden editar y archivar pacientes (ver RLS en 001_mvp.sql).

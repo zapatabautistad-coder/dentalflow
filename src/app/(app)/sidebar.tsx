@@ -267,19 +267,21 @@ function NotificationPopover({
 
 // Módulos del menú, en el mismo orden del diseño. Los que no tienen `href`
 // todavía no existen en la app: se ven igual pero no llevan a ninguna parte.
-type NavItem = { label: string; key?: string; icon: IconName; href?: string };
+type NavItem = { label: string; key?: string; icon: IconName; href?: string; adminOnly?: boolean };
 
 const NAV: NavItem[] = [
   { label: "PANEL", key: "sidebar.panel", icon: "home", href: "/panel" },
   { label: "PACIENTES", key: "sidebar.patients", icon: "users", href: "/patients" },
   { label: "CITAS", key: "sidebar.appointments", icon: "calendar", href: "/appointments" },
   { label: "SALA DE ESPERA", key: "sidebar.waitingRoom", icon: "turnos", href: "/waiting-room" },
+  { label: "CUENTAS", key: "sidebar.accounts", icon: "settings", href: "/accounts", adminOnly: true },
 ];
 
 const NAV_ITEM =
   "group relative flex items-center gap-3.5 overflow-hidden rounded-[22px] border px-3.5 py-2.5 text-[13px] font-black uppercase tracking-[0.08em] shadow-[0_12px_24px_-18px_rgba(15,23,42,0.65)] transition-all duration-200 [@media(max-height:800px)]:py-1.5";
 
 type ProfileProps = { fullName: string; roleLabel: string };
+type SidebarProps = ProfileProps & { isAdmin: boolean };
 
 function initialsOf(fullName: string) {
   return fullName
@@ -333,10 +335,10 @@ function Brand({ compact = false, onNavigate }: { compact?: boolean; onNavigate?
   );
 }
 
-function NavList({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
+function NavList({ pathname, isAdmin, onNavigate }: { pathname: string; isAdmin: boolean; onNavigate?: () => void }) {
   return (
     <nav aria-label="Menú principal" className="flex flex-col gap-1">
-      {NAV.map((item) => {
+      {NAV.filter((item) => !item.adminOnly || isAdmin).map((item) => {
         if (!item.href) {
           return (
             <div
@@ -549,7 +551,7 @@ function Watermark({ className }: { className: string }) {
   );
 }
 
-export function Sidebar({ fullName, roleLabel }: ProfileProps) {
+export function Sidebar({ fullName, roleLabel, isAdmin }: SidebarProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
@@ -642,7 +644,7 @@ export function Sidebar({ fullName, roleLabel }: ProfileProps) {
               </div>
 
               <div className="sidebar-scroll min-h-0 flex-1 overflow-y-auto pb-4">
-                <NavList pathname={pathname} onNavigate={() => setMobileOpen(false)} />
+                <NavList pathname={pathname} isAdmin={isAdmin} onNavigate={() => setMobileOpen(false)} />
               </div>
 
               <SidebarFooter fullName={fullName} roleLabel={roleLabel} />
@@ -663,7 +665,7 @@ export function Sidebar({ fullName, roleLabel }: ProfileProps) {
           </div>
 
           <div className="sidebar-scroll -mx-1 min-h-0 flex-1 overflow-y-auto px-1">
-            <NavList pathname={pathname} />
+            <NavList pathname={pathname} isAdmin={isAdmin} />
           </div>
 
           <div className="pt-4">

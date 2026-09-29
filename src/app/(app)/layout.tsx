@@ -15,7 +15,7 @@ export default async function AppLayout({
       <LanguageBridge />
       <IdleLogout />
       <div className="flex h-dvh w-full flex-col overflow-hidden md:flex-row">
-        <Sidebar fullName={profile.fullName} roleLabel={ROLE_LABELS[profile.role]} />
+        <Sidebar fullName={profile.fullName} roleLabel={ROLE_LABELS[profile.role]} isAdmin={profile.role === "admin"} />
         <main className="min-w-0 flex-1 overflow-y-auto px-4 py-5 [overflow-wrap:anywhere] sm:px-6 sm:py-8 md:px-10 md:py-10">{children}</main>
       </div>
     </>
