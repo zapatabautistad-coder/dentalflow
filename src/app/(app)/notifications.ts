@@ -121,6 +121,8 @@ export async function getNotifications(): Promise<NotificationsResult> {
   const patientsWithAppointments = new Map<string, string>();
   for (const appointment of appointments) {
     if (appointment.status === "cancelada" || !appointment.patients) continue;
+    // El doctor solo recibe avisos de sus propios pacientes del día.
+    if (profile.role === "doctor" && appointment.doctor_id !== profile.userId) continue;
     patientsWithAppointments.set(appointment.patient_id, appointment.patients.full_name);
   }
 
