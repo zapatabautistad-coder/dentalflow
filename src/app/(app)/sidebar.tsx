@@ -4,7 +4,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
+import { formatHour } from "@/lib/timezone";
 import { logout } from "./actions";
+import { getNotifications, type NotificationItem } from "./notifications";
 
 // Nombre de la clínica bajo el logo y en el perfil. Se cambia con
 // NEXT_PUBLIC_CLINIC_NAME en .env.local, sin tocar el código.
@@ -152,6 +154,114 @@ function Icon({
     >
       {ICONS[name]}
     </svg>
+  );
+}
+
+function NotificationLabel({ item }: { item: NotificationItem }) {
+  const labelKey =
+    item.kind === "appointmentSoon"
+      ? "notifications.appointmentSoon"
+      : item.kind === "queueWaiting"
+        ? "notifications.queueWaiting"
+        : item.kind === "appointmentUnconfirmed"
+          ? "notifications.appointmentUnconfirmed"
+          : "notifications.missingHistory";
+  const label =
+    item.kind === "appointmentSoon"
+      ? "Cita en los próximos 30 minutos:"
+      : item.kind === "queueWaiting"
+        ? "Paciente en sala de espera:"
+        : item.kind === "appointmentUnconfirmed"
+          ? "Cita sin confirmar:"
+          : "Registrar historial médico de";
+
+  return (
+    <>
+      <span data-i18n={labelKey}>{label}</span> {item.patientName}
+      {item.startsAt ? ` · ${formatHour(item.startsAt)}` : ""}
+    </>
+  );
+}
+
+function NotificationPopover({
+  id,
+  mobile,
+  items,
+  error,
+  loading,
+}: {
+  id: string;
+  mobile?: boolean;
+  items: NotificationItem[];
+  error: boolean;
+  loading: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    const language = window.localStorage.getItem("dentalflow-language") ?? "es";
+    document.dispatchEvent(new CustomEvent("dentalflow-language-change", { detail: language }));
+  }, [open, items, error, loading]);
+
+  return (
+    <div className="relative shrink-0">
+      <button
+        type="button"
+        aria-label="Notificaciones"
+        aria-expanded={open}
+        aria-controls={id}
+        title="Notificaciones"
+        onClick={() => setOpen((value) => !value)}
+        className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/30 bg-white/10 text-white transition hover:bg-white/20"
+      >
+        <Icon name="tooth" className="h-6 w-6" />
+        {items.length > 0 && (
+          <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#8FD3C4] px-1 text-[11px] font-black leading-none text-[#154360]">
+            {items.length}
+          </span>
+        )}
+      </button>
+
+      {open && (
+        <section
+          id={id}
+          role="dialog"
+          aria-label="Notificaciones"
+          aria-labelledby={`${id}-title`}
+          className={`crystal-card fixed inset-x-4 top-[4.5rem] z-[60] max-h-[calc(100dvh-5rem)] min-w-0 overflow-x-hidden overflow-y-auto rounded-2xl border border-white/80 bg-white/95 p-3 text-[#0F172A] shadow-xl backdrop-blur-xl md:absolute md:inset-x-auto md:right-0 md:top-full md:z-50 md:mt-2 md:max-h-[calc(100dvh-9rem)] md:w-64 ${mobile ? "" : "max-md:hidden"}`}
+        >
+          <h2 id={`${id}-title`} className="mb-2 px-1 text-sm font-bold text-[#0F172A]" data-i18n="notifications.title">
+            Notificaciones
+          </h2>
+          {loading ? (
+            <p className="px-1 py-4 text-sm text-slate-500" data-i18n="notifications.loading">Cargando notificaciones…</p>
+          ) : error ? (
+            <p role="alert" className="px-1 py-4 text-sm text-rose-700" data-i18n="notifications.error">
+              No se pudieron cargar las notificaciones.
+            </p>
+          ) : items.length === 0 ? (
+            <p className="px-1 py-4 text-sm text-slate-500" data-i18n="notifications.empty">
+              Sin notificaciones pendientes.
+            </p>
+          ) : (
+            <ul className="flex min-w-0 flex-col gap-1">
+              {items.map((item) => (
+                <li key={item.id} className="min-w-0">
+                  <Link
+                    href={item.href}
+                    onClick={() => setOpen(false)}
+                    className="block min-w-0 break-words rounded-xl px-3 py-2.5 text-sm text-slate-700 transition hover:bg-white/70 hover:text-[#154360]"
+                  >
+                    <NotificationLabel item={item} />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
+    </div>
   );
 }
 
@@ -442,21 +552,76 @@ function Watermark({ className }: { className: string }) {
 export function Sidebar({ fullName, roleLabel }: ProfileProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [notificationsError, setNotificationsError] = useState(false);
+  const [notificationsLoading, setNotificationsLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    let isFetching = false;
+    let interval: ReturnType<typeof setInterval> | null = null;
+
+    const refresh = async () => {
+      if (!active || document.visibilityState !== "visible" || isFetching) return;
+      isFetching = true;
+      try {
+        const result = await getNotifications();
+        if (!active) return;
+        setNotifications(result.items);
+        setNotificationsError(result.error);
+        setNotificationsLoading(false);
+      } catch {
+        if (!active) return;
+        setNotifications([]);
+        setNotificationsError(true);
+        setNotificationsLoading(false);
+      } finally {
+        isFetching = false;
+      }
+    };
+
+    const stopPolling = () => {
+      if (interval) clearInterval(interval);
+      interval = null;
+    };
+
+    const startPolling = () => {
+      if (document.visibilityState !== "visible" || interval) return;
+      void refresh();
+      interval = setInterval(() => void refresh(), 60_000);
+    };
+
+    const handleVisibilityChange = () => {
+      stopPolling();
+      startPolling();
+    };
+
+    startPolling();
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      active = false;
+      stopPolling();
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
 
   return (
     <>
       <div className="md:hidden">
         <header className="topbar-crystal sticky top-0 z-40 flex items-center justify-between gap-3 px-4 py-3">
           <Brand compact />
-          <button
-            type="button"
-            aria-label="Abrir menú"
-            aria-expanded={mobileOpen}
-            onClick={() => setMobileOpen(true)}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/30 bg-white/10 text-white transition hover:bg-white/20"
-          >
-            <Icon name="menu" className="h-6 w-6" />
-          </button>
+          <div className="flex shrink-0 items-center gap-2">
+            <NotificationPopover id="notifications-mobile" mobile items={notifications} error={notificationsError} loading={notificationsLoading} />
+            <button
+              type="button"
+              aria-label="Abrir menú"
+              aria-expanded={mobileOpen}
+              onClick={() => setMobileOpen(true)}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/30 bg-white/10 text-white transition hover:bg-white/20"
+            >
+              <Icon name="menu" className="h-6 w-6" />
+            </button>
+          </div>
         </header>
 
         {mobileOpen && (
@@ -490,8 +655,11 @@ export function Sidebar({ fullName, roleLabel }: ProfileProps) {
         <Watermark className="-right-24 top-[48%] h-[54%]" />
 
         <div className="relative z-10 flex h-full flex-col px-3.5 py-5">
-          <div className="px-2.5 pb-6">
-            <Brand />
+          <div className="flex min-w-0 items-start gap-2 px-2.5 pb-6">
+            <div className="min-w-0 flex-1">
+              <Brand />
+            </div>
+            <NotificationPopover id="notifications-desktop" items={notifications} error={notificationsError} loading={notificationsLoading} />
           </div>
 
           <div className="sidebar-scroll -mx-1 min-h-0 flex-1 overflow-y-auto px-1">
