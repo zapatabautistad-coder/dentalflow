@@ -334,6 +334,13 @@ function matchingMedicationAllergy(
         "augmentin",
         "dicloxacilina",
         "cefalexina",
+        "amoxil",
+        "clavulin",
+        "oxacilina",
+        "piperacilina",
+        "cefadroxilo",
+        "cefuroxima",
+        "ceftriaxona",
       ],
     },
     {
@@ -348,12 +355,17 @@ function matchingMedicationAllergy(
         "ácido acetilsalicílico",
         "meloxicam",
         "nimesulida",
+        "advil",
+        "motrin",
+        "voltaren",
+        "cataflam",
+        "aspirin",
       ],
     },
     {
       recorded: history.allergy_local_anesthetic,
       label: "anestésicos locales",
-      terms: ["lidocaína", "articaína", "mepivacaína", "bupivacaína", "prilocaína"],
+      terms: ["lidocaína", "xilocaína", "xylocaína", "articaína", "septocaine", "mepivacaína", "carbocaína", "scandonest", "bupivacaína", "prilocaína", "citanest"],
     },
   ];
 
