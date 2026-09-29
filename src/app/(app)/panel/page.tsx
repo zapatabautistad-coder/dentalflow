@@ -4,12 +4,14 @@ import { createClient } from "@/lib/supabase/server";
 import { canManageAppointments, requireProfile } from "@/lib/auth";
 import { dayBoundsUtc, formatDateLong, formatHour, todayDateKey } from "@/lib/timezone";
 import { StatusChip } from "../appointments/status-chip";
+import { checkInAppointment } from "../waiting-room/actions";
 
 export const metadata: Metadata = { title: "Panel · DentalFlow" };
 
 type AgendaRow = {
   id: string;
   patient_id: string;
+  doctor_id: string;
   starts_at: string;
   duration_minutes: number;
   reason: string | null;
@@ -40,11 +42,11 @@ export default async function PanelPage() {
   const { start, end } = dayBoundsUtc(dateKey);
   const supabase = await createClient();
 
-  const [patientsCount, agendaResult, waitingCount, recentResult] = await Promise.all([
+  const [patientsCount, agendaResult, waitingCount, queueAppointmentsResult, recentResult] = await Promise.all([
     supabase.from("patients").select("id", { count: "exact", head: true }).is("archived_at", null),
     supabase
       .from("appointments")
-      .select("id, patient_id, starts_at, duration_minutes, reason, status, patients(full_name), profiles(full_name)")
+      .select("id, patient_id, doctor_id, starts_at, duration_minutes, reason, status, patients(full_name), profiles(full_name)")
       .gte("starts_at", start)
       .lt("starts_at", end)
       .order("starts_at", { ascending: true })
@@ -54,6 +56,9 @@ export default async function PanelPage() {
       .select("id", { count: "exact", head: true })
       .eq("queue_date", dateKey)
       .eq("status", "en_espera"),
+    canManageAgenda
+      ? supabase.from("queue").select("appointment_id").eq("queue_date", dateKey)
+      : Promise.resolve({ data: [], error: null }),
     supabase
       .from("patients")
       .select("id, full_name, record_number, insurance_type, insurance_provider")
@@ -64,10 +69,11 @@ export default async function PanelPage() {
   ]);
 
   const agenda = agendaResult.data ?? [];
+  const queueAppointmentIds = new Set((queueAppointmentsResult.data ?? []).map((entry) => entry.appointment_id).filter(Boolean));
   const recentPatients = recentResult.data ?? [];
   const activeAgenda = agenda.filter((item) => item.status !== "cancelada");
   const completedToday = agenda.filter((item) => item.status === "completada").length;
-  const loadFailed = Boolean(patientsCount.error || agendaResult.error || waitingCount.error || recentResult.error);
+  const loadFailed = Boolean(patientsCount.error || agendaResult.error || waitingCount.error || queueAppointmentsResult.error || recentResult.error);
 
   const metrics = [
     { key: "panel.kpi.patients", label: "Pacientes registrados", value: patientsCount.count ?? 0 },
@@ -152,12 +158,21 @@ export default async function PanelPage() {
 
                 return (
                   <li key={item.id}>
-                    <Link
-                      href={canManageAgenda ? `/appointments/${item.id}/edit` : `/patients/${item.patient_id}`}
-                      className="block rounded-[16px] border border-white/80 bg-white/40 p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] transition hover:border-[#8FD3C4] hover:bg-white/70"
-                    >
-                      {content}
-                    </Link>
+                    <div className="flex min-w-0 flex-col gap-2 rounded-[16px] border border-white/80 bg-white/40 p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] transition hover:border-[#8FD3C4] hover:bg-white/70 sm:flex-row sm:items-center sm:justify-between">
+                      <Link
+                        href={canManageAgenda ? `/appointments/${item.id}/edit` : `/patients/${item.patient_id}`}
+                        className="block min-w-0 flex-1"
+                      >
+                        {content}
+                      </Link>
+                      {canManageAgenda && !queueAppointmentsResult.error && !queueAppointmentIds.has(item.id) && (
+                        <form action={checkInAppointment.bind(null, item.id)}>
+                          <button type="submit" className="glass-button min-h-11 w-full px-4 text-sm font-semibold sm:w-auto" data-i18n="waitingRoom.action.arrived">
+                            Llegó
+                          </button>
+                        </form>
+                      )}
+                    </div>
                   </li>
                 );
               })}

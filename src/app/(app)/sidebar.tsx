@@ -163,6 +163,7 @@ const NAV: NavItem[] = [
   { label: "PANEL", key: "sidebar.panel", icon: "home", href: "/panel" },
   { label: "PACIENTES", key: "sidebar.patients", icon: "users", href: "/patients" },
   { label: "CITAS", key: "sidebar.appointments", icon: "calendar", href: "/appointments" },
+  { label: "SALA DE ESPERA", key: "sidebar.waitingRoom", icon: "turnos", href: "/waiting-room" },
 ];
 
 const NAV_ITEM =
