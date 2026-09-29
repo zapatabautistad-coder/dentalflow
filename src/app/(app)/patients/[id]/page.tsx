@@ -304,6 +304,7 @@ export default async function PatientChartPage({ params }: { params: Promise<{ i
             canWrite={canWriteClinicalEntries(profile.role) && !patient.archived_at}
             action={addEntry}
             nowIso={nowIso}
+            medicalHistoryStatus={historyFailed ? "unavailable" : history ? "recorded" : "missing"}
           />
         )}
       </section>

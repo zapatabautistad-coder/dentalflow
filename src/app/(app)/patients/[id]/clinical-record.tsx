@@ -57,16 +57,20 @@ function author(entry: ClinicalEntry): string {
 function EntryForm({
   action,
   nowIso,
+  medicalHistoryStatus,
   original,
   onCancel,
 }: {
   action: Action;
   nowIso: string;
+  medicalHistoryStatus: "recorded" | "missing" | "unavailable";
   original?: ClinicalEntry;
   onCancel?: () => void;
 }) {
   const [state, formAction, pending] = useActionState(action, undefined);
   const [kind, setKind] = useState<ClinicalEntry["kind"]>(original?.kind ?? "nota");
+  const submittedValues = state && "values" in state ? state.values : undefined;
+  const attemptId = state && "attemptId" in state ? state.attemptId : undefined;
   const administered = splitLocalDateTime(original?.administered_at ?? nowIso);
   const saved = state && "saved" in state;
 
@@ -75,7 +79,7 @@ function EntryForm({
   }
 
   return (
-    <form key={saved ? state.at : "form"} action={formAction} className="flex flex-col gap-3">
+    <form key={attemptId ?? (saved ? state.at : "form")} action={formAction} className="flex flex-col gap-3">
       {original && <input type="hidden" name="corrects_entry_id" value={original.id} />}
       <input type="hidden" name="kind" value={kind} />
 
@@ -104,23 +108,23 @@ function EntryForm({
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <label className="flex flex-col gap-1.5 text-sm font-medium text-slate-700 sm:col-span-2">
             Medicamento
-            <input name="medication_name" required maxLength={200} defaultValue={original?.medication_name ?? ""} placeholder="Ej.: Amoxicilina" className="glass-input text-[15px]" />
+            <input name="medication_name" required maxLength={200} defaultValue={submittedValues?.medication_name ?? original?.medication_name ?? ""} placeholder="Ej.: Amoxicilina" className="glass-input text-[15px]" />
           </label>
           <label className="flex flex-col gap-1.5 text-sm font-medium text-slate-700">
             Dosis
-            <input name="dose" required maxLength={100} defaultValue={original?.dose ?? ""} placeholder="Ej.: 500 mg" className="glass-input text-[15px]" />
+            <input name="dose" required maxLength={100} defaultValue={submittedValues?.dose ?? original?.dose ?? ""} placeholder="Ej.: 500 mg" className="glass-input text-[15px]" />
           </label>
           <label className="flex flex-col gap-1.5 text-sm font-medium text-slate-700">
             Vía
-            <input name="route" required maxLength={100} list="clinical-routes" defaultValue={original?.route ?? ""} placeholder="Ej.: Oral" className="glass-input text-[15px]" />
+            <input name="route" required maxLength={100} list="clinical-routes" defaultValue={submittedValues?.route ?? original?.route ?? ""} placeholder="Ej.: Oral" className="glass-input text-[15px]" />
           </label>
           <label className="flex flex-col gap-1.5 text-sm font-medium text-slate-700">
             Fecha de administración
-            <input type="date" name="administered_date" required defaultValue={administered.dateKey} className="glass-input text-[15px]" />
+            <input type="date" name="administered_date" required defaultValue={submittedValues?.administered_date ?? administered.dateKey} className="glass-input text-[15px]" />
           </label>
           <label className="flex flex-col gap-1.5 text-sm font-medium text-slate-700">
             Hora de administración
-            <input type="time" name="administered_time" required defaultValue={administered.time} className="glass-input text-[15px]" />
+            <input type="time" name="administered_time" required defaultValue={submittedValues?.administered_time ?? administered.time} className="glass-input text-[15px]" />
           </label>
           <datalist id="clinical-routes">
             {ROUTES.map((route) => (
@@ -137,7 +141,7 @@ function EntryForm({
           required={kind !== "medicamento"}
           maxLength={4000}
           rows={kind === "medicamento" ? 2 : 4}
-          defaultValue={original?.body ?? ""}
+          defaultValue={submittedValues?.body ?? original?.body ?? ""}
           placeholder={kind === "nota" ? "Hallazgos, diagnóstico, plan…" : kind === "procedimiento" ? "Qué se hizo, zona, material…" : "Reacciones, lote, indicaciones…"}
           className="glass-input resize-y text-[15px]"
         />
@@ -146,13 +150,29 @@ function EntryForm({
       {original && (
         <label className="flex flex-col gap-1.5 text-sm font-medium text-slate-700">
           Motivo de la corrección (obligatorio)
-          <input name="correction_reason" required minLength={5} maxLength={500} placeholder="Ej.: dosis mal escrita" className="glass-input text-[15px]" />
+          <input name="correction_reason" required minLength={5} maxLength={500} defaultValue={submittedValues?.correction_reason ?? ""} placeholder="Ej.: dosis mal escrita" className="glass-input text-[15px]" />
         </label>
       )}
 
       {state && "error" in state && (
+        <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+          <p>{state.error}</p>
+          {state.allergyWarning && (
+            <label className="mt-2 flex min-h-11 items-start gap-2 font-medium">
+              <input type="checkbox" name="allergy_confirmed" value="on" required className="mt-1 h-4 w-4 shrink-0 accent-rose-700" />
+              <span>Confirmo que revisé la alergia y el medicamento es seguro para este paciente</span>
+            </label>
+          )}
+        </div>
+      )}
+      {kind === "medicamento" && medicalHistoryStatus === "missing" && (
+        <p role="alert" className="rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          Historial médico no registrado: pregunte por alergias
+        </p>
+      )}
+      {kind === "medicamento" && medicalHistoryStatus === "unavailable" && (
         <p role="alert" className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-          {state.error}
+          No se pudo verificar el historial médico. Recarga la página antes de administrar el medicamento.
         </p>
       )}
       {saved && !original && (
@@ -202,11 +222,13 @@ export function ClinicalRecord({
   canWrite,
   action,
   nowIso,
+  medicalHistoryStatus,
 }: {
   entries: ClinicalEntry[];
   canWrite: boolean;
   action: Action;
   nowIso: string;
+  medicalHistoryStatus: "recorded" | "missing" | "unavailable";
 }) {
   const [correcting, setCorrecting] = useState<string | null>(null);
   const correctionOf = new Map(entries.filter((e) => e.corrects_entry_id).map((e) => [e.corrects_entry_id as string, e]));
@@ -215,7 +237,7 @@ export function ClinicalRecord({
   return (
     <div className="flex flex-col gap-5">
       {canWrite ? (
-        <EntryForm action={action} nowIso={nowIso} />
+        <EntryForm action={action} nowIso={nowIso} medicalHistoryStatus={medicalHistoryStatus} />
       ) : (
         <p className="text-sm text-slate-600">Solo doctores y enfermería pueden escribir en el registro clínico.</p>
       )}
@@ -282,7 +304,7 @@ export function ClinicalRecord({
                     <p className="mb-2 text-sm font-semibold text-amber-800">
                       La entrada original seguirá visible, tachada, con tu corrección y el motivo.
                     </p>
-                    <EntryForm action={action} nowIso={nowIso} original={entry} onCancel={() => setCorrecting(null)} />
+                    <EntryForm action={action} nowIso={nowIso} medicalHistoryStatus={medicalHistoryStatus} original={entry} onCancel={() => setCorrecting(null)} />
                   </div>
                 )}
               </li>

@@ -1,5 +1,6 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
@@ -263,13 +264,115 @@ export async function saveMedicalHistory(
   return { saved: true };
 }
 
-export type ClinicalEntryState = { error: string } | { saved: true; at: number } | undefined;
+type ClinicalEntryFormValues = {
+  body: string;
+  medication_name: string;
+  dose: string;
+  route: string;
+  administered_date: string;
+  administered_time: string;
+  correction_reason: string;
+};
+
+export type ClinicalEntryState =
+  | { error: string; allergyWarning?: boolean; values?: ClinicalEntryFormValues; attemptId?: string }
+  | { saved: true; at: number }
+  | undefined;
 
 const CLINICAL_KINDS = ["nota", "medicamento", "procedimiento"] as const;
 type ClinicalKind = (typeof CLINICAL_KINDS)[number];
 
 function field(formData: FormData, name: string): string {
   return String(formData.get(name) ?? "").trim();
+}
+
+function clinicalEntryFormValues(formData: FormData): ClinicalEntryFormValues {
+  return {
+    body: field(formData, "body"),
+    medication_name: field(formData, "medication_name"),
+    dose: field(formData, "dose"),
+    route: field(formData, "route"),
+    administered_date: field(formData, "administered_date"),
+    administered_time: field(formData, "administered_time"),
+    correction_reason: field(formData, "correction_reason"),
+  };
+}
+
+function normalizeAllergyText(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function hasMedicationTerm(medication: string, term: string): boolean {
+  return ` ${normalizeAllergyText(medication)} `.includes(` ${normalizeAllergyText(term)} `);
+}
+
+type MedicationAllergyHistory = {
+  allergy_penicillin: boolean;
+  allergy_nsaids: boolean;
+  allergy_local_anesthetic: boolean;
+  allergies_other: string | null;
+};
+
+function matchingMedicationAllergy(
+  medication: string,
+  history: MedicationAllergyHistory
+): string | null {
+  const allergyGroups = [
+    {
+      recorded: history.allergy_penicillin,
+      label: "penicilina",
+      terms: [
+        "penicilina",
+        "amoxicilina",
+        "ampicilina",
+        "amoxicilina/clavulánico",
+        "augmentin",
+        "dicloxacilina",
+        "cefalexina",
+      ],
+    },
+    {
+      recorded: history.allergy_nsaids,
+      label: "AINEs",
+      terms: [
+        "ibuprofeno",
+        "naproxeno",
+        "diclofenaco",
+        "ketorolaco",
+        "aspirina",
+        "ácido acetilsalicílico",
+        "meloxicam",
+        "nimesulida",
+      ],
+    },
+    {
+      recorded: history.allergy_local_anesthetic,
+      label: "anestésicos locales",
+      terms: ["lidocaína", "articaína", "mepivacaína", "bupivacaína", "prilocaína"],
+    },
+  ];
+
+  for (const group of allergyGroups) {
+    if (group.recorded && group.terms.some((term) => hasMedicationTerm(medication, term))) {
+      return group.label;
+    }
+  }
+
+  const otherAllergy = history.allergies_other?.trim();
+  if (otherAllergy) {
+    const medicationTerms = normalizeAllergyText(medication)
+      .split(" ")
+      .filter((term) => /[a-z]{4,}/.test(term));
+    const normalizedOther = ` ${normalizeAllergyText(otherAllergy)} `;
+    if (medicationTerms.some((term) => normalizedOther.includes(` ${term} `))) return otherAllergy;
+  }
+
+  return null;
 }
 
 export async function addClinicalEntry(
@@ -295,6 +398,8 @@ export async function addClinicalEntry(
   if (correctionReason && correctionReason.length > 500) {
     return { error: "El motivo admite hasta 500 caracteres." };
   }
+
+  const submittedValues = clinicalEntryFormValues(formData);
 
   const values: Record<string, string | null> = {
     patient_id: patientId,
@@ -338,11 +443,53 @@ export async function addClinicalEntry(
     values.body = body;
   }
 
+  const supabase = await createClient();
+
+  if (kind === "medicamento") {
+    const { data: medicalHistory, error: historyError } = await supabase
+      .from("patient_medical_history")
+      .select("allergy_penicillin, allergy_nsaids, allergy_local_anesthetic, allergies_other")
+      .eq("patient_id", patientId)
+      .maybeSingle<MedicationAllergyHistory>();
+
+    if (historyError) {
+      return {
+        error: "No se pudo verificar el historial médico. Recarga la página antes de administrar el medicamento.",
+        values: submittedValues,
+        attemptId: randomUUID(),
+      };
+    }
+
+    const allergyLabel = medicalHistory ? matchingMedicationAllergy(values.medication_name ?? "", medicalHistory) : null;
+    const allergyConfirmed = field(formData, "allergy_confirmed") === "on";
+
+    if (allergyLabel && !allergyConfirmed) {
+      return {
+        error: `⚠ El paciente tiene registrada alergia a ${allergyLabel}. Verifica antes de administrar.`,
+        allergyWarning: true,
+        values: submittedValues,
+        attemptId: randomUUID(),
+      };
+    }
+
+    if (allergyLabel && allergyConfirmed) {
+      const confirmation = "[Alerta de alergia revisada y confirmada por el profesional]";
+      values.body = values.body ? `${values.body}\n${confirmation}` : confirmation;
+      if (values.body.length > 4000) {
+        return {
+          error: "El texto admite hasta 4000 caracteres después de añadir la confirmación.",
+          allergyWarning: true,
+          values: submittedValues,
+          attemptId: randomUUID(),
+        };
+      }
+    }
+  }
+
   if (values.body && values.body.length > 4000) {
     return { error: "El texto admite hasta 4000 caracteres." };
   }
 
-  const supabase = await createClient();
   const { error } = await supabase.from("clinical_entries").insert(values);
 
   if (error) {
