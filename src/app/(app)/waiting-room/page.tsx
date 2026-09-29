@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { canManageAppointments, requireProfile } from "@/lib/auth";
 import { formatDateLong, todayDateKey } from "@/lib/timezone";
-import { setQueueStatus } from "./actions";
+import { callNextPatient, setQueueStatus } from "./actions";
 
 export const metadata: Metadata = { title: "Sala de espera · DentalFlow" };
 
@@ -12,6 +12,7 @@ type WaitingRoomRow = {
   id: string;
   position: number;
   status: QueueStatus;
+  doctor_id: string | null;
   checked_in_at: string;
   patients: { full_name: string } | null;
   profiles: { full_name: string } | null;
@@ -69,19 +70,31 @@ export default async function WaitingRoomPage({
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("queue")
-    .select("id, position, status, checked_in_at, patients(full_name), profiles(full_name)")
+    .select("id, position, status, doctor_id, checked_in_at, patients(full_name), profiles(full_name)")
     .eq("queue_date", dateKey)
     .order("position", { ascending: true })
     .returns<WaitingRoomRow[]>();
 
   const entries = data ?? [];
   const now = new Date().getTime();
+  const isDoctor = profile.role === "doctor";
+  const myWaiting = isDoctor
+    ? entries.filter((entry) => entry.doctor_id === profile.userId && entry.status === "en_espera").length
+    : 0;
   const errorMessageKey =
     errorCode === "permission"
       ? "waitingRoom.error.permission"
-      : errorCode
-        ? "waitingRoom.error.save"
-        : null;
+      : errorCode === "empty"
+        ? "waitingRoom.error.empty"
+        : errorCode
+          ? "waitingRoom.error.save"
+          : null;
+  const errorText =
+    errorCode === "permission"
+      ? "No tienes permiso para realizar esta acción."
+      : errorCode === "empty"
+        ? "No tienes pacientes esperando."
+        : "No se pudo guardar el cambio. Recarga la página e inténtalo de nuevo.";
 
   return (
     <div className="flex w-full min-w-0 flex-col gap-4">
@@ -90,9 +103,20 @@ export default async function WaitingRoomPage({
         <p className="mt-1 text-[13px] font-bold uppercase text-slate-500">{formatDateLong(dateKey)}</p>
       </header>
 
+      {isDoctor && (
+        <form action={callNextPatient} className="crystal-card flex flex-col gap-3 rounded-[20px] p-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-[15px] font-semibold text-[#154360]">
+            {myWaiting === 0 ? "No tienes pacientes esperando." : `Tienes ${myWaiting} paciente${myWaiting === 1 ? "" : "s"} esperando.`}
+          </p>
+          <button type="submit" disabled={myWaiting === 0} className="glass-button min-h-11 px-5 text-[15px] font-semibold disabled:opacity-50" data-i18n="waitingRoom.action.callNext">
+            Llamar siguiente
+          </button>
+        </form>
+      )}
+
       {errorMessageKey && (
         <p role="alert" className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700" data-i18n={errorMessageKey}>
-          {errorCode === "permission" ? "No tienes permiso para realizar esta acción." : "No se pudo guardar el cambio. Recarga la página e inténtalo de nuevo."}
+          {errorText}
         </p>
       )}
 
@@ -131,7 +155,7 @@ export default async function WaitingRoomPage({
                     </div>
                   </div>
 
-                  {canManage && <StatusActions entry={entry} />}
+                  {(canManage || (isDoctor && entry.doctor_id === profile.userId)) && <StatusActions entry={entry} />}
                 </div>
               </li>
             );

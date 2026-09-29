@@ -98,9 +98,14 @@ export async function checkInAppointment(appointmentId: string) {
   }
 }
 
+// Recepción y admin mueven toda la fila; el doctor solo sus turnos (RLS 014).
+function canMoveQueue(role: string) {
+  return canManageAppointments(role as Parameters<typeof canManageAppointments>[0]) || role === "doctor";
+}
+
 export async function setQueueStatus(queueId: string, status: string) {
   const profile = await requireProfile();
-  if (!canManageAppointments(profile.role)) redirect("/waiting-room?error=permission");
+  if (!canMoveQueue(profile.role)) redirect("/waiting-room?error=permission");
   if (!QUEUE_STATUSES.has(status as QueueStatus)) redirect("/waiting-room?error=save");
 
   const dateKey = todayDateKey();
@@ -123,21 +128,41 @@ export async function setQueueStatus(queueId: string, status: string) {
 
   if (!isAllowedTransition) redirect("/waiting-room?error=save");
 
-  const timestamp = new Date().toISOString();
-  const values =
-    nextStatus === "llamado"
-      ? { status: nextStatus, called_at: timestamp }
-      : nextStatus === "atendido"
-        ? { status: nextStatus, finished_at: timestamp }
-        : { status: nextStatus };
-
+  // Las horas de llamado y fin las pone la base de datos (trigger stamp_queue).
   const { error: updateError } = await supabase
     .from("queue")
-    .update(values)
+    .update({ status: nextStatus })
     .eq("id", queueId)
     .eq("queue_date", dateKey);
 
   if (updateError) redirect("/waiting-room?error=save");
 
+  refreshQueueViews();
+}
+export async function callNextPatient() {
+  const profile = await requireProfile();
+  if (profile.role !== "doctor") redirect("/waiting-room?error=permission");
+
+  const supabase = await createClient();
+  const { data: next, error } = await supabase
+    .from("queue")
+    .select("id")
+    .eq("queue_date", todayDateKey())
+    .eq("doctor_id", profile.userId)
+    .eq("status", "en_espera")
+    .order("position", { ascending: true })
+    .limit(1)
+    .maybeSingle<{ id: string }>();
+
+  if (error) redirect("/waiting-room?error=save");
+  if (!next) redirect("/waiting-room?error=empty");
+
+  const { error: updateError } = await supabase
+    .from("queue")
+    .update({ status: "llamado" })
+    .eq("id", next.id)
+    .eq("status", "en_espera");
+
+  if (updateError) redirect("/waiting-room?error=save");
   refreshQueueViews();
 }

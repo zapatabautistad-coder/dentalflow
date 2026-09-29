@@ -40,6 +40,9 @@ const FIELD_LABELS: Record<string, Record<string, string>> = {
     is_pregnant: "Embarazo",
     conditions_other: "Otras condiciones",
   },
+  queue: {
+    status: "Estado del turno",
+  },
   appointments: {
     starts_at: "Fecha y hora",
     duration_minutes: "Duración (min)",
@@ -57,6 +60,11 @@ const TITLES: Record<string, Record<AuditRow["action"], string>> = {
     DELETE: "Historial médico eliminado",
   },
   appointments: { INSERT: "Cita creada", UPDATE: "Cita modificada", DELETE: "Cita eliminada" },
+  queue: {
+    INSERT: "Llegada a sala de espera",
+    UPDATE: "Turno en sala de espera actualizado",
+    DELETE: "Turno en sala de espera eliminado",
+  },
   clinical_entries: {
     INSERT: "Entrada del registro clínico firmada",
     UPDATE: "Entrada del registro clínico modificada",
@@ -76,6 +84,14 @@ function formatStamp(iso: string): string {
   }).format(new Date(iso));
 }
 
+const QUEUE_STATUS_LABELS: Record<string, string> = {
+  en_espera: "En espera",
+  llamado: "Llamado",
+  en_atencion: "En atención",
+  atendido: "Atendido",
+  cancelado: "Cancelado",
+};
+
 function formatValue(field: string, value: unknown): string {
   if (value === null || value === undefined || value === "") return "—";
   if (typeof value === "boolean") return value ? "Sí" : "No";
@@ -83,6 +99,9 @@ function formatValue(field: string, value: unknown): string {
     return `${formatShortDate(splitLocalDateTime(value).dateKey)} ${formatHour(value)}`;
   }
   if (field === "archived_at" && typeof value === "string") return formatStamp(value);
+  if (field === "status" && typeof value === "string" && value in QUEUE_STATUS_LABELS) {
+    return QUEUE_STATUS_LABELS[value];
+  }
   if (field === "status" && typeof value === "string") {
     return STATUS_META[value as AppointmentStatus]?.label ?? value;
   }
