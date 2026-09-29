@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { formatHour } from "@/lib/timezone";
 import { logout } from "./actions";
 import { getNotifications, type NotificationItem } from "./notifications";
@@ -198,7 +198,33 @@ function NotificationPopover({
   error: boolean;
   loading: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+  // El panel recuerda en qué pantalla se abrió: al cambiar de pantalla
+  // (ir atrás, tocar un enlace) se considera cerrado.
+  const [openAt, setOpenAt] = useState<string | null>(null);
+  const open = openAt === pathname;
+  const setOpen = (next: boolean | ((value: boolean) => boolean)) => {
+    const value = typeof next === "function" ? next(open) : next;
+    setOpenAt(value ? pathname : null);
+  };
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Cerrar al tocar o hacer clic fuera del panel y con la tecla Escape.
+  useEffect(() => {
+    if (!open) return;
+    const closeOnOutside = (event: PointerEvent) => {
+      if (!containerRef.current?.contains(event.target as Node)) setOpenAt(null);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpenAt(null);
+    };
+    document.addEventListener("pointerdown", closeOnOutside);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOnOutside);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -210,7 +236,7 @@ function NotificationPopover({
   const label = hasItems ? `Notificaciones (${items.length})` : "Notificaciones";
 
   return (
-    <div className="relative shrink-0">
+    <div ref={containerRef} className="relative shrink-0">
       <button
         type="button"
         aria-label={label}
