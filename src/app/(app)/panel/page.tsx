@@ -2,7 +2,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { canManageAppointments, requireProfile } from "@/lib/auth";
-import { dayBoundsUtc, formatDateLong, formatHour, todayDateKey } from "@/lib/timezone";
+import {
+  combineDateTime,
+  dayBoundsUtc,
+  formatDateLong,
+  formatHour,
+  splitLocalDateTime,
+  TIME_ZONE,
+  todayDateKey,
+} from "@/lib/timezone";
 import { StatusChip } from "../appointments/status-chip";
 import { checkInAppointment } from "../waiting-room/actions";
 
@@ -28,10 +36,123 @@ type RecentPatient = {
   insurance_provider: string | null;
 };
 
+type ReviewAppointmentRow = {
+  patient_id: string;
+  starts_at: string;
+  patients: { full_name: string; phone: string | null; archived_at: string | null } | null;
+};
+
+type ReviewPatient = {
+  id: string;
+  full_name: string;
+  phone: string | null;
+  lastVisit: string;
+};
+
+type ReviewPatientsResult = { patients: ReviewPatient[]; error: boolean };
+
 function insuranceLabel(patient: RecentPatient) {
   if (patient.insurance_type === "ars") return `ARS: ${patient.insurance_provider ?? "—"}`;
   if (patient.insurance_type === "privado") return "Privado";
   return "Sin aseguradora";
+}
+
+function subtractMonths(dateKey: string, months: number): string {
+  const [year, month, day] = dateKey.split("-").map(Number);
+  const monthIndex = year * 12 + month - 1 - months;
+  const targetYear = Math.floor(monthIndex / 12);
+  const targetMonth = monthIndex - targetYear * 12 + 1;
+  const lastDay = new Date(Date.UTC(targetYear, targetMonth, 0)).getUTCDate();
+  const targetDay = Math.min(day, lastDay);
+
+  return `${targetYear}-${String(targetMonth).padStart(2, "0")}-${String(targetDay).padStart(2, "0")}`;
+}
+
+function sixMonthsAgo(nowIso: string): string {
+  const { dateKey, time } = splitLocalDateTime(nowIso);
+  return combineDateTime(subtractMonths(dateKey, 6), time);
+}
+
+async function findPatientsForReview(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  cutoffIso: string,
+  nowIso: string
+): Promise<ReviewPatientsResult> {
+  const pageSize = 250;
+  const seenPatientIds = new Set<string>();
+  const patients: ReviewPatient[] = [];
+
+  for (let offset = 0; ; offset += pageSize) {
+    const { data: visits, error } = await supabase
+      .from("appointments")
+      .select("patient_id, starts_at, patients!inner(full_name, phone, archived_at)")
+      .eq("status", "completada")
+      .lt("starts_at", cutoffIso)
+      .is("patients.archived_at", null)
+      .order("starts_at", { ascending: false })
+      .range(offset, offset + pageSize - 1)
+      .returns<ReviewAppointmentRow[]>();
+
+    if (error) return { patients: [], error: true };
+
+    const candidates: ReviewPatient[] = [];
+    for (const visit of visits ?? []) {
+      if (!visit.patients || seenPatientIds.has(visit.patient_id)) continue;
+      seenPatientIds.add(visit.patient_id);
+      candidates.push({
+        id: visit.patient_id,
+        full_name: visit.patients.full_name,
+        phone: visit.patients.phone,
+        lastVisit: visit.starts_at,
+      });
+    }
+
+    if (candidates.length > 0) {
+      const candidateIds = candidates.map((patient) => patient.id);
+      const [recentCompleted, upcoming] = await Promise.all([
+        supabase
+          .from("appointments")
+          .select("patient_id")
+          .in("patient_id", candidateIds)
+          .eq("status", "completada")
+          .gte("starts_at", cutoffIso),
+        supabase
+          .from("appointments")
+          .select("patient_id")
+          .in("patient_id", candidateIds)
+          .in("status", ["programada", "confirmada"])
+          .gt("starts_at", nowIso),
+      ]);
+
+      if (recentCompleted.error || upcoming.error) return { patients: [], error: true };
+
+      const hasRecentCompleted = new Set((recentCompleted.data ?? []).map((visit) => visit.patient_id));
+      const hasUpcoming = new Set((upcoming.data ?? []).map((appointment) => appointment.patient_id));
+      for (const patient of candidates) {
+        if (hasRecentCompleted.has(patient.id) || hasUpcoming.has(patient.id)) continue;
+        patients.push(patient);
+        if (patients.length === 8) return { patients, error: false };
+      }
+    }
+
+    if (!visits || visits.length < pageSize) break;
+  }
+
+  return { patients, error: false };
+}
+
+function formatReviewDate(iso: string): string {
+  return new Intl.DateTimeFormat("es-DO", {
+    timeZone: TIME_ZONE,
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(iso));
+}
+
+function whatsappUrl(phone: string | null): string | null {
+  const digits = phone?.replace(/\D/g, "") ?? "";
+  return digits ? `https://wa.me/1${digits}` : null;
 }
 
 export default async function PanelPage() {
@@ -40,9 +161,11 @@ export default async function PanelPage() {
 
   const dateKey = todayDateKey();
   const { start, end } = dayBoundsUtc(dateKey);
+  const nowIso = new Date().toISOString();
+  const reviewCutoff = sixMonthsAgo(nowIso);
   const supabase = await createClient();
 
-  const [patientsCount, agendaResult, waitingCount, queueAppointmentsResult, recentResult] = await Promise.all([
+  const [patientsCount, agendaResult, waitingCount, queueAppointmentsResult, recentResult, reviewPatientsResult] = await Promise.all([
     supabase.from("patients").select("id", { count: "exact", head: true }).is("archived_at", null),
     supabase
       .from("appointments")
@@ -66,6 +189,9 @@ export default async function PanelPage() {
       .order("created_at", { ascending: false })
       .limit(5)
       .returns<RecentPatient[]>(),
+    canManageAgenda
+      ? findPatientsForReview(supabase, reviewCutoff, nowIso)
+      : Promise.resolve<ReviewPatientsResult>({ patients: [], error: false }),
   ]);
 
   const agenda = agendaResult.data ?? [];
@@ -220,6 +346,48 @@ export default async function PanelPage() {
           )}
         </div>
       </section>
+
+      {canManageAgenda && (
+        <section className="mt-4 crystal-card min-w-0 rounded-[22px] p-3.5">
+          <h2 className="text-base font-black text-[#0F172A]" data-i18n="panel.review.title">Pacientes para revisión</h2>
+          {reviewPatientsResult.error ? (
+            <p role="alert" className="py-5 text-center text-sm text-rose-700" data-i18n="panel.review.loadError">
+              No se pudieron cargar los pacientes para revisión.
+            </p>
+          ) : reviewPatientsResult.patients.length === 0 ? (
+            <p className="py-5 text-center text-sm text-slate-500" data-i18n="panel.review.empty">
+              No hay pacientes pendientes de revisión.
+            </p>
+          ) : (
+            <ul className="mt-3 grid min-w-0 grid-cols-1 gap-2 md:grid-cols-2">
+              {reviewPatientsResult.patients.map((patient) => {
+                const whatsapp = whatsappUrl(patient.phone);
+
+                return (
+                  <li key={patient.id} className="flex min-w-0 items-center justify-between gap-3 rounded-[16px] border border-white/80 bg-white/40 p-3">
+                    <Link href={`/patients/${patient.id}`} className="min-w-0 flex-1">
+                      <p className="break-words text-sm font-bold text-[#0F172A]">{patient.full_name}</p>
+                      <p className="mt-1 text-xs text-slate-500">
+                        <span data-i18n="panel.review.lastVisit">Última visita:</span> {formatReviewDate(patient.lastVisit)}
+                      </p>
+                    </Link>
+                    {whatsapp && (
+                      <a
+                        href={whatsapp}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex min-h-11 shrink-0 items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 px-3 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100"
+                      >
+                        WhatsApp
+                      </a>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
+      )}
     </div>
   );
 }
