@@ -258,10 +258,10 @@ function NotificationPopover({
         className={`relative flex shrink-0 items-center justify-center transition ${
           floating
             ? "bell-glass h-12 w-12 rounded-2xl text-white"
-            : "bell-glass h-11 w-11 rounded-xl text-white"
+            : "bell-glass h-9 w-9 rounded-xl text-white"
         } ${hasItems && !open ? "notify-blink" : ""}`}
       >
-        <Icon name="tooth" className={`${floating ? "h-7 w-7" : "h-6 w-6"} drop-shadow-[0_1px_2px_rgba(7,102,181,0.65)]`} />
+        <Icon name="tooth" className={`${floating ? "h-7 w-7" : "h-5 w-5"} drop-shadow-[0_1px_2px_rgba(7,102,181,0.65)]`} />
         {hasItems && (
           <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5">
             <span className="notify-ping absolute inline-flex h-full w-full rounded-full bg-rose-500 opacity-75" />
