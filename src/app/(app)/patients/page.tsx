@@ -90,7 +90,7 @@ function ContactButtons({
         <a
           href={links.email}
           aria-label={`Correo de ${patient.full_name}`}
-          className={`flex ${box} items-center justify-center rounded-lg border border-slate-200 bg-white/70 text-[#154360] transition hover:bg-white`}
+          className={`flex ${box} items-center justify-center rounded-lg border border-slate-200 bg-white/70 text-[#0369A1] transition hover:bg-white`}
         >
           <EmailIcon />
         </a>
@@ -99,7 +99,7 @@ function ContactButtons({
         <a
           href={links.tel}
           aria-label={`Llamar a ${patient.full_name}`}
-          className={`flex ${box} items-center justify-center rounded-lg border border-slate-200 bg-white/70 text-[#154360] transition hover:bg-white`}
+          className={`flex ${box} items-center justify-center rounded-lg border border-slate-200 bg-white/70 text-[#0369A1] transition hover:bg-white`}
         >
           <PhoneIcon />
         </a>

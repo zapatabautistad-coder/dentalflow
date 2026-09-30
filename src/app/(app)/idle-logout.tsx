@@ -136,21 +136,21 @@ export function IdleLogout() {
   return (
     <>
       {isOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#154360]/45 px-4 backdrop-blur-[2px]">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#0369A1]/45 px-4 backdrop-blur-[2px]">
           <div
             role="alertdialog"
             aria-modal="true"
             aria-labelledby="idle-logout-title"
-            className="w-full max-w-md rounded-[28px] border border-[#8FD3C4]/70 bg-white/90 p-5 sm:p-6 shadow-[0_28px_60px_-30px_rgba(21,67,96,0.7)]"
+            className="w-full max-w-md rounded-[28px] border border-[#7DD3FC]/70 bg-white/90 p-5 sm:p-6 shadow-[0_28px_60px_-30px_rgba(3,105,161,0.7)]"
           >
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-black uppercase tracking-[0.08em] text-[#154360]/70">Sesión</p>
-                <h2 id="idle-logout-title" className="mt-2 text-[15px] font-black leading-6 text-[#154360]">
+                <p className="text-xs font-black uppercase tracking-[0.08em] text-[#0369A1]/70">Sesión</p>
+                <h2 id="idle-logout-title" className="mt-2 text-[15px] font-black leading-6 text-[#0369A1]">
                   Tu sesión se cerrará en {timeLeft} segundos por inactividad
                 </h2>
               </div>
-              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#8FD3C4]/20 text-xl font-black text-[#154360]">
+              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#7DD3FC]/20 text-xl font-black text-[#0369A1]">
                 ⏱
               </div>
             </div>

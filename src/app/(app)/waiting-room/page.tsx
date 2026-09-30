@@ -107,7 +107,7 @@ export default async function WaitingRoomPage({
 
       {isDoctor && (
         <form action={callNextPatient} className="crystal-card flex flex-col gap-3 rounded-[20px] p-4 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-[15px] font-semibold text-[#154360]">
+          <p className="text-[15px] font-semibold text-[#0369A1]">
             {myWaiting === 0 ? "No tienes pacientes esperando." : `Tienes ${myWaiting} paciente${myWaiting === 1 ? "" : "s"} esperando.`}
           </p>
           <button type="submit" disabled={myWaiting === 0} className="glass-button min-h-11 px-5 text-[15px] font-semibold disabled:opacity-50" data-i18n="waitingRoom.action.callNext">
@@ -140,7 +140,7 @@ export default async function WaitingRoomPage({
               <li key={entry.id} className="crystal-card min-w-0 rounded-[20px] p-4 sm:p-5">
                 <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex min-w-0 items-start gap-3">
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/80 bg-white/60 text-sm font-black text-[#154360]">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/80 bg-white/60 text-sm font-black text-[#0369A1]">
                       {entry.position}
                     </span>
                     <div className="min-w-0">
@@ -151,7 +151,7 @@ export default async function WaitingRoomPage({
                       <p className="mt-1 text-sm text-slate-600">
                         <span>{minutes}</span> <span data-i18n="waitingRoom.waitingMinutes">minutos esperando</span>
                       </p>
-                      <span className="mt-2 inline-flex rounded-full border border-white/80 bg-white/60 px-3 py-1 text-xs font-bold text-[#154360]" data-i18n={status.key}>
+                      <span className="mt-2 inline-flex rounded-full border border-white/80 bg-white/60 px-3 py-1 text-xs font-bold text-[#0369A1]" data-i18n={status.key}>
                         {status.label}
                       </span>
                     </div>

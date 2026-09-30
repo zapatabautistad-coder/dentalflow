@@ -68,12 +68,12 @@ export function MedicalHistoryForm({
     <form action={formAction} className="flex flex-col gap-5">
       {GROUPS.map((group) => (
         <fieldset key={group.title} className="flex flex-col gap-2.5">
-          <legend className="mb-1 text-sm font-bold text-[#154360]" data-i18n={group.i18n}>{group.title}</legend>
+          <legend className="mb-1 text-sm font-bold text-[#0369A1]" data-i18n={group.i18n}>{group.title}</legend>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {group.flags.map((flag) => (
               <label
                 key={flag.name}
-                className="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl border border-white/80 bg-white/55 px-3 py-2 text-[15px] text-slate-800 transition hover:border-[#8FD3C4] has-[:checked]:border-rose-300 has-[:checked]:bg-rose-50"
+                className="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl border border-white/80 bg-white/55 px-3 py-2 text-[15px] text-slate-800 transition hover:border-[#7DD3FC] has-[:checked]:border-rose-300 has-[:checked]:bg-rose-50"
               >
                 <input
                   type="checkbox"
@@ -105,7 +105,7 @@ export function MedicalHistoryForm({
         </p>
       )}
       {state && "saved" in state && (
-        <p role="status" className="rounded-xl border border-[#8FD3C4] bg-[#8FD3C4]/15 px-3 py-2 text-sm font-medium text-[#154360]">
+        <p role="status" className="rounded-xl border border-[#7DD3FC] bg-[#7DD3FC]/15 px-3 py-2 text-sm font-medium text-[#0369A1]">
           Historial médico guardado.
         </p>
       )}

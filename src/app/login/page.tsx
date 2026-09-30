@@ -15,7 +15,7 @@ export default function LoginPage() {
               className="absolute inset-0 rounded-full blur-xl"
               style={{
                 background:
-                  "radial-gradient(circle, rgba(143,211,196,0.6) 0%, rgba(143,211,196,0) 70%)",
+                  "radial-gradient(circle, rgba(125,211,252,0.6) 0%, rgba(125,211,252,0) 70%)",
               }}
             />
             <Image
@@ -24,14 +24,14 @@ export default function LoginPage() {
               width={640}
               height={640}
               priority
-              className="relative h-[240px] w-[240px] drop-shadow-[0_18px_22px_rgba(21,67,96,0.22)]"
+              className="relative h-[240px] w-[240px] drop-shadow-[0_18px_22px_rgba(3,105,161,0.22)]"
             />
           </div>
-          <h1 className="text-3xl font-black tracking-tight text-[#154360]">DentalFlow</h1>
+          <h1 className="text-3xl font-black tracking-tight text-[#0369A1]">DentalFlow</h1>
           <p className="mt-1 text-sm text-slate-500">
             Inicia sesión para continuar
           </p>
-          <p className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-[#8FD3C4]/60 bg-[#8FD3C4]/15 px-3 py-1 text-xs font-semibold text-[#154360]">
+          <p className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-[#7DD3FC]/60 bg-[#7DD3FC]/15 px-3 py-1 text-xs font-semibold text-[#0369A1]">
             <svg
               aria-hidden="true"
               viewBox="0 0 24 24"

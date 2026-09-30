@@ -204,7 +204,7 @@ export default async function PatientChartPage({ params }: { params: Promise<{ i
 
   return (
     <div className="flex flex-col gap-4">
-      <Link href="/patients" className="self-start text-sm font-semibold text-[#154360] hover:underline" data-i18n="chart.back">
+      <Link href="/patients" className="self-start text-sm font-semibold text-[#0369A1] hover:underline" data-i18n="chart.back">
         ← Pacientes
       </Link>
 
@@ -299,8 +299,8 @@ export default async function PatientChartPage({ params }: { params: Promise<{ i
           </p>
         </section>
       ) : (
-        <section className="rounded-2xl border border-[#8FD3C4] bg-white/60 p-4">
-          <p className="text-base font-bold text-[#154360]" data-i18n="chart.noAlerts">Sin alertas médicas registradas</p>
+        <section className="rounded-2xl border border-[#7DD3FC] bg-white/60 p-4">
+          <p className="text-base font-bold text-[#0369A1]" data-i18n="chart.noAlerts">Sin alertas médicas registradas</p>
           {history.current_medications && (
             <p className="mt-1 text-[15px] text-slate-700">
               <span className="font-semibold">Medicamentos:</span> {history.current_medications}

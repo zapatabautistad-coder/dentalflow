@@ -102,7 +102,7 @@ export function ChangeRoleForm({ action, currentRole }: { action: Action; curren
         <button
           type="submit"
           disabled={pending}
-          className="min-h-11 rounded-xl border border-[#154360]/30 bg-white/60 px-3 text-sm font-semibold text-[#154360] transition hover:bg-white disabled:opacity-60"
+          className="min-h-11 rounded-xl border border-[#0369A1]/30 bg-white/60 px-3 text-sm font-semibold text-[#0369A1] transition hover:bg-white disabled:opacity-60"
         >
           {pending ? "Guardando…" : "Cambiar rol"}
         </button>
@@ -156,7 +156,7 @@ export function ReactivateForm({ action }: { action: () => Promise<AccountFormSt
       <button
         type="submit"
         disabled={pending}
-        className="min-h-11 self-start rounded-xl border border-[#154360]/30 bg-white/60 px-4 text-sm font-semibold text-[#154360] transition hover:bg-white disabled:opacity-60"
+        className="min-h-11 self-start rounded-xl border border-[#0369A1]/30 bg-white/60 px-4 text-sm font-semibold text-[#0369A1] transition hover:bg-white disabled:opacity-60"
       >
         {pending ? "Reactivando…" : "Reactivar cuenta"}
       </button>
