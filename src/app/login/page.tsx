@@ -19,7 +19,7 @@ export default function LoginPage() {
               }}
             />
             <Image
-              src="/dentalflow-app-icon-3d.png"
+              src="/dentalflow-app-icon-3d-sky.png"
               alt="DentalFlow"
               width={640}
               height={640}

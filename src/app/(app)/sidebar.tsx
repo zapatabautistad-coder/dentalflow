@@ -357,7 +357,7 @@ function Brand({ compact = false, onNavigate }: { compact?: boolean; onNavigate?
       >
         {/* Ícono 3D: disco de vidrio con el diente, con sombra de profundidad y brillo aguamarina */}
         <Image
-          src="/dentalflow-app-icon.png"
+          src="/dentalflow-app-icon-sky.png"
           alt="DentalFlow"
           width={512}
           height={512}
@@ -590,7 +590,7 @@ function SidebarFooter({ fullName, roleLabel }: ProfileProps) {
 function Watermark({ className }: { className: string }) {
   return (
     <Image
-      src="/dentalflow-mark.png"
+      src="/dentalflow-mark-sky.png"
       alt=""
       aria-hidden="true"
       width={389}
