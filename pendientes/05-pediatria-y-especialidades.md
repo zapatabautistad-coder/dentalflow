@@ -45,5 +45,5 @@ Rama nueva, PR pequeños. Yo hago las pantallas y un agente Opus escribe las mig
 
 ## Bloqueado por
 - Confirmar la lista de especialidades del primer cliente.
-- Un pediatra que revise plantillas, tablas y esquemas.
+- ~~Un pediatra que revise plantillas, tablas y esquemas.~~ Resuelto: la especialista la aporta el dueño del proyecto. Su revisión se hace con el documento «DentalFlow · Módulo de Pediatría: paquete de revisión clínica» (30-sep-2026). Sin su aprobación por escrito no se usa con niños reales.
 - Decisión sobre visibilidad entre especialidades.
