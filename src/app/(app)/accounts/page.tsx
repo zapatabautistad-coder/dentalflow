@@ -98,7 +98,7 @@ export default async function AccountsPage() {
                   <span
                     className={`shrink-0 rounded-full border px-2.5 py-1 text-xs font-bold ${
                       account.active
-                        ? "border-[#8FD3C4] bg-[#8FD3C4]/20 text-[#154360]"
+                        ? "border-[#95D3FA] bg-[#95D3FA]/20 text-[#0766B5]"
                         : "border-slate-300 bg-slate-100 text-slate-600"
                     }`}
                   >

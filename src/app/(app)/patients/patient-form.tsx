@@ -234,7 +234,7 @@ export function PatientForm({
           )}
           {cedulaLookup.status === "checking" && (
             <span className="flex items-center gap-1.5 text-xs text-slate-500">
-              <span className="h-3 w-3 animate-spin rounded-full border-2 border-slate-300 border-t-[#154360]" aria-hidden="true" />
+              <span className="h-3 w-3 animate-spin rounded-full border-2 border-slate-300 border-t-[#0766B5]" aria-hidden="true" />
               Buscando datos…
             </span>
           )}

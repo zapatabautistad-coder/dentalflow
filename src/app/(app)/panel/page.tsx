@@ -275,7 +275,7 @@ export default async function PanelPage() {
         {metrics.map((metric) => (
           <div key={metric.key} className="crystal-card rounded-[22px] p-3.5 shadow-[0_18px_42px_-28px_rgba(15,23,42,0.6)]">
             <p className="text-xs font-black uppercase tracking-[0.08em] text-slate-500" data-i18n={metric.key}>{metric.label}</p>
-            <p className="mt-2.5 text-[1.6rem] font-black tracking-[-0.06em] text-[#154360]">{metric.value}</p>
+            <p className="mt-2.5 text-[1.6rem] font-black tracking-[-0.06em] text-[#0766B5]">{metric.value}</p>
           </div>
         ))}
       </section>
@@ -287,7 +287,7 @@ export default async function PanelPage() {
               <h2 className="text-base font-black tracking-[-0.03em] text-[#0F172A]" data-i18n="panel.agenda">Agenda de Hoy</h2>
               <p className="mt-1 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500" data-i18n="panel.agenda.subtitle">Citas programadas</p>
             </div>
-            <Link href="/appointments" className="text-xs font-bold uppercase tracking-[0.08em] text-[#154360] hover:underline" data-i18n="panel.agenda.view">
+            <Link href="/appointments" className="text-xs font-bold uppercase tracking-[0.08em] text-[#0766B5] hover:underline" data-i18n="panel.agenda.view">
               Ver todo
             </Link>
           </div>
@@ -300,7 +300,7 @@ export default async function PanelPage() {
                 const content = (
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="flex min-w-0 flex-1 items-center gap-2.5">
-                      <div className="min-w-[46px] text-[13px] font-black tracking-[0.08em] text-[#154360]">
+                      <div className="min-w-[46px] text-[13px] font-black tracking-[0.08em] text-[#0766B5]">
                         {formatHour(item.starts_at)}
                       </div>
                       <div className="h-8 w-px bg-slate-200" />
@@ -318,7 +318,7 @@ export default async function PanelPage() {
 
                 return (
                   <li key={item.id}>
-                    <div className="flex min-w-0 flex-col gap-2 rounded-[16px] border border-white/80 bg-white/40 p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] transition hover:border-[#8FD3C4] hover:bg-white/70 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex min-w-0 flex-col gap-2 rounded-[16px] border border-white/80 bg-white/40 p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] transition hover:border-[#95D3FA] hover:bg-white/70 sm:flex-row sm:items-center sm:justify-between">
                       <Link
                         href={canManageAgenda ? `/appointments/${item.id}/edit` : `/patients/${item.patient_id}`}
                         className="block min-w-0 flex-1"
@@ -343,7 +343,7 @@ export default async function PanelPage() {
         <div className="crystal-card rounded-[22px] p-3.5">
           <div className="mb-2.5 flex items-center justify-between">
             <h3 className="text-xs font-black uppercase tracking-[0.08em] text-slate-500" data-i18n="panel.recent">Pacientes recientes</h3>
-            <Link href="/patients" className="text-xs font-black uppercase tracking-[0.08em] text-[#154360] hover:underline" data-i18n="panel.recent.view">
+            <Link href="/patients" className="text-xs font-black uppercase tracking-[0.08em] text-[#0766B5] hover:underline" data-i18n="panel.recent.view">
               Ver todos
             </Link>
           </div>
@@ -359,7 +359,7 @@ export default async function PanelPage() {
                       <p className="truncate text-[13px] font-bold text-[#0F172A]">{patient.full_name}</p>
                       <p className="truncate text-xs text-slate-500">{insuranceLabel(patient)}</p>
                     </div>
-                    <span className="shrink-0 text-xs font-black tracking-[0.12em] text-[#154360]">
+                    <span className="shrink-0 text-xs font-black tracking-[0.12em] text-[#0766B5]">
                       N.° {String(patient.record_number).padStart(4, "0")}
                     </span>
                   </>
@@ -369,7 +369,7 @@ export default async function PanelPage() {
                   <li key={patient.id}>
                     <Link
                       href={`/patients/${patient.id}`}
-                      className="flex items-center justify-between gap-2 rounded-lg border border-white/80 bg-white/50 px-2.5 py-2 transition hover:border-[#8FD3C4] hover:bg-white/70"
+                      className="flex items-center justify-between gap-2 rounded-lg border border-white/80 bg-white/50 px-2.5 py-2 transition hover:border-[#95D3FA] hover:bg-white/70"
                     >
                       {content}
                     </Link>
