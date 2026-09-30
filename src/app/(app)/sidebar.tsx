@@ -257,8 +257,8 @@ function NotificationPopover({
         onClick={() => setOpen((value) => !value)}
         className={`relative flex shrink-0 items-center justify-center transition ${
           floating
-            ? "h-12 w-12 rounded-2xl border border-white/70 bg-gradient-to-br from-[#0EA5E9] to-[#0284C7] text-white shadow-[0_14px_30px_-12px_rgba(2,132,199,0.7)] hover:from-[#38BDF8] hover:to-[#0EA5E9]"
-            : "h-11 w-11 rounded-xl border border-[#0EA5E9]/30 bg-white/60 text-[#0369A1] hover:bg-white/90"
+            ? "h-12 w-12 rounded-2xl border border-white/80 bg-white/25 text-[#0369A1] shadow-[inset_0_1px_0_rgba(255,255,255,0.95),inset_0_-8px_14px_-8px_rgba(56,189,248,0.35),0_10px_24px_-12px_rgba(3,105,161,0.45)] backdrop-blur-xl backdrop-saturate-150 hover:bg-white/45"
+            : "h-11 w-11 rounded-xl border border-white/80 bg-white/25 text-[#0369A1] shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_8px_18px_-10px_rgba(3,105,161,0.4)] backdrop-blur-xl backdrop-saturate-150 hover:bg-white/45"
         } ${hasItems && !open ? "notify-blink" : ""}`}
       >
         <Icon name="tooth" className={floating ? "h-7 w-7" : "h-6 w-6"} />
