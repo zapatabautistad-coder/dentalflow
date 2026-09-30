@@ -95,7 +95,7 @@ export default async function EditAppointmentPage({
       </p>
       <Link
         href={`/patients/${appointment.patient_id}`}
-        className="mt-3 inline-flex items-center text-sm font-semibold text-[#154360] hover:underline"
+        className="mt-3 inline-flex items-center text-sm font-semibold text-[#0766B5] hover:underline"
       >
         Ver ficha del paciente
       </Link>

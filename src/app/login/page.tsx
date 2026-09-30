@@ -15,23 +15,23 @@ export default function LoginPage() {
               className="absolute inset-0 rounded-full blur-xl"
               style={{
                 background:
-                  "radial-gradient(circle, rgba(143,211,196,0.6) 0%, rgba(143,211,196,0) 70%)",
+                  "radial-gradient(circle, rgba(149,211,250,0.6) 0%, rgba(149,211,250,0) 70%)",
               }}
             />
             <Image
-              src="/dentalflow-app-icon-3d.png"
+              src="/dentalflow-app-icon-3d-sky.png"
               alt="DentalFlow"
               width={640}
               height={640}
               priority
-              className="relative h-[240px] w-[240px] drop-shadow-[0_18px_22px_rgba(21,67,96,0.22)]"
+              className="relative h-[240px] w-[240px] drop-shadow-[0_18px_22px_rgba(7,102,181,0.22)]"
             />
           </div>
-          <h1 className="text-3xl font-black tracking-tight text-[#154360]">DentalFlow</h1>
+          <h1 className="text-3xl font-black tracking-tight text-[#0766B5]">DentalFlow</h1>
           <p className="mt-1 text-sm text-slate-500">
             Inicia sesión para continuar
           </p>
-          <p className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-[#8FD3C4]/60 bg-[#8FD3C4]/15 px-3 py-1 text-xs font-semibold text-[#154360]">
+          <p className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-[#95D3FA]/60 bg-[#95D3FA]/15 px-3 py-1 text-xs font-semibold text-[#0766B5]">
             <svg
               aria-hidden="true"
               viewBox="0 0 24 24"

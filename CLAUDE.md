@@ -27,11 +27,16 @@ Sistema de gestión para clínicas dentales. Stack: Next.js (App Router, TypeScr
 - Idiomas: ES / EN.
 
 ## Diseño
-- Fondo: degradado `#F5F7FA` → `#C3CFE2`.
-- Barra lateral: paleta del logo, azul marino `#154360` (base) + aguamarina `#8FD3C4` (acento: bordes, iconos activos, detalles), texto blanco. Efecto vidrio esmerilado (fondo semitransparente con blur, brillo sutil en el borde superior, borde delgado claro). Clase `sidebar-glass` en `src/app/globals.css`. Toda la app usa esta paleta (botones, enlaces y acentos); verde solo con significado (estado "completada", diente sano, WhatsApp).
+- **Idea de diseño: una sonrisa limpia y brillante.** Vidrio claro, azul cielo vivo, mucho aire y brillo suave. Sin azul oscuro pesado (ni marino ni dorado). Todo cambio visual debe conservar esa sensación.
+- Fondo: degradado `#F0F9FF` → `#E0F2FE` con brillos celestes.
+- Paleta azul cielo vivo: principal `#0E9BF3`, oscuro `#0766B5` (texto sobre claro, botones, enfoque), medio `#0D7FD8`, brillo `#53B6F7`, claro `#95D3FA`; texto sobre el azul de la barra `#062F55`. Toda la app usa esta paleta (botones, enlaces y acentos); verde solo con significado (estado "completada", diente sano, WhatsApp).
+- Barra lateral: clase `sidebar-crystal` en `src/app/globals.css`. Vidrio esmerilado con el azul vivo arriba que **se desvanece hasta quedar transparente abajo**; menú y logo con texto azul oscuro; la zona inferior (idioma y perfil) en vidrio blanco. En el celular, la barra superior es `topbar-crystal` y el menú abierto `crystal-overlay` (mismo degradado, opaco).
+- Botón de notificaciones: clase `bell-glass` (cristal azul translúcido con borde definido y reflejo).
+- Ícono principal: diente de cristal en azul cielo (`public/dentalflow-app-icon-sky.png`, `dentalflow-app-icon-3d-sky.png` y `dentalflow-mark-sky.png`). Si se recolorea una imagen, cambiarle el nombre para no chocar con la caché de imágenes de Next.
 - Tipografía: Inter.
 - Botones estilo vidrio (glassmorphism).
-- El color **teal se reserva solo para funciones de IA**.
+- El color **teal se reserva solo para funciones de IA** y debe verse claramente más verde que el azul de la app.
+- Historial: la versión anterior en azul marino `#154360` + aguamarina `#8FD3C4` está en el commit `aa64a2f`.
 
 ## Alcance
 - **MVP (fase 1):** login con los 3 roles, Pacientes, Citas y Turnos; datos guardados en Supabase.

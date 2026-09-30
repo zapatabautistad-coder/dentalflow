@@ -75,7 +75,7 @@ function EntryForm({
   const saved = state && "saved" in state;
 
   if (saved && original) {
-    return <p role="status" className="mt-2 text-sm font-medium text-[#154360]">Corrección guardada.</p>;
+    return <p role="status" className="mt-2 text-sm font-medium text-[#0766B5]">Corrección guardada.</p>;
   }
 
   return (
@@ -94,8 +94,8 @@ function EntryForm({
               onClick={() => setKind(option)}
               className={`min-h-11 rounded-xl border px-3 text-[15px] font-semibold transition ${
                 kind === option
-                  ? "border-[#154360] bg-[#154360] text-white"
-                  : "border-white/80 bg-white/60 text-[#154360] hover:border-[#8FD3C4]"
+                  ? "border-[#0766B5] bg-[#0766B5] text-white"
+                  : "border-white/80 bg-white/60 text-[#0766B5] hover:border-[#95D3FA]"
               }`}
             >
               {KIND_LABELS[option]}
@@ -176,7 +176,7 @@ function EntryForm({
         </p>
       )}
       {saved && !original && (
-        <p role="status" className="rounded-xl border border-[#8FD3C4] bg-[#8FD3C4]/15 px-3 py-2 text-sm font-medium text-[#154360]">
+        <p role="status" className="rounded-xl border border-[#95D3FA] bg-[#95D3FA]/15 px-3 py-2 text-sm font-medium text-[#0766B5]">
           Entrada guardada y firmada. Ya no se puede editar ni borrar.
         </p>
       )}
@@ -256,7 +256,7 @@ export function ClinicalRecord({
                 className={`rounded-2xl border p-4 ${correction ? "border-slate-200 bg-slate-50/80" : "border-white/80 bg-white/60"}`}
               >
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="rounded-full border border-[#154360]/20 bg-[#154360]/5 px-2.5 py-0.5 text-sm font-semibold text-[#154360]">
+                  <span className="rounded-full border border-[#0766B5]/20 bg-[#0766B5]/5 px-2.5 py-0.5 text-sm font-semibold text-[#0766B5]">
                     {KIND_LABELS[entry.kind]}
                   </span>
                   {entry.corrects_entry_id && (

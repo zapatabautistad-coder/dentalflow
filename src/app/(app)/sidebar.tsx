@@ -255,13 +255,13 @@ function NotificationPopover({
         aria-controls={id}
         title={label}
         onClick={() => setOpen((value) => !value)}
-        className={`relative flex shrink-0 items-center justify-center text-white transition ${
+        className={`relative flex shrink-0 items-center justify-center transition ${
           floating
-            ? "h-12 w-12 rounded-2xl border border-[#8FD3C4]/70 bg-[#154360] shadow-[0_14px_30px_-12px_rgba(21,67,96,0.85)] hover:bg-[#1B5478]"
-            : "h-11 w-11 rounded-xl border border-white/30 bg-white/10 hover:bg-white/20"
+            ? "bell-glass h-12 w-12 rounded-2xl text-white"
+            : "bell-glass h-11 w-11 rounded-xl text-white"
         } ${hasItems && !open ? "notify-blink" : ""}`}
       >
-        <Icon name="tooth" className={floating ? "h-7 w-7" : "h-6 w-6"} />
+        <Icon name="tooth" className={`${floating ? "h-7 w-7" : "h-6 w-6"} drop-shadow-[0_1px_2px_rgba(7,102,181,0.65)]`} />
         {hasItems && (
           <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5">
             <span className="notify-ping absolute inline-flex h-full w-full rounded-full bg-rose-500 opacity-75" />
@@ -300,7 +300,7 @@ function NotificationPopover({
                   <Link
                     href={item.href}
                     onClick={() => setOpen(false)}
-                    className="block min-w-0 break-words rounded-xl px-3 py-2.5 text-sm text-slate-700 transition hover:bg-white/70 hover:text-[#154360]"
+                    className="block min-w-0 break-words rounded-xl px-3 py-2.5 text-sm text-slate-700 transition hover:bg-white/70 hover:text-[#0766B5]"
                   >
                     <NotificationLabel item={item} />
                   </Link>
@@ -348,7 +348,7 @@ function Brand({ compact = false, onNavigate }: { compact?: boolean; onNavigate?
       href="/panel"
       onClick={onNavigate}
       aria-label="Ir al panel"
-      className={`flex min-w-0 items-center gap-3.5 ${compact ? "" : "select-none border-b border-white/10 px-1 pb-5"}`}
+      className={`flex min-w-0 items-center gap-3.5 ${compact ? "" : "select-none border-b border-[#0E9BF3]/25 px-1 pb-5"}`}
     >
       <div
         className={`relative flex shrink-0 items-center justify-center transition-transform duration-200 hover:scale-105 ${
@@ -357,26 +357,26 @@ function Brand({ compact = false, onNavigate }: { compact?: boolean; onNavigate?
       >
         {/* Ícono 3D: disco de vidrio con el diente, con sombra de profundidad y brillo aguamarina */}
         <Image
-          src="/dentalflow-app-icon.png"
+          src="/dentalflow-app-icon-sky.png"
           alt="DentalFlow"
           width={512}
           height={512}
           priority
-          className="h-full w-full [filter:drop-shadow(0_12px_14px_rgba(4,20,30,0.55))_drop-shadow(0_0_10px_rgba(143,211,196,0.6))]"
+          className="h-full w-full [filter:drop-shadow(0_12px_14px_rgba(7,55,90,0.55))_drop-shadow(0_0_10px_rgba(149,211,250,0.6))]"
         />
 
         <span className={`absolute flex h-3 w-3 ${compact ? "right-0 top-0" : "right-1.5 top-1.5"}`}>
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#8FD3C4] opacity-75" />
-          <span className="relative inline-flex h-3 w-3 rounded-full border-2 border-white bg-[#8FD3C4] shadow-sm" />
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#95D3FA] opacity-75" />
+          <span className="relative inline-flex h-3 w-3 rounded-full border-2 border-white bg-[#95D3FA] shadow-sm" />
         </span>
       </div>
 
       <div className="flex min-w-0 flex-col">
-        <span className="text-[20px] font-semibold leading-none tracking-[-0.03em] text-white drop-shadow-sm">
+        <span className="text-[20px] font-semibold leading-none tracking-[-0.03em] text-[#062F55] drop-shadow-sm">
           DentalFlow
         </span>
-        <span aria-hidden="true" className="my-2 block h-px w-7 bg-gradient-to-r from-[#8FD3C4] to-transparent" />
-        <span className="line-clamp-2 text-xs font-medium uppercase leading-[1.55] tracking-[0.08em] text-[#B8E6DE]/80">
+        <span aria-hidden="true" className="my-2 block h-px w-7 bg-gradient-to-r from-[#95D3FA] to-transparent" />
+        <span className="line-clamp-2 text-xs font-medium uppercase leading-[1.55] tracking-[0.08em] text-[#0766B5]/80">
           {CLINIC_NAME}
         </span>
       </div>
@@ -393,7 +393,7 @@ function NavList({ pathname, isAdmin, onNavigate }: { pathname: string; isAdmin:
             <div
               key={item.label}
               aria-disabled="true"
-              className={`${NAV_ITEM} cursor-default border-transparent text-white/90`}
+              className={`${NAV_ITEM} cursor-default border-transparent text-[#062F55]/90`}
             >
               <Icon name={item.icon} className="h-[22px] w-[22px] shrink-0" />
               <span className="min-w-0 flex-1 truncate" data-i18n={item.key ?? item.label}>{item.label}</span>
@@ -412,15 +412,15 @@ function NavList({ pathname, isAdmin, onNavigate }: { pathname: string; isAdmin:
             aria-current={active ? "page" : undefined}
             className={`${NAV_ITEM} ${
               active
-                ? "border-white/30 bg-white/10 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.28),0_14px_28px_-18px_rgba(143,211,196,0.9)] before:absolute before:inset-x-2 before:top-0 before:h-8 before:rounded-full before:bg-[radial-gradient(circle,_rgba(143,211,196,0.52),_transparent_68%)] before:blur-lg before:content-['']"
-                : "border-transparent bg-white/[0.03] text-white/85 hover:border-white/20 hover:bg-white/8 hover:text-white"
+                ? "border-[#0E9BF3]/40 bg-white/85 text-[#062F55] shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_14px_28px_-18px_rgba(149,211,250,0.9)] before:absolute before:inset-x-2 before:top-0 before:h-8 before:rounded-full before:bg-[radial-gradient(circle,_rgba(149,211,250,0.52),_transparent_68%)] before:blur-lg before:content-['']"
+                : "border-transparent bg-transparent text-[#062F55]/85 hover:border-[#0E9BF3]/40 hover:bg-white/80 hover:text-[#062F55]"
             }`}
           >
             <span
               className={`flex h-9 w-9 items-center justify-center rounded-xl border ${
                 active
-                  ? "border-white/25 bg-white/12 text-[#D6F7F1] shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]"
-                  : "border-white/10 bg-white/[0.04] text-white/80"
+                  ? "border-[#0E9BF3]/25 bg-white/55 text-[#0766B5] shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]"
+                  : "border-[#0E9BF3]/25 bg-white/55 text-[#062F55]/80"
               }`}
             >
               <Icon name={item.icon} className="h-[18px] w-[18px] shrink-0" />
@@ -465,19 +465,19 @@ function LanguageToggle() {
         aria-expanded={open}
         aria-label="Seleccionar idioma"
         onClick={() => setOpen((value) => !value)}
-        className={`lang-toggle relative flex w-full items-center justify-between gap-2 rounded-xl border px-2.5 py-2 text-left text-white transition-all duration-200 ease-out ${
-          open ? "border-white/45 bg-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.28),0_0_0_1px_rgba(143,211,196,0.18)]" : "border-white/20 bg-white/5 hover:border-white/35 hover:bg-white/8"
+        className={`lang-toggle relative flex w-full items-center justify-between gap-2 rounded-xl border px-2.5 py-2 text-left text-[#062F55] transition-all duration-200 ease-out ${
+          open ? "border-white/45 bg-white/55 shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_0_0_1px_rgba(149,211,250,0.18)]" : "border-[#0E9BF3]/25 bg-white/5 hover:border-white/35 hover:bg-white/80"
         }`}
       >
-        <span className="text-xs font-black uppercase tracking-[0.08em] text-white/60">Idioma</span>
-        <span className="flex items-center gap-2 rounded-full border border-white/15 bg-white/6 px-2 py-0.5 text-xs font-bold tracking-[0.08em] text-white/90 shadow-[inset_0_1px_0_rgba(255,255,255,0.14)]">
-          <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#8FD3C4] shadow-[0_0_10px_rgba(143,211,196,0.8)]" />
+        <span className="text-xs font-black uppercase tracking-[0.08em] text-[#062F55]/60">Idioma</span>
+        <span className="flex items-center gap-2 rounded-full border border-[#0E9BF3]/25 bg-white/55 px-2 py-0.5 text-xs font-bold tracking-[0.08em] text-[#062F55]/90 shadow-[inset_0_1px_0_rgba(255,255,255,0.14)]">
+          <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#95D3FA] shadow-[0_0_10px_rgba(149,211,250,0.8)]" />
           {selected.code.toUpperCase()}
         </span>
       </button>
 
       <div
-        className={`absolute inset-x-0 top-[calc(100%+0.55rem)] z-20 origin-top overflow-hidden rounded-2xl border border-white/15 bg-[#0f3149]/96 p-1.5 shadow-[0_18px_42px_-20px_rgba(15,23,42,0.8)] backdrop-blur-xl transition-all duration-220 ease-[cubic-bezier(0.2,0.8,0.2,1)] ${
+        className={`absolute inset-x-0 top-[calc(100%+0.55rem)] z-20 origin-top overflow-hidden rounded-2xl border border-[#0E9BF3]/25 bg-[#062F55]/96 p-1.5 shadow-[0_18px_42px_-20px_rgba(15,23,42,0.8)] backdrop-blur-xl transition-all duration-220 ease-[cubic-bezier(0.2,0.8,0.2,1)] ${
           open
             ? "pointer-events-auto scale-y-100 opacity-100 translate-y-0"
             : "pointer-events-none scale-y-95 opacity-0 -translate-y-1"
@@ -499,15 +499,15 @@ function LanguageToggle() {
                   event.currentTarget.style.setProperty("--x", `${x}%`);
                   event.currentTarget.style.setProperty("--y", `${y}%`);
                   event.currentTarget.style.background = active
-                    ? "linear-gradient(135deg, rgba(255,255,255,0.12), rgba(143,211,196,0.14))"
-                    : "radial-gradient(circle at var(--x) var(--y), rgba(143,211,196,0.22), transparent 26%), rgba(255,255,255,0.02)";
+                    ? "linear-gradient(135deg, rgba(255,255,255,0.12), rgba(149,211,250,0.14))"
+                    : "radial-gradient(circle at var(--x) var(--y), rgba(149,211,250,0.22), transparent 26%), rgba(255,255,255,0.02)";
                   event.currentTarget.style.boxShadow = active
-                    ? "inset 0 0 0 1px rgba(255,255,255,0.12), 0 0 18px rgba(143,211,196,0.18)"
+                    ? "inset 0 0 0 1px rgba(255,255,255,0.12), 0 0 18px rgba(149,211,250,0.18)"
                     : "inset 0 0 0 1px rgba(255,255,255,0.04)";
                 }}
                 onMouseLeave={(event) => {
                   event.currentTarget.style.background = active ? "rgba(255,255,255,0.12)" : "transparent";
-                  event.currentTarget.style.boxShadow = active ? "inset 0 0 0 1px rgba(255,255,255,0.12), 0 0 18px rgba(143,211,196,0.18)" : "none";
+                  event.currentTarget.style.boxShadow = active ? "inset 0 0 0 1px rgba(255,255,255,0.12), 0 0 18px rgba(149,211,250,0.18)" : "none";
                 }}
                 onClick={() => {
                   setSelected(lang);
@@ -515,17 +515,17 @@ function LanguageToggle() {
                   setOpen(false);
                 }}
                 className={`relative flex w-full items-center justify-between overflow-hidden rounded-xl px-2.5 py-2 text-left text-[13px] transition-all duration-150 ${
-                  active ? "text-white" : "text-white/80 hover:text-white"
+                  active ? "text-[#062F55]" : "text-[#062F55]/80 hover:text-[#062F55]"
                 }`}
                 style={{
                   background: active ? "rgba(255,255,255,0.12)" : "transparent",
-                  boxShadow: active ? "inset 0 0 0 1px rgba(255,255,255,0.12), 0 0 18px rgba(143,211,196,0.18)" : "none",
+                  boxShadow: active ? "inset 0 0 0 1px rgba(255,255,255,0.12), 0 0 18px rgba(149,211,250,0.18)" : "none",
                 }}
               >
                 <span className="relative z-10">{lang.name}</span>
                 <span
                   className={`relative z-10 text-xs font-black uppercase tracking-[0.08em] transition-opacity duration-150 ${
-                    active ? "text-[#8FD3C4] opacity-100" : "opacity-0"
+                    active ? "text-[#0E9BF3] opacity-100" : "opacity-0"
                   }`}
                 >
                   {active ? "ON" : ""}
@@ -543,21 +543,21 @@ function ProfileCard({ fullName, roleLabel }: ProfileProps) {
   return (
     <div className="profile-glass rounded-2xl p-3">
       <div className="flex items-center gap-3">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#8FD3C4] text-sm font-bold text-[#154360] shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_6px_14px_-6px_rgba(6,28,40,0.7)]">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#95D3FA] text-sm font-bold text-[#0766B5] shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_6px_14px_-6px_rgba(7,102,181,0.4)]">
           {initialsOf(fullName)}
         </span>
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-white">{fullName}</p>
-          <p className="truncate text-xs text-white/70">
+          <p className="truncate text-sm font-semibold text-[#062F55]">{fullName}</p>
+          <p className="truncate text-xs text-[#062F55]/70">
             {roleLabel} · {CLINIC_NAME}
           </p>
         </div>
       </div>
 
-      <form action={logout} className="mt-3 border-t border-white/15 pt-2">
+      <form action={logout} className="mt-3 border-t border-[#0E9BF3]/25 pt-2">
         <button
           type="submit"
-          className="flex w-full items-center gap-3 rounded-xl px-2 py-1.5 text-sm font-medium text-white/90 transition hover:bg-white/10 hover:text-white"
+          className="flex w-full items-center gap-3 rounded-xl px-2 py-1.5 text-sm font-medium text-[#062F55]/90 transition hover:bg-white/55 hover:text-[#062F55]"
         >
           <Icon name="logout" className="h-5 w-5" />
           Cerrar sesión
@@ -571,14 +571,14 @@ function SidebarFooter({ fullName, roleLabel }: ProfileProps) {
   return (
     <div className="space-y-4">
       <div className="px-2 [@media(max-height:860px)]:hidden">
-        <p className="text-[15px] leading-snug text-white/85">
+        <p className="text-[15px] leading-snug text-[#062F55]/85">
           Sonrisas
           <br />
           que inspiran
           <br />
           vidas mejores
         </p>
-        <span aria-hidden="true" className="mt-3 block h-px w-10 bg-[#8FD3C4]/80" />
+        <span aria-hidden="true" className="mt-3 block h-px w-10 bg-[#95D3FA]/80" />
       </div>
       <LanguageToggle />
       <ProfileCard fullName={fullName} roleLabel={roleLabel} />
@@ -590,7 +590,7 @@ function SidebarFooter({ fullName, roleLabel }: ProfileProps) {
 function Watermark({ className }: { className: string }) {
   return (
     <Image
-      src="/dentalflow-mark.png"
+      src="/dentalflow-mark-sky.png"
       alt=""
       aria-hidden="true"
       width={389}
@@ -674,7 +674,7 @@ export function Sidebar({ fullName, roleLabel, isAdmin }: SidebarProps) {
               aria-label="Abrir menú"
               aria-expanded={mobileOpen}
               onClick={() => setMobileOpen(true)}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/30 bg-white/10 text-white transition hover:bg-white/20"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#0E9BF3]/25 bg-white/55 text-[#062F55] transition hover:bg-white/90"
             >
               <Icon name="menu" className="h-6 w-6" />
             </button>
@@ -692,7 +692,7 @@ export function Sidebar({ fullName, roleLabel, isAdmin }: SidebarProps) {
                   type="button"
                   aria-label="Cerrar menú"
                   onClick={() => setMobileOpen(false)}
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/30 bg-white/10 text-white transition hover:bg-white/20"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#0E9BF3]/25 bg-white/55 text-[#062F55] transition hover:bg-white/90"
                 >
                   <Icon name="close" className="h-6 w-6" />
                 </button>
