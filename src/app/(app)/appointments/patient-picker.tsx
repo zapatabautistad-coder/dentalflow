@@ -51,7 +51,7 @@ export function PatientPicker({
             setSelected(null);
             setTerm("");
           }}
-          className="shrink-0 rounded-lg border border-white/90 bg-white/70 px-3 py-1.5 text-[13px] font-semibold text-slate-700 transition hover:border-[#0369A1] hover:text-[#0369A1]"
+          className="shrink-0 rounded-lg border border-white/90 bg-white/70 px-3 py-1.5 text-[13px] font-semibold text-slate-700 transition hover:border-[#154360] hover:text-[#154360]"
           data-i18n="patient.change"
         >
           Cambiar
@@ -79,7 +79,7 @@ export function PatientPicker({
       />
 
       {open && (
-        <div className="absolute z-20 mt-1.5 w-full overflow-hidden rounded-xl border border-white/80 bg-white/95 shadow-[0_12px_30px_-12px_rgba(3,105,161,0.4)] backdrop-blur-md">
+        <div className="absolute z-20 mt-1.5 w-full overflow-hidden rounded-xl border border-white/80 bg-white/95 shadow-[0_12px_30px_-12px_rgba(21,67,96,0.4)] backdrop-blur-md">
           {results.length === 0 ? (
             <p className="px-4 py-3 text-sm text-slate-500" data-i18n="patient.search.empty">Sin resultados.</p>
           ) : (
@@ -91,7 +91,7 @@ export function PatientPicker({
                   setSelected(patient);
                   setOpen(false);
                 }}
-                className="flex w-full flex-col items-start px-4 py-2.5 text-left transition hover:bg-[#0369A1]/6"
+                className="flex w-full flex-col items-start px-4 py-2.5 text-left transition hover:bg-[#154360]/6"
               >
                 <span className="text-sm font-semibold text-slate-800">{patient.full_name}</span>
                 {patient.document_id && (
