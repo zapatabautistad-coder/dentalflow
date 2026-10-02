@@ -35,6 +35,11 @@ export function canWriteOdontogram(role: Role) {
   return role === "doctor";
 }
 
+// Solo el doctor arma el plan de tratamiento y cambia sus estados (ver RLS en 019_treatment_plan.sql).
+export function canWriteTreatmentPlan(role: Role) {
+  return role === "doctor";
+}
+
 // Roles que pueden crear, editar y cancelar citas (ver RLS en 001_mvp.sql
 // y 003_doctor_status_update.sql). El doctor solo cambia el estado de las suyas.
 export function canManageAppointments(role: Role) {

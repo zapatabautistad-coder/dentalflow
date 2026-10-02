@@ -264,6 +264,9 @@ export default async function PatientChartPage({ params }: { params: Promise<{ i
           <Link href={`/patients/${patient.id}/odontograma`} className="glass-button-light min-h-11 text-[15px]" data-i18n="odontogram.title">
             Odontograma
           </Link>
+          <Link href={`/patients/${patient.id}/plan-tratamiento`} className="glass-button-light min-h-11 text-[15px]" data-i18n="plan.title">
+            Plan de tratamiento
+          </Link>
           {canManageAppointments(profile.role) && (
             <Link
               href={`/appointments/new?patient=${patient.id}`}

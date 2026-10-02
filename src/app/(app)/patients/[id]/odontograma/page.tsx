@@ -38,14 +38,19 @@ export default async function OdontogramPage({ params }: { params: Promise<{ id:
         ← {patient.full_name}
       </Link>
 
-      <header>
-        <h1 className="text-[1.6rem] font-black text-[#0F172A]" data-i18n="odontogram.title">Odontograma</h1>
-        <p className="mt-1 text-sm text-slate-600">
-          <span data-i18n="chart.recordNo">Expediente N.°</span> {String(patient.record_number).padStart(4, "0")} ·{" "}
-          <span data-i18n="odontogram.subtitle">
-            Cada hallazgo queda firmado con fecha y hora. No se borra: un error se anula con motivo.
-          </span>
-        </p>
+      <header className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-[1.6rem] font-black text-[#0F172A]" data-i18n="odontogram.title">Odontograma</h1>
+          <p className="mt-1 text-sm text-slate-600">
+            <span data-i18n="chart.recordNo">Expediente N.°</span> {String(patient.record_number).padStart(4, "0")} ·{" "}
+            <span data-i18n="odontogram.subtitle">
+              Cada hallazgo queda firmado con fecha y hora. No se borra: un error se anula con motivo.
+            </span>
+          </p>
+        </div>
+        <Link href={`/patients/${patient.id}/plan-tratamiento`} className="glass-button-light min-h-11 text-[15px]" data-i18n="plan.title">
+          Plan de tratamiento
+        </Link>
       </header>
 
       {error ? (
