@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { canManageAppointments, canManagePatients, canWriteClinicalEntries, requireProfile } from "@/lib/auth";
+import { canManageAppointments, canManagePatients, canViewBilling, canWriteClinicalEntries, requireProfile } from "@/lib/auth";
 import { formatDominicanDocumentId, formatDominicanPhone } from "@/lib/phone";
 import {
   TIME_ZONE,
@@ -267,6 +267,11 @@ export default async function PatientChartPage({ params }: { params: Promise<{ i
           <Link href={`/patients/${patient.id}/plan-tratamiento`} className="glass-button-light min-h-11 text-[15px]" data-i18n="plan.title">
             Plan de tratamiento
           </Link>
+          {canViewBilling(profile.role) && (
+            <Link href={`/patients/${patient.id}/facturacion`} className="glass-button-light min-h-11 text-[15px]" data-i18n="billing.title">
+              Facturación
+            </Link>
+          )}
           {canManageAppointments(profile.role) && (
             <Link
               href={`/appointments/new?patient=${patient.id}`}
