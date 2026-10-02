@@ -2,8 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { canWriteTreatmentPlan, requireProfile } from "@/lib/auth";
-import { isValidTooth, SURFACES, type Surface } from "@/lib/odontogram";
+import { canWriteOdontogram, canWriteTreatmentPlan, requireProfile } from "@/lib/auth";
+import { CONDITION_LABELS, isSurfaceCondition, isValidTooth, SURFACES, type OdontogramCondition, type Surface } from "@/lib/odontogram";
 import { parseCost, type TreatmentStatus } from "@/lib/treatment-plan";
 
 export type PlanFormState = { error?: string; savedAt?: number } | undefined;
@@ -66,8 +66,40 @@ export async function movePlanItem(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.from("treatment_plan_items").update(update).eq("id", itemId).eq("patient_id", patientId);
-  if (error) return { error: "No se pudo cambiar el estado. Recarga la página e inténtalo de nuevo." };
+  const { data: item, error } = await supabase
+    .from("treatment_plan_items")
+    .update(update)
+    .eq("id", itemId)
+    .eq("patient_id", patientId)
+    .select("tooth, surfaces, procedure")
+    .maybeSingle<{ tooth: number | null; surfaces: Surface[] | null; procedure: string }>();
+  if (error || !item) return { error: "No se pudo cambiar el estado. Recarga la página e inténtalo de nuevo." };
+
+  // Opcional: registrar el resultado en el odontograma en el mismo paso.
+  // Diente y superficies salen del procedimiento guardado, no del formulario.
+  const condition = String(formData.get("odontogram_condition") ?? "") as OdontogramCondition;
+  if (status === "completado" && condition && item.tooth !== null) {
+    refresh(patientId);
+    revalidatePath(`/patients/${patientId}/odontograma`);
+    if (!(condition in CONDITION_LABELS) || !canWriteOdontogram(profile.role)) {
+      return { error: "El procedimiento quedó completado, pero no se pudo registrar en el odontograma." };
+    }
+    const surfaceCondition = isSurfaceCondition(condition);
+    if (surfaceCondition && !item.surfaces?.length) {
+      return { error: "El procedimiento quedó completado. Para el odontograma faltan las superficies: regístralo allí." };
+    }
+    const { error: odontogramError } = await supabase.from("odontogram_entries").insert({
+      patient_id: patientId,
+      tooth: item.tooth,
+      condition,
+      surfaces: surfaceCondition ? item.surfaces : null,
+      note: `Plan de tratamiento: ${item.procedure}`.slice(0, 500),
+    });
+    if (odontogramError) {
+      return { error: "El procedimiento quedó completado, pero no se pudo registrar en el odontograma. Regístralo allí." };
+    }
+    return { savedAt: Date.now() };
+  }
 
   refresh(patientId);
   return { savedAt: Date.now() };

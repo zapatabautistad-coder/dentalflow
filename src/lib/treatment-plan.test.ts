@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canMoveTreatment, parseCost, treatmentTotals } from "./treatment-plan";
+import { canMoveTreatment, parseCost, suggestOdontogramCondition, treatmentTotals } from "./treatment-plan";
 
 describe("canMoveTreatment", () => {
   it("permite avanzar y cancelar mientras no esté terminado", () => {
@@ -40,5 +40,21 @@ describe("parseCost", () => {
     expect(parseCost("abc")).toBeNaN();
     expect(parseCost("-5")).toBeNaN();
     expect(parseCost("10.999")).toBeNaN();
+  });
+});
+
+describe("suggestOdontogramCondition", () => {
+  it("sugiere la condición según el procedimiento", () => {
+    expect(suggestOdontogramCondition("Resina compuesta", true)).toBe("obturacion");
+    expect(suggestOdontogramCondition("Endodoncia", false)).toBe("endodoncia");
+    expect(suggestOdontogramCondition("Corona de zirconio", false)).toBe("corona");
+    expect(suggestOdontogramCondition("Extracción de cordal", false)).toBe("ausente");
+    expect(suggestOdontogramCondition("Implante dental", false)).toBe("implante");
+    expect(suggestOdontogramCondition("Sellante de fosas y fisuras", true)).toBe("sellante");
+  });
+
+  it("no sugiere condiciones de superficie sin superficies", () => {
+    expect(suggestOdontogramCondition("Resina compuesta", false)).toBeNull();
+    expect(suggestOdontogramCondition("Profilaxis (limpieza)", false)).toBeNull();
   });
 });

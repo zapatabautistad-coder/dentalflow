@@ -66,3 +66,24 @@ export function parseCost(raw: string): number | null {
   if (!/^\d+(\.\d{1,2})?$/.test(cleaned)) return Number.NaN;
   return Number(cleaned);
 }
+
+// Condición del odontograma que corresponde a un procedimiento terminado,
+// para sugerirla al marcarlo completado. Las de superficie solo si el
+// procedimiento tiene superficies. null = sin sugerencia.
+export function suggestOdontogramCondition(
+  procedure: string,
+  hasSurfaces: boolean
+): "obturacion" | "sellante" | "endodoncia" | "corona" | "ausente" | "implante" | null {
+  const text = procedure
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase();
+  if (/implante|implant/.test(text)) return "implante";
+  if (/extracc|exodoncia|cordal|extraction|wisdom/.test(text)) return "ausente";
+  if (/endodon|conducto|root canal/.test(text)) return "endodoncia";
+  if (/corona|crown/.test(text)) return "corona";
+  if (!hasSurfaces) return null;
+  if (/sellante|sealant/.test(text)) return "sellante";
+  if (/resina|amalgama|obturac|incrustac|composite|filling/.test(text)) return "obturacion";
+  return null;
+}

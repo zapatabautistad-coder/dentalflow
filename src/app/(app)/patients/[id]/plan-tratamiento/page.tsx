@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { canWriteTreatmentPlan, requireProfile } from "@/lib/auth";
+import { canWriteOdontogram, canWriteTreatmentPlan, requireProfile } from "@/lib/auth";
 import { addPlanItem, movePlanItem } from "./actions";
 import { TreatmentPlan, type PlanItem } from "./treatment-plan";
 
@@ -59,6 +59,7 @@ export default async function TreatmentPlanPage({ params }: { params: Promise<{ 
           patientId={patient.id}
           items={data ?? []}
           canWrite={canWriteTreatmentPlan(profile.role) && !patient.archived_at}
+          canWriteOdontogram={canWriteOdontogram(profile.role) && !patient.archived_at}
           addAction={addPlanItem.bind(null, patient.id)}
           moveAction={movePlanItem}
         />

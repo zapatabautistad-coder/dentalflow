@@ -1,11 +1,12 @@
 "use client";
 
 import { useActionState } from "react";
-import { SURFACES, SURFACE_LABELS } from "@/lib/odontogram";
+import { CONDITION_LABELS, SURFACE_CONDITIONS, SURFACES, SURFACE_LABELS, TOOTH_CONDITIONS, type OdontogramCondition } from "@/lib/odontogram";
 import {
   COMMON_PROCEDURES,
   TREATMENT_STATUS_LABELS,
   formatPesos,
+  suggestOdontogramCondition,
   treatmentTotals,
   type TreatmentStatus,
 } from "@/lib/treatment-plan";
@@ -116,14 +117,34 @@ function MoveButton({
   action,
   status,
   className,
+  odontogramFor,
 }: {
   action: (prev: PlanFormState, formData: FormData) => Promise<PlanFormState>;
   status: "en_proceso" | "completado";
   className: string;
+  // Al completar un procedimiento con diente: ofrecer registrarlo en el odontograma.
+  odontogramFor?: { procedure: string; hasSurfaces: boolean };
 }) {
   const [state, formAction, pending] = useActionState(action, undefined);
+  const options: OdontogramCondition[] = odontogramFor
+    ? [...(odontogramFor.hasSurfaces ? SURFACE_CONDITIONS : []), ...TOOTH_CONDITIONS]
+    : [];
+  const suggested = odontogramFor ? suggestOdontogramCondition(odontogramFor.procedure, odontogramFor.hasSurfaces) : null;
   return (
     <form action={formAction} className="flex flex-col gap-1">
+      {odontogramFor && (
+        <label className="flex flex-col gap-1 text-xs font-medium text-slate-600">
+          <span data-i18n="plan.toOdontogram">Registrar en el odontograma</span>
+          <select name="odontogram_condition" defaultValue={suggested ?? ""} className="glass-input min-h-10 text-sm">
+            <option value="" data-i18n="plan.toOdontogram.none">No registrar</option>
+            {options.map((condition) => (
+              <option key={condition} value={condition} data-i18n={`odontogram.cond.${condition}`}>
+                {CONDITION_LABELS[condition]}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
       <button type="submit" disabled={pending} className={className}>
         <span data-i18n={status === "completado" ? "plan.markDone" : "plan.start"}>
           {status === "completado" ? "Marcar completado" : "Iniciar"}
@@ -166,12 +187,14 @@ export function TreatmentPlan({
   patientId,
   items,
   canWrite,
+  canWriteOdontogram,
   addAction,
   moveAction,
 }: {
   patientId: string;
   items: PlanItem[];
   canWrite: boolean;
+  canWriteOdontogram: boolean;
   addAction: AddAction;
   moveAction: MoveAction;
 }) {
@@ -253,7 +276,7 @@ export function TreatmentPlan({
                   </div>
 
                   {canWrite && open && (
-                    <div className="mt-3 flex flex-wrap items-start gap-2">
+                    <div className="mt-3 flex flex-wrap items-end gap-2">
                       {item.status === "pendiente" && (
                         <MoveButton
                           action={moveAction.bind(null, patientId, item.id, "en_proceso")}
@@ -264,6 +287,11 @@ export function TreatmentPlan({
                       <MoveButton
                         action={moveAction.bind(null, patientId, item.id, "completado")}
                         status="completado"
+                        odontogramFor={
+                          canWriteOdontogram && item.tooth
+                            ? { procedure: item.procedure, hasSurfaces: Boolean(item.surfaces?.length) }
+                            : undefined
+                        }
                         className="glass-button min-h-10 px-3 text-sm font-semibold disabled:opacity-60"
                       />
                       <CancelForm action={moveAction.bind(null, patientId, item.id, "cancelado")} />
