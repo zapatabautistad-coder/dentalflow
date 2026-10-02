@@ -12,7 +12,7 @@ import {
 } from "@/lib/timezone";
 import { StatusChip } from "../appointments/status-chip";
 import { checkInAppointment } from "../waiting-room/actions";
-import { arsName } from "@/lib/insurance";
+import { InsuranceLabel } from "../insurance-label";
 
 export const metadata: Metadata = { title: "Panel · DentalFlow" };
 
@@ -51,11 +51,6 @@ type ReviewPatient = {
 
 type ReviewPatientsResult = { patients: ReviewPatient[]; error: boolean };
 
-function insuranceLabel(patient: RecentPatient) {
-  if (patient.insurance_type === "ars") return arsName(patient.insurance_provider);
-  if (patient.insurance_type === "privado") return "Privado";
-  return "Sin aseguradora";
-}
 
 type ReviewRpcRow = {
   patient_id: string;
@@ -256,7 +251,7 @@ export default async function PanelPage() {
           >
             Hola, {profile.fullName}
           </h1>
-          <p className="mt-1 text-[13px] font-bold uppercase tracking-[0.08em] text-slate-500">{formatDateLong(dateKey)}</p>
+          <p className="mt-1 text-[13px] font-bold uppercase tracking-[0.08em] text-slate-500" data-i18n-date={dateKey}>{formatDateLong(dateKey)}</p>
         </div>
 
         {canManageAgenda && (
@@ -358,10 +353,10 @@ export default async function PanelPage() {
                   <>
                     <div className="min-w-0">
                       <p className="truncate text-[13px] font-bold text-[#0F172A]">{patient.full_name}</p>
-                      <p className="truncate text-xs text-slate-500">{insuranceLabel(patient)}</p>
+                      <p className="truncate text-xs text-slate-500"><InsuranceLabel type={patient.insurance_type} provider={patient.insurance_provider} /></p>
                     </div>
                     <span className="shrink-0 text-xs font-black tracking-[0.12em] text-[#0766B5]">
-                      N.° {String(patient.record_number).padStart(4, "0")}
+                      <span data-i18n="patients.recordShort">N.°</span> {String(patient.record_number).padStart(4, "0")}
                     </span>
                   </>
                 );

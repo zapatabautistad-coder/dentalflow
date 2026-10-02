@@ -102,7 +102,7 @@ export default async function WaitingRoomPage({
       <AutoRefresh />
       <header>
         <h1 className="text-[1.6rem] font-black text-[#0F172A]" data-i18n="waitingRoom.title">Sala de espera</h1>
-        <p className="mt-1 text-[13px] font-bold uppercase text-slate-500">{formatDateLong(dateKey)}</p>
+        <p className="mt-1 text-[13px] font-bold uppercase text-slate-500" data-i18n-date={dateKey}>{formatDateLong(dateKey)}</p>
       </header>
 
       {isDoctor && (

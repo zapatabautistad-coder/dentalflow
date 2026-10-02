@@ -55,7 +55,7 @@ export default async function EditAppointmentPage({
     return (
       <div className="crystal-card mx-auto w-full max-w-lg rounded-3xl p-5 sm:p-8">
         <h1 className="text-xl font-bold">Cita de {appointment.patients?.full_name ?? "paciente"}</h1>
-        <p className="mt-1 text-sm text-slate-500">{formatDateLong(dateKey)}</p>
+        <p className="mt-1 text-sm text-slate-500" data-i18n-date={dateKey}>{formatDateLong(dateKey)}</p>
 
         <div className="mt-4 space-y-1.5 rounded-2xl border border-white/70 bg-white/50 p-4 text-sm">
           <p>

@@ -48,10 +48,15 @@ function formatStamp(iso: string): string {
   }).format(new Date(iso));
 }
 
-function author(entry: ClinicalEntry): string {
+function author(entry: ClinicalEntry) {
   const name = entry.profiles?.full_name ?? "Usuario desconocido";
   const role = entry.author_role ? ROLE_LABELS[entry.author_role] ?? entry.author_role : null;
-  return role ? `${name} (${role})` : name;
+  if (!role) return name;
+  return (
+    <>
+      {name} (<span data-i18n={`role.${entry.author_role}`}>{role}</span>)
+    </>
+  );
 }
 
 function EntryForm({
@@ -98,7 +103,7 @@ function EntryForm({
                   : "border-white/80 bg-white/60 text-[#0766B5] hover:border-[#95D3FA]"
               }`}
             >
-              {KIND_LABELS[option]}
+              <span data-i18n={`clinical.kind.${option}`}>{KIND_LABELS[option]}</span>
             </button>
           ))}
         </div>
@@ -207,7 +212,7 @@ function EntryContent({ entry }: { entry: ClinicalEntry }) {
           <span className="font-semibold">{entry.medication_name}</span> · {entry.dose} · {entry.route}
           {entry.administered_at && (
             <>
-              {" "}· administrado {formatShortDate(splitLocalDateTime(entry.administered_at).dateKey)} {formatHour(entry.administered_at)}
+              {" "}· <span data-i18n="clinical.administered">administrado</span> {formatShortDate(splitLocalDateTime(entry.administered_at).dateKey)} {formatHour(entry.administered_at)}
             </>
           )}
         </p>
@@ -239,7 +244,7 @@ export function ClinicalRecord({
       {canWrite ? (
         <EntryForm action={action} nowIso={nowIso} medicalHistoryStatus={medicalHistoryStatus} />
       ) : (
-        <p className="text-sm text-slate-600">Solo doctores y enfermería pueden escribir en el registro clínico.</p>
+        <p className="text-sm text-slate-600" data-i18n="clinical.onlyStaff">Solo doctores y enfermería pueden escribir en el registro clínico.</p>
       )}
 
       {entries.length === 0 ? (
@@ -256,7 +261,10 @@ export function ClinicalRecord({
                 className={`rounded-2xl border p-4 ${correction ? "border-slate-200 bg-slate-50/80" : "border-white/80 bg-white/60"}`}
               >
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="rounded-full border border-[#0766B5]/20 bg-[#0766B5]/5 px-2.5 py-0.5 text-sm font-semibold text-[#0766B5]">
+                  <span
+                    className="rounded-full border border-[#0766B5]/20 bg-[#0766B5]/5 px-2.5 py-0.5 text-sm font-semibold text-[#0766B5]"
+                    data-i18n={`clinical.kind.${entry.kind}`}
+                  >
                     {KIND_LABELS[entry.kind]}
                   </span>
                   {entry.corrects_entry_id && (

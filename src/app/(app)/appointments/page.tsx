@@ -62,7 +62,7 @@ export default async function AppointmentsPage({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-[1.6rem] font-black tracking-[-0.05em] text-[#0F172A]" data-i18n="appointments.title">Citas</h1>
-          <p className="mt-1 text-[13px] font-bold uppercase tracking-[0.08em] text-slate-500">{formatDateLong(dateKey)}</p>
+          <p className="mt-1 text-[13px] font-bold uppercase tracking-[0.08em] text-slate-500" data-i18n-date={dateKey}>{formatDateLong(dateKey)}</p>
         </div>
         {canManage && (
           <Link href={`/appointments/new?date=${dateKey}`} className="glass-button px-3 py-2 text-xs font-black uppercase tracking-[0.08em]" data-i18n="appointments.new">

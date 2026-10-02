@@ -12,6 +12,53 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     "sidebar.appointments": "Citas",
     "sidebar.waitingRoom": "Sala de espera",
     "sidebar.accounts": "Cuentas",
+    "sidebar.logout": "Cerrar sesión",
+    "sidebar.tagline1": "Sonrisas",
+    "sidebar.tagline2": "que inspiran",
+    "sidebar.tagline3": "vidas mejores",
+    "role.doctor": "Doctor",
+    "role.recepcion": "Recepción",
+    "role.enfermeria": "Enfermería",
+    "role.admin": "Admin",
+    "insurance.private": "Privado",
+    "insurance.none": "Sin aseguradora",
+    "patients.table.contact": "Contacto",
+    "patients.recordShort": "N.°",
+    "chart.recordNo": "Expediente N.°",
+    "chart.documentId": "Cédula",
+    "chart.years": "años",
+    "chart.affiliate": "Afiliado",
+    "chart.noInsurance": "Sin aseguradora registrada",
+    "chart.medications": "Medicamentos:",
+    "chart.updated": "Actualizado",
+    "chart.by": "por",
+    "alert.penicillin": "Alergia a penicilina / amoxicilina",
+    "alert.anesthetic": "Alergia a anestésicos locales",
+    "alert.nsaids": "Alergia a AINEs",
+    "alert.latex": "Alergia al látex",
+    "alert.anticoagulants": "Toma anticoagulantes / antiagregantes",
+    "alert.bisphosphonates": "Toma bifosfonatos",
+    "alert.diabetes": "Diabetes",
+    "alert.hypertension": "Hipertensión",
+    "alert.heart": "Cardiopatía",
+    "alert.pregnant": "Embarazo",
+    "clinical.kind.nota": "Nota de evolución",
+    "clinical.kind.medicamento": "Medicamento administrado",
+    "clinical.kind.procedimiento": "Procedimiento",
+    "clinical.administered": "administrado",
+    "clinical.onlyStaff": "Solo doctores y enfermería pueden escribir en el registro clínico.",
+    "accounts.field.name": "Nombre completo",
+    "accounts.field.email": "Correo",
+    "accounts.field.password": "Contraseña temporal",
+    "accounts.field.role": "Rol",
+    "accounts.passwordRule": "Mínimo 10 caracteres, con minúsculas, mayúsculas, números y símbolos.",
+    "accounts.select": "Selecciona…",
+    "accounts.create": "Crear cuenta",
+    "accounts.changeRole": "Cambiar rol",
+    "accounts.deactivate": "Desactivar cuenta",
+    "accounts.createdOn": "Creada el",
+    "accounts.active": "Activa",
+    "accounts.inactive": "Desactivada",
     "accounts.title": "Cuentas",
     "accounts.subtitle": "Crea cuentas para el personal, asigna su rol y desactívalas cuando dejen la clínica. Las cuentas no se borran.",
     "accounts.new": "Nueva cuenta",
@@ -167,6 +214,53 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     "sidebar.appointments": "Appointments",
     "sidebar.waitingRoom": "Waiting room",
     "sidebar.accounts": "Accounts",
+    "sidebar.logout": "Sign out",
+    "sidebar.tagline1": "Smiles",
+    "sidebar.tagline2": "that inspire",
+    "sidebar.tagline3": "better lives",
+    "role.doctor": "Doctor",
+    "role.recepcion": "Front desk",
+    "role.enfermeria": "Nursing",
+    "role.admin": "Admin",
+    "insurance.private": "Private",
+    "insurance.none": "No insurance",
+    "patients.table.contact": "Contact",
+    "patients.recordShort": "No.",
+    "chart.recordNo": "Record No.",
+    "chart.documentId": "ID",
+    "chart.years": "years old",
+    "chart.affiliate": "Member ID",
+    "chart.noInsurance": "No insurance on file",
+    "chart.medications": "Medications:",
+    "chart.updated": "Updated",
+    "chart.by": "by",
+    "alert.penicillin": "Penicillin / amoxicillin allergy",
+    "alert.anesthetic": "Local anesthetic allergy",
+    "alert.nsaids": "NSAID allergy",
+    "alert.latex": "Latex allergy",
+    "alert.anticoagulants": "Takes anticoagulants / antiplatelets",
+    "alert.bisphosphonates": "Takes bisphosphonates",
+    "alert.diabetes": "Diabetes",
+    "alert.hypertension": "Hypertension",
+    "alert.heart": "Heart disease",
+    "alert.pregnant": "Pregnancy",
+    "clinical.kind.nota": "Progress note",
+    "clinical.kind.medicamento": "Medication given",
+    "clinical.kind.procedimiento": "Procedure",
+    "clinical.administered": "given",
+    "clinical.onlyStaff": "Only doctors and nursing staff can write in the clinical record.",
+    "accounts.field.name": "Full name",
+    "accounts.field.email": "Email",
+    "accounts.field.password": "Temporary password",
+    "accounts.field.role": "Role",
+    "accounts.passwordRule": "At least 10 characters, with lowercase, uppercase, numbers and symbols.",
+    "accounts.select": "Select…",
+    "accounts.create": "Create account",
+    "accounts.changeRole": "Change role",
+    "accounts.deactivate": "Deactivate account",
+    "accounts.createdOn": "Created on",
+    "accounts.active": "Active",
+    "accounts.inactive": "Deactivated",
     "accounts.title": "Accounts",
     "accounts.subtitle": "Create staff accounts, assign their role and deactivate them when they leave the clinic. Accounts are never deleted.",
     "accounts.new": "New account",
@@ -345,6 +439,21 @@ function applyTranslations(lang: string) {
     node.placeholder = value;
   });
 
+  // Fechas ("jueves, 1 de octubre"): data-i18n-date lleva el día (AAAA-MM-DD).
+  const dateNodes = document.querySelectorAll<HTMLElement>("[data-i18n-date]");
+  dateNodes.forEach((node) => {
+    const dateKey = node.dataset.i18nDate;
+    if (!dateKey || !/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) return;
+    const formatted = new Intl.DateTimeFormat(lang === "en" ? "en-US" : "es-DO", {
+      timeZone: "UTC",
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+    }).format(new Date(`${dateKey}T12:00:00Z`));
+    const text = formatted.charAt(0).toUpperCase() + formatted.slice(1);
+    if (node.textContent !== text) node.textContent = text;
+  });
+
   const nameNodes = document.querySelectorAll<HTMLElement>("[data-i18n-name]");
   nameNodes.forEach((node) => {
     const key = node.dataset.i18nName;
@@ -371,7 +480,8 @@ function setOwnText(node: HTMLElement, value: string) {
     return;
   }
 
-  target.data = node.childElementCount === 0 ? value : `${value} `;
+  const next = node.childElementCount === 0 ? value : `${value} `;
+  if (target.data !== next) target.data = next;
   if (node.childElementCount === 0) {
     textNodes.forEach((child) => {
       if (child !== target) child.data = "";
@@ -401,8 +511,23 @@ export function LanguageBridge() {
 
     document.addEventListener("dentalflow-language-change", handleLanguageChange);
 
+    // El contenido de cada pantalla llega después (streaming, navegación,
+    // recargas de datos): se vuelve a traducir cuando cambia el DOM.
+    let frame = 0;
+    const observer = new MutationObserver(() => {
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        const lang = getStoredLanguage();
+        if (lang !== "es") applyTranslations(lang);
+      });
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+
     return () => {
       document.removeEventListener("dentalflow-language-change", handleLanguageChange);
+      observer.disconnect();
+      if (frame) cancelAnimationFrame(frame);
     };
   }, []);
 

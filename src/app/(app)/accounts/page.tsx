@@ -92,7 +92,7 @@ export default async function AccountsPage() {
                     </p>
                     <p className="break-words text-sm text-slate-600">{emails.get(account.id) ?? "—"}</p>
                     <p className="mt-1 text-xs text-slate-500">
-                      {ROLE_LABELS[account.role]} · Creada el {formatDate(account.created_at)}
+                      <span data-i18n={`role.${account.role}`}>{ROLE_LABELS[account.role]}</span> · <span data-i18n="accounts.createdOn">Creada el</span> {formatDate(account.created_at)}
                     </p>
                   </div>
                   <span
@@ -102,7 +102,7 @@ export default async function AccountsPage() {
                         : "border-slate-300 bg-slate-100 text-slate-600"
                     }`}
                   >
-                    {account.active ? "Activa" : "Desactivada"}
+                    {account.active ? <span data-i18n="accounts.active">Activa</span> : <span data-i18n="accounts.inactive">Desactivada</span>}
                   </span>
                 </div>
 

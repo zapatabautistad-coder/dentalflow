@@ -6,7 +6,7 @@ import { formatDominicanDocumentId, formatDominicanPhone } from "@/lib/phone";
 import { buildPatientSearchFilter } from "@/lib/patient-search";
 import { PatientRow } from "./patient-row";
 import { SearchBox } from "./search-box";
-import { arsName } from "@/lib/insurance";
+import { InsuranceLabel } from "../insurance-label";
 
 export const metadata: Metadata = { title: "Pacientes · DentalFlow" };
 
@@ -47,11 +47,6 @@ type PatientRow = {
   insurance_provider: string | null;
 };
 
-function insuranceText(patient: PatientRow): string {
-  if (patient.insurance_type === "ars") return arsName(patient.insurance_provider);
-  if (patient.insurance_type === "privado") return "Privado";
-  return "Sin aseguradora";
-}
 
 function contactLinks(patient: PatientRow) {
   const phoneDigits = patient.phone?.replace(/\D/g, "") ?? "";
@@ -171,11 +166,11 @@ export default async function PatientsPage({
                     <Link href={`/patients/${patient.id}`} className="block rounded-xl active:bg-white/40">
                       <p className="text-base font-semibold text-[#0F172A]">{patient.full_name}</p>
                       <p className="mt-0.5 text-sm text-slate-600">
-                        N.° {String(patient.record_number).padStart(4, "0")}
+                        <span data-i18n="patients.recordShort">N.°</span> {String(patient.record_number).padStart(4, "0")}
                         {patient.document_id ? ` · ${formatDominicanDocumentId(patient.document_id)}` : ""}
                       </p>
                       <p className="text-sm text-slate-600">
-                        {insuranceText(patient)}
+                        <InsuranceLabel type={patient.insurance_type} provider={patient.insurance_provider} />
                         {patient.phone ? ` · ${formatDominicanPhone(patient.phone)}` : ""}
                       </p>
                     </Link>
@@ -193,7 +188,7 @@ export default async function PatientsPage({
                   <th className="px-4 py-2.5 font-medium" data-i18n="patients.table.document">Cédula</th>
                   <th className="px-4 py-2.5 font-medium" data-i18n="patients.table.phone">Teléfono</th>
                   <th className="px-4 py-2.5 font-medium" data-i18n="patients.table.insurance">Aseguradora</th>
-                  <th className="px-4 py-2.5 font-medium">Contacto</th>
+                  <th className="px-4 py-2.5 font-medium" data-i18n="patients.table.contact">Contacto</th>
                 </tr>
               </thead>
               <tbody>
@@ -209,7 +204,7 @@ export default async function PatientsPage({
                     <td className="px-4 py-2.5 text-[13px] text-slate-600">
                       {patient.phone ? formatDominicanPhone(patient.phone) : "—"}
                     </td>
-                    <td className="px-4 py-2.5 text-[13px] text-slate-600">{insuranceText(patient)}</td>
+                    <td className="px-4 py-2.5 text-[13px] text-slate-600"><InsuranceLabel type={patient.insurance_type} provider={patient.insurance_provider} /></td>
                     <td className="px-4 py-2.5">
                       <ContactButtons patient={patient} links={contactLinks(patient)} size="sm" />
                     </td>

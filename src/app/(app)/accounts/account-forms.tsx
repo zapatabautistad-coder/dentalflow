@@ -40,15 +40,15 @@ export function CreateAccountForm({ action }: { action: Action }) {
   return (
     <form ref={formRef} action={formAction} className="grid min-w-0 grid-cols-1 gap-3 md:grid-cols-2">
       <label className="flex min-w-0 flex-col gap-1.5 text-sm font-medium text-slate-700">
-        Nombre completo
+        <span data-i18n="accounts.field.name">Nombre completo</span>
         <input name="full_name" required minLength={3} maxLength={120} autoComplete="off" className="glass-input text-[15px]" />
       </label>
       <label className="flex min-w-0 flex-col gap-1.5 text-sm font-medium text-slate-700">
-        Correo
+        <span data-i18n="accounts.field.email">Correo</span>
         <input name="email" type="email" required autoComplete="off" className="glass-input text-[15px]" />
       </label>
       <label className="flex min-w-0 flex-col gap-1.5 text-sm font-medium text-slate-700">
-        Contraseña temporal
+        <span data-i18n="accounts.field.password">Contraseña temporal</span>
         <input
           name="password"
           type="text"
@@ -58,16 +58,16 @@ export function CreateAccountForm({ action }: { action: Action }) {
           spellCheck={false}
           className="glass-input font-mono text-[15px]"
         />
-        <span className="text-xs font-normal text-slate-500">{PASSWORD_RULE_TEXT}</span>
+        <span className="text-xs font-normal text-slate-500" data-i18n="accounts.passwordRule">{PASSWORD_RULE_TEXT}</span>
       </label>
       <label className="flex min-w-0 flex-col gap-1.5 text-sm font-medium text-slate-700">
-        Rol
+        <span data-i18n="accounts.field.role">Rol</span>
         <select name="role" required defaultValue="" className="glass-input text-[15px]">
-          <option value="" disabled>
+          <option value="" disabled data-i18n="accounts.select">
             Selecciona…
           </option>
           {ROLES.map(([value, label]) => (
-            <option key={value} value={value}>
+            <option key={value} value={value} data-i18n={`role.${value}`}>
               {label}
             </option>
           ))}
@@ -76,7 +76,7 @@ export function CreateAccountForm({ action }: { action: Action }) {
       <div className="flex min-w-0 flex-col gap-3 md:col-span-2">
         <Message state={state} />
         <button type="submit" disabled={pending} className={PRIMARY_BUTTON}>
-          {pending ? "Creando…" : "Crear cuenta"}
+          {pending ? "Creando…" : <span data-i18n="accounts.create">Crear cuenta</span>}
         </button>
       </div>
     </form>
@@ -90,10 +90,10 @@ export function ChangeRoleForm({ action, currentRole }: { action: Action; curren
     <form action={formAction} className="flex min-w-0 flex-col gap-2">
       <div className="flex min-w-0 flex-wrap items-end gap-2">
         <label className="flex min-w-0 flex-col gap-1 text-xs font-medium text-slate-600">
-          Rol
+          <span data-i18n="accounts.field.role">Rol</span>
           <select name="role" defaultValue={currentRole} className="glass-input min-h-11 text-[15px]">
             {ROLES.map(([value, label]) => (
-              <option key={value} value={value}>
+              <option key={value} value={value} data-i18n={`role.${value}`}>
                 {label}
               </option>
             ))}
@@ -104,7 +104,7 @@ export function ChangeRoleForm({ action, currentRole }: { action: Action; curren
           disabled={pending}
           className="min-h-11 rounded-xl border border-[#0766B5]/30 bg-white/60 px-3 text-sm font-semibold text-[#0766B5] transition hover:bg-white disabled:opacity-60"
         >
-          {pending ? "Guardando…" : "Cambiar rol"}
+          {pending ? "Guardando…" : <span data-i18n="accounts.changeRole">Cambiar rol</span>}
         </button>
       </div>
       <Message state={state} />
@@ -117,7 +117,7 @@ export function DeactivateForm({ action }: { action: Action }) {
 
   return (
     <details className="rounded-xl border border-slate-200 bg-white/50 p-3">
-      <summary className="cursor-pointer text-sm font-semibold text-slate-700">Desactivar cuenta</summary>
+      <summary className="cursor-pointer text-sm font-semibold text-slate-700" data-i18n="accounts.deactivate">Desactivar cuenta</summary>
       <form action={formAction} className="mt-3 flex flex-col gap-3">
         <p className="text-sm text-slate-600">
           La persona deja de poder entrar y pierde el acceso a todos los datos al instante. Su historial de cambios

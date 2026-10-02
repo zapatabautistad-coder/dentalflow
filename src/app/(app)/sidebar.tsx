@@ -329,7 +329,7 @@ const NAV: NavItem[] = [
 const NAV_ITEM =
   "group relative flex items-center gap-3.5 overflow-hidden rounded-[22px] border px-3.5 py-2.5 text-[13px] font-black uppercase tracking-[0.08em] shadow-[0_12px_24px_-18px_rgba(15,23,42,0.65)] transition-all duration-200 [@media(max-height:800px)]:py-1.5";
 
-type ProfileProps = { fullName: string; roleLabel: string };
+type ProfileProps = { fullName: string; roleLabel: string; role: string };
 type SidebarProps = ProfileProps & { isAdmin: boolean };
 
 function initialsOf(fullName: string) {
@@ -469,7 +469,7 @@ function LanguageToggle() {
           open ? "border-white/45 bg-white/55 shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_0_0_1px_rgba(149,211,250,0.18)]" : "border-[#0E9BF3]/25 bg-white/5 hover:border-white/35 hover:bg-white/80"
         }`}
       >
-        <span className="text-xs font-black uppercase tracking-[0.08em] text-[#062F55]/60">Idioma</span>
+        <span className="text-xs font-black uppercase tracking-[0.08em] text-[#062F55]/60" data-i18n="sidebar.lang">Idioma</span>
         <span className="flex items-center gap-2 rounded-full border border-[#0E9BF3]/25 bg-white/55 px-2 py-0.5 text-xs font-bold tracking-[0.08em] text-[#062F55]/90 shadow-[inset_0_1px_0_rgba(255,255,255,0.14)]">
           <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#95D3FA] shadow-[0_0_10px_rgba(149,211,250,0.8)]" />
           {selected.code.toUpperCase()}
@@ -539,7 +539,7 @@ function LanguageToggle() {
   );
 }
 
-function ProfileCard({ fullName, roleLabel }: ProfileProps) {
+function ProfileCard({ fullName, roleLabel, role }: ProfileProps) {
   return (
     <div className="profile-glass rounded-2xl p-3">
       <div className="flex items-center gap-3">
@@ -549,7 +549,7 @@ function ProfileCard({ fullName, roleLabel }: ProfileProps) {
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold text-[#062F55]">{fullName}</p>
           <p className="truncate text-xs text-[#062F55]/70">
-            {roleLabel} · {CLINIC_NAME}
+            <span data-i18n={`role.${role}`}>{roleLabel}</span> · {CLINIC_NAME}
           </p>
         </div>
       </div>
@@ -560,28 +560,28 @@ function ProfileCard({ fullName, roleLabel }: ProfileProps) {
           className="flex w-full items-center gap-3 rounded-xl px-2 py-1.5 text-sm font-medium text-[#062F55]/90 transition hover:bg-white/55 hover:text-[#062F55]"
         >
           <Icon name="logout" className="h-5 w-5" />
-          Cerrar sesión
+          <span data-i18n="sidebar.logout">Cerrar sesión</span>
         </button>
       </form>
     </div>
   );
 }
 
-function SidebarFooter({ fullName, roleLabel }: ProfileProps) {
+function SidebarFooter({ fullName, roleLabel, role }: ProfileProps) {
   return (
     <div className="space-y-4">
       <div className="px-2 [@media(max-height:860px)]:hidden">
         <p className="text-[15px] leading-snug text-[#062F55]/85">
-          Sonrisas
+          <span data-i18n="sidebar.tagline1">Sonrisas</span>
           <br />
-          que inspiran
+          <span data-i18n="sidebar.tagline2">que inspiran</span>
           <br />
-          vidas mejores
+          <span data-i18n="sidebar.tagline3">vidas mejores</span>
         </p>
         <span aria-hidden="true" className="mt-3 block h-px w-10 bg-[#95D3FA]/80" />
       </div>
       <LanguageToggle />
-      <ProfileCard fullName={fullName} roleLabel={roleLabel} />
+      <ProfileCard fullName={fullName} roleLabel={roleLabel} role={role} />
     </div>
   );
 }
@@ -600,7 +600,7 @@ function Watermark({ className }: { className: string }) {
   );
 }
 
-export function Sidebar({ fullName, roleLabel, isAdmin }: SidebarProps) {
+export function Sidebar({ fullName, roleLabel, role, isAdmin }: SidebarProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
@@ -702,7 +702,7 @@ export function Sidebar({ fullName, roleLabel, isAdmin }: SidebarProps) {
                 <NavList pathname={pathname} isAdmin={isAdmin} onNavigate={() => setMobileOpen(false)} />
               </div>
 
-              <SidebarFooter fullName={fullName} roleLabel={roleLabel} />
+              <SidebarFooter fullName={fullName} roleLabel={roleLabel} role={role} />
             </div>
           </div>
         )}
@@ -726,7 +726,7 @@ export function Sidebar({ fullName, roleLabel, isAdmin }: SidebarProps) {
           </div>
 
           <div className="pt-4">
-            <SidebarFooter fullName={fullName} roleLabel={roleLabel} />
+            <SidebarFooter fullName={fullName} roleLabel={roleLabel} role={role} />
           </div>
         </div>
       </aside>

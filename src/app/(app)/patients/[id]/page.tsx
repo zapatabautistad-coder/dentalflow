@@ -61,20 +61,23 @@ function ageFrom(birthDate: string | null): number | null {
   return age >= 0 ? age : null;
 }
 
-function activeAlerts(history: MedicalHistoryValues): string[] {
-  const alerts: string[] = [];
-  if (history.allergy_penicillin) alerts.push("Alergia a penicilina / amoxicilina");
-  if (history.allergy_local_anesthetic) alerts.push("Alergia a anestésicos locales");
-  if (history.allergy_nsaids) alerts.push("Alergia a AINEs");
-  if (history.allergy_latex) alerts.push("Alergia al látex");
-  if (history.allergies_other) alerts.push(`Alergia: ${history.allergies_other}`);
-  if (history.takes_anticoagulants) alerts.push("Toma anticoagulantes / antiagregantes");
-  if (history.takes_bisphosphonates) alerts.push("Toma bifosfonatos");
-  if (history.has_diabetes) alerts.push("Diabetes");
-  if (history.has_hypertension) alerts.push("Hipertensión");
-  if (history.has_heart_disease) alerts.push("Cardiopatía");
-  if (history.is_pregnant) alerts.push("Embarazo");
-  if (history.conditions_other) alerts.push(history.conditions_other);
+// key: texto fijo traducible; sin key: dato escrito por el usuario (no se traduce).
+type Alert = { key?: string; text: string };
+
+function activeAlerts(history: MedicalHistoryValues): Alert[] {
+  const alerts: Alert[] = [];
+  if (history.allergy_penicillin) alerts.push({ key: "alert.penicillin", text: "Alergia a penicilina / amoxicilina" });
+  if (history.allergy_local_anesthetic) alerts.push({ key: "alert.anesthetic", text: "Alergia a anestésicos locales" });
+  if (history.allergy_nsaids) alerts.push({ key: "alert.nsaids", text: "Alergia a AINEs" });
+  if (history.allergy_latex) alerts.push({ key: "alert.latex", text: "Alergia al látex" });
+  if (history.allergies_other) alerts.push({ text: `Alergia: ${history.allergies_other}` });
+  if (history.takes_anticoagulants) alerts.push({ key: "alert.anticoagulants", text: "Toma anticoagulantes / antiagregantes" });
+  if (history.takes_bisphosphonates) alerts.push({ key: "alert.bisphosphonates", text: "Toma bifosfonatos" });
+  if (history.has_diabetes) alerts.push({ key: "alert.diabetes", text: "Diabetes" });
+  if (history.has_hypertension) alerts.push({ key: "alert.hypertension", text: "Hipertensión" });
+  if (history.has_heart_disease) alerts.push({ key: "alert.heart", text: "Cardiopatía" });
+  if (history.is_pregnant) alerts.push({ key: "alert.pregnant", text: "Embarazo" });
+  if (history.conditions_other) alerts.push({ text: history.conditions_other });
   return alerts;
 }
 
@@ -197,11 +200,6 @@ export default async function PatientChartPage({ params }: { params: Promise<{ i
   const auditRows = auditResult.data ?? [];
   const addEntry = addClinicalEntry.bind(null, patient.id);
 
-  const identity = [
-    `Expediente N.° ${String(patient.record_number).padStart(4, "0")}`,
-    patient.document_id ? `Cédula ${formatDominicanDocumentId(patient.document_id)}` : null,
-    age !== null ? `${age} años` : null,
-  ].filter(Boolean);
 
   return (
     <div className="flex flex-col gap-4">
@@ -229,13 +227,31 @@ export default async function PatientChartPage({ params }: { params: Promise<{ i
       <header className="glass-card flex flex-col gap-4 p-5 sm:flex-row sm:items-start sm:justify-between sm:p-6">
         <div className="min-w-0">
           <h1 className="text-2xl font-bold tracking-tight text-[#0F172A] sm:text-3xl">{patient.full_name}</h1>
-          <p className="mt-1.5 text-[15px] text-slate-600">{identity.join(" · ")}</p>
+          <p className="mt-1.5 text-[15px] text-slate-600">
+            <span data-i18n="chart.recordNo">Expediente N.°</span> {String(patient.record_number).padStart(4, "0")}
+            {patient.document_id && (
+              <>
+                {" · "}
+                <span data-i18n="chart.documentId">Cédula</span> {formatDominicanDocumentId(patient.document_id)}
+              </>
+            )}
+            {age !== null && (
+              <>
+                {" · "}
+                {age} <span data-i18n="chart.years">años</span>
+              </>
+            )}
+          </p>
           <p className="mt-1 text-[15px] text-slate-600">
-            {patient.insurance_type === "ars"
-              ? `${arsName(patient.insurance_provider)} · Afiliado ${patient.affiliate_number}`
-              : patient.insurance_type === "privado"
-                ? "Privado"
-                : "Sin aseguradora registrada"}
+            {patient.insurance_type === "ars" ? (
+              <>
+                {arsName(patient.insurance_provider)} · <span data-i18n="chart.affiliate">Afiliado</span> {patient.affiliate_number}
+              </>
+            ) : patient.insurance_type === "privado" ? (
+              <span data-i18n="insurance.private">Privado</span>
+            ) : (
+              <span data-i18n="chart.noInsurance">Sin aseguradora registrada</span>
+            )}
           </p>
           {(patient.phone || patient.email) && (
             <p className="mt-1 text-[15px] text-slate-600">
@@ -284,19 +300,28 @@ export default async function PatientChartPage({ params }: { params: Promise<{ i
           <p className="text-base font-bold text-rose-800" data-i18n="chart.alerts">Alertas médicas</p>
           <ul className="mt-2 flex flex-wrap gap-2">
             {alerts.map((alert) => (
-              <li key={alert} className="rounded-full border border-rose-300 bg-white px-3 py-1 text-[15px] font-semibold text-rose-800">
-                {alert}
+              <li
+                key={alert.key ?? alert.text}
+                className="rounded-full border border-rose-300 bg-white px-3 py-1 text-[15px] font-semibold text-rose-800"
+                data-i18n={alert.key}
+              >
+                {alert.text}
               </li>
             ))}
           </ul>
           {history.current_medications && (
             <p className="mt-3 text-[15px] text-rose-900">
-              <span className="font-semibold">Medicamentos:</span> {history.current_medications}
+              <span className="font-semibold" data-i18n="chart.medications">Medicamentos:</span> {history.current_medications}
             </p>
           )}
           <p className="mt-2 text-sm text-rose-700">
-            Actualizado {formatStamp(history.updated_at)}
-            {history.profiles?.full_name ? ` por ${history.profiles.full_name}` : ""}
+            <span data-i18n="chart.updated">Actualizado</span> {formatStamp(history.updated_at)}
+            {history.profiles?.full_name && (
+              <>
+                {" "}
+                <span data-i18n="chart.by">por</span> {history.profiles.full_name}
+              </>
+            )}
           </p>
         </section>
       ) : (
@@ -304,12 +329,17 @@ export default async function PatientChartPage({ params }: { params: Promise<{ i
           <p className="text-base font-bold text-[#0766B5]" data-i18n="chart.noAlerts">Sin alertas médicas registradas</p>
           {history.current_medications && (
             <p className="mt-1 text-[15px] text-slate-700">
-              <span className="font-semibold">Medicamentos:</span> {history.current_medications}
+              <span className="font-semibold" data-i18n="chart.medications">Medicamentos:</span> {history.current_medications}
             </p>
           )}
           <p className="mt-1 text-sm text-slate-600">
-            Actualizado {formatStamp(history.updated_at)}
-            {history.profiles?.full_name ? ` por ${history.profiles.full_name}` : ""}
+            <span data-i18n="chart.updated">Actualizado</span> {formatStamp(history.updated_at)}
+            {history.profiles?.full_name && (
+              <>
+                {" "}
+                <span data-i18n="chart.by">por</span> {history.profiles.full_name}
+              </>
+            )}
           </p>
         </section>
       )}
