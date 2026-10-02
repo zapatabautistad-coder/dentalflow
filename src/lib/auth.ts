@@ -40,6 +40,16 @@ export function canWriteTreatmentPlan(role: Role) {
   return role === "doctor";
 }
 
+// Facturación (ver RLS en 020_billing.sql): recepción y admin registran
+// cargos y pagos; el doctor solo ve. Enfermería no tiene acceso.
+export function canManageBilling(role: Role) {
+  return role === "admin" || role === "recepcion";
+}
+
+export function canViewBilling(role: Role) {
+  return role === "admin" || role === "recepcion" || role === "doctor";
+}
+
 // Roles que pueden crear, editar y cancelar citas (ver RLS en 001_mvp.sql
 // y 003_doctor_status_update.sql). El doctor solo cambia el estado de las suyas.
 export function canManageAppointments(role: Role) {
