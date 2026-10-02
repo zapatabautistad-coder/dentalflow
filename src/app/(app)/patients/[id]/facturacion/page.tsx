@@ -225,7 +225,7 @@ export default async function PatientBillingPage({
                           {charge.description}
                         </p>
                         <p className={`mt-1 text-sm text-slate-700 ${charge.voided_at ? "line-through opacity-60" : ""}`}>
-                          <span data-i18n="billing.amount">Monto</span>: {formatPesos(Number(charge.amount))}
+                          <span data-i18n="billing.amountShort">Monto</span>: {formatPesos(Number(charge.amount))}
                         </p>
                         <p className={`text-sm text-slate-700 ${charge.voided_at ? "line-through opacity-60" : ""}`}>
                           <span data-i18n="billing.arsCoverageShort">Cobertura ARS</span>: {formatPesos(Number(charge.ars_coverage))}
