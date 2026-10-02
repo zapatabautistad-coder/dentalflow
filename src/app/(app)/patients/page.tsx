@@ -6,6 +6,7 @@ import { formatDominicanDocumentId, formatDominicanPhone } from "@/lib/phone";
 import { buildPatientSearchFilter } from "@/lib/patient-search";
 import { PatientRow } from "./patient-row";
 import { SearchBox } from "./search-box";
+import { arsName } from "@/lib/insurance";
 
 export const metadata: Metadata = { title: "Pacientes · DentalFlow" };
 
@@ -47,7 +48,7 @@ type PatientRow = {
 };
 
 function insuranceText(patient: PatientRow): string {
-  if (patient.insurance_type === "ars") return `ARS: ${patient.insurance_provider}`;
+  if (patient.insurance_type === "ars") return arsName(patient.insurance_provider);
   if (patient.insurance_type === "privado") return "Privado";
   return "Sin aseguradora";
 }

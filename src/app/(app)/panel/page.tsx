@@ -12,6 +12,7 @@ import {
 } from "@/lib/timezone";
 import { StatusChip } from "../appointments/status-chip";
 import { checkInAppointment } from "../waiting-room/actions";
+import { arsName } from "@/lib/insurance";
 
 export const metadata: Metadata = { title: "Panel · DentalFlow" };
 
@@ -51,7 +52,7 @@ type ReviewPatient = {
 type ReviewPatientsResult = { patients: ReviewPatient[]; error: boolean };
 
 function insuranceLabel(patient: RecentPatient) {
-  if (patient.insurance_type === "ars") return `ARS: ${patient.insurance_provider ?? "—"}`;
+  if (patient.insurance_type === "ars") return arsName(patient.insurance_provider);
   if (patient.insurance_type === "privado") return "Privado";
   return "Sin aseguradora";
 }
@@ -299,11 +300,11 @@ export default async function PanelPage() {
               {agenda.map((item) => {
                 const content = (
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex min-w-0 flex-1 items-center gap-2.5">
-                      <div className="min-w-[46px] text-[13px] font-black tracking-[0.08em] text-[#0766B5]">
+                    <div className="flex min-w-0 flex-1 basis-[13rem] items-center gap-2.5">
+                      <div className="min-w-[46px] shrink-0 whitespace-nowrap text-[13px] font-black tracking-[0.08em] text-[#0766B5]">
                         {formatHour(item.starts_at)}
                       </div>
-                      <div className="h-8 w-px bg-slate-200" />
+                      <div className="h-8 w-px shrink-0 bg-slate-200" />
                       <div className="min-w-0">
                         <p className="truncate text-[15px] font-black text-[#0F172A]">{item.patients?.full_name ?? "Paciente"}</p>
                         <p className="mt-0.5 truncate text-[13px] text-slate-500">

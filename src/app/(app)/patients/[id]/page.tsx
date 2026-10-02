@@ -18,6 +18,7 @@ import { ArchiveForm } from "./archive-form";
 import { ChangeLog, type AuditRow } from "./change-log";
 import { ClinicalRecord, type ClinicalEntry } from "./clinical-record";
 import { MedicalHistoryForm, type MedicalHistoryValues } from "./medical-history-form";
+import { arsName } from "@/lib/insurance";
 
 export const metadata: Metadata = { title: "Ficha del paciente · DentalFlow" };
 
@@ -231,7 +232,7 @@ export default async function PatientChartPage({ params }: { params: Promise<{ i
           <p className="mt-1.5 text-[15px] text-slate-600">{identity.join(" · ")}</p>
           <p className="mt-1 text-[15px] text-slate-600">
             {patient.insurance_type === "ars"
-              ? `ARS ${patient.insurance_provider} · Afiliado ${patient.affiliate_number}`
+              ? `${arsName(patient.insurance_provider)} · Afiliado ${patient.affiliate_number}`
               : patient.insurance_type === "privado"
                 ? "Privado"
                 : "Sin aseguradora registrada"}
