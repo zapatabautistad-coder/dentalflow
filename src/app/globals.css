@@ -306,3 +306,52 @@ body {
     animation: none;
   }
 }
+
+@media print {
+  body:has(.billing-receipt-page) {
+    background: #fff !important;
+    color: #111827 !important;
+    overflow: visible !important;
+  }
+
+  body:has(.billing-receipt-page) .sidebar-crystal,
+  body:has(.billing-receipt-page) .topbar-crystal,
+  body:has(.billing-receipt-page) .crystal-overlay,
+  body:has(.billing-receipt-page) .receipt-print-hidden {
+    display: none !important;
+  }
+
+  body:has(.billing-receipt-page) .h-dvh {
+    display: block !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+
+  body:has(.billing-receipt-page) main {
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  body:has(.billing-receipt-page) .billing-receipt-page {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+  }
+
+  body:has(.billing-receipt-page) .billing-receipt-sheet {
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: #fff !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  body:has(.billing-receipt-page) .billing-receipt-sheet::before {
+    display: none !important;
+  }
+}

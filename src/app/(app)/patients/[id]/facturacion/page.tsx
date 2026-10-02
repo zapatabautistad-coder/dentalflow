@@ -290,6 +290,13 @@ export default async function PatientBillingPage({
                   </div>
                   {payment.reference && <p className="mt-2 break-words text-sm text-slate-600"><span data-i18n="billing.reference">Referencia</span>: {payment.reference}</p>}
                   {payment.note && <p className="mt-1 break-words text-sm text-slate-600"><span data-i18n="billing.note">Nota</span>: {payment.note}</p>}
+                  <Link
+                    href={`/patients/${patient.id}/facturacion/recibo/${payment.receipt_number}`}
+                    className="mt-2 inline-flex min-h-11 items-center text-sm font-semibold text-[#0766B5] hover:underline"
+                    data-i18n="billing.receipt.view"
+                  >
+                    Ver recibo
+                  </Link>
                   <p className="mt-2 text-xs text-slate-500">
                     <span data-i18n="billing.receivedBy">Recibido por</span>: {payment.receiver?.full_name ?? <span data-i18n="billing.unknownUser">Usuario desconocido</span>}
                   </p>
