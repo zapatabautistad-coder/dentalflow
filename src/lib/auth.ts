@@ -30,6 +30,11 @@ export function canWriteClinicalEntries(role: Role) {
   return role === "doctor" || role === "enfermeria";
 }
 
+// Solo el doctor registra hallazgos del odontograma (ver RLS en 018_odontogram.sql).
+export function canWriteOdontogram(role: Role) {
+  return role === "doctor";
+}
+
 // Roles que pueden crear, editar y cancelar citas (ver RLS en 001_mvp.sql
 // y 003_doctor_status_update.sql). El doctor solo cambia el estado de las suyas.
 export function canManageAppointments(role: Role) {

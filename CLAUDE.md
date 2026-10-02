@@ -51,7 +51,8 @@ Sistema de gestión para clínicas dentales. Stack: Next.js (App Router, TypeScr
 - Panel: los pacientes pendientes de revisión salen de la función `patients_for_review` (017, `security invoker`, con LIMIT); si no existe, la app usa un respaldo acotado.
 - Menú: Panel, Pacientes, Citas, Sala de espera, Cuentas (solo admin). (Horarios, Reportes y Configuración se borraron por tener datos inventados; se rehacen con datos reales cuando toque.)
 - Cierre de sesión por inactividad a los 15 min (`src/app/(app)/idle-logout.tsx`): volver a una pestaña o desbloquear el celular NO cuenta como actividad.
-- Odontograma, periodontograma y plan de tratamiento se borraron por tener datos inventados; se rehacen guardando datos reales en Supabase.
+- Odontograma (`/patients/[id]/odontograma`, tabla `odontogram_entries`, migración 018): cada hallazgo (diente FDI, superficies M/D/O/V/L, condición) es una entrada firmada por la base; solo INSERT y SELECT, un error se anula con otra entrada (`corrects_entry_id` + motivo). Escribe solo el doctor; todos leen. El estado actual de cada diente lo calcula `src/lib/odontogram.ts` (con pruebas).
+- Periodontograma y plan de tratamiento se borraron por tener datos inventados; se rehacen guardando datos reales en Supabase.
 - Contraseñas (Supabase Auth): mínimo 10 caracteres con minúsculas, mayúsculas, números y símbolos. Pendiente al pasar a plan Pro: activar "Prevent use of leaked passwords".
 - Clientes: `src/lib/supabase/client.ts` (navegador) y `src/lib/supabase/server.ts` (servidor).
 - En Next 16 `middleware` se llama `proxy`: el refresco de sesión del login irá en `src/proxy.ts`.

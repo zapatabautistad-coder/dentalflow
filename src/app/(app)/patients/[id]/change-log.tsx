@@ -69,6 +69,10 @@ const TITLES: Record<string, Record<AuditRow["action"], string>> = {
     INSERT: "Entrada del registro clínico firmada",
     UPDATE: "Entrada del registro clínico modificada",
     DELETE: "Entrada del registro clínico eliminada",
+  },  odontogram_entries: {
+    INSERT: "Hallazgo del odontograma registrado",
+    UPDATE: "Hallazgo del odontograma modificado",
+    DELETE: "Hallazgo del odontograma eliminado",
   },
 };
 
