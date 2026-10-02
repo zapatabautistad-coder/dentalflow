@@ -3,14 +3,13 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { canViewBilling, requireProfile } from "@/lib/auth";
 import { PAYMENT_METHOD_LABELS, type PaymentMethod } from "@/lib/billing";
+import { CLINIC_ADDRESS, CLINIC_NAME, CLINIC_PHONE, CLINIC_TAX_ID } from "@/lib/clinic";
+import { formatBillingDate } from "@/lib/billing-format";
 import { formatPesos } from "@/lib/treatment-plan";
-import { TIME_ZONE } from "@/lib/timezone";
 import { BillingLanguageBridge } from "../../billing-forms";
 import { PrintButton } from "./print-button";
 
 export const metadata: Metadata = { title: "Recibo · DentalFlow" };
-
-const CLINIC_NAME = process.env.NEXT_PUBLIC_CLINIC_NAME || "Bright Smile Dental";
 
 type ReceiptPatient = {
   id: string;
@@ -29,18 +28,6 @@ type ReceiptPayment = {
   voided_at: string | null;
   receiver: { full_name: string } | null;
 };
-
-function formatReceiptDate(iso: string): string {
-  return new Intl.DateTimeFormat("es-DO", {
-    timeZone: TIME_ZONE,
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  }).format(new Date(iso));
-}
 
 export default async function BillingReceiptPage({
   params,
@@ -101,6 +88,21 @@ export default async function BillingReceiptPage({
 
         <header className="border-b border-[#95D3FA]/70 pb-5 text-center">
           <p className="break-words text-lg font-bold text-[#0766B5]">{CLINIC_NAME}</p>
+          {CLINIC_ADDRESS && (
+            <p className="mt-1 break-words text-sm text-slate-600">
+              <span data-i18n="billing.receipt.address">Dirección</span>: {CLINIC_ADDRESS}
+            </p>
+          )}
+          {CLINIC_PHONE && (
+            <p className="mt-1 break-words text-sm text-slate-600">
+              <span data-i18n="billing.receipt.phone">Teléfono</span>: {CLINIC_PHONE}
+            </p>
+          )}
+          {CLINIC_TAX_ID && (
+            <p className="mt-1 break-words text-sm text-slate-600">
+              <span data-i18n="billing.receipt.taxId">Identificación fiscal</span>: {CLINIC_TAX_ID}
+            </p>
+          )}
           <h1 className="mt-2 text-2xl font-black text-[#0F172A]" data-i18n="billing.receipt.title">Recibo</h1>
           <p className="mt-1 text-sm font-semibold text-slate-600">
             <span data-i18n="billing.receipt.number">N.° de recibo</span> {payment.receipt_number}
@@ -118,7 +120,7 @@ export default async function BillingReceiptPage({
           </div>
           <div className="min-w-0">
             <dt className="text-xs font-bold uppercase tracking-[0.06em] text-slate-500" data-i18n="billing.receipt.date">Fecha</dt>
-            <dd className="mt-1 break-words text-[15px] text-slate-700">{formatReceiptDate(payment.received_at)}</dd>
+            <dd className="mt-1 break-words text-[15px] text-slate-700">{formatBillingDate(payment.received_at)}</dd>
           </div>
           <div className="min-w-0">
             <dt className="text-xs font-bold uppercase tracking-[0.06em] text-slate-500" data-i18n="billing.amountShort">Monto</dt>
@@ -145,7 +147,7 @@ export default async function BillingReceiptPage({
         </dl>
 
         <footer className="mt-7 border-t border-[#95D3FA]/50 pt-4 text-center text-xs text-slate-500" data-i18n="billing.receipt.footer">
-          Comprobante de pago
+          Recibo de pago · No es comprobante fiscal
         </footer>
       </article>
     </div>

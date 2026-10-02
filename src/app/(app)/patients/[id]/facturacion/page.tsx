@@ -14,7 +14,7 @@ import {
   type PaymentMethod,
 } from "@/lib/billing";
 import { formatPesos } from "@/lib/treatment-plan";
-import { TIME_ZONE } from "@/lib/timezone";
+import { formatBillingDate } from "@/lib/billing-format";
 import {
   addCharge,
   addPayment,
@@ -69,18 +69,6 @@ type BillingPayment = PaymentForBalance & {
 };
 
 type CompletedPlanItem = CompletedBillablePlanItem;
-
-function formatBillingDate(iso: string): string {
-  return new Intl.DateTimeFormat("es-DO", {
-    timeZone: TIME_ZONE,
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  }).format(new Date(iso));
-}
 
 function SummaryCard({ labelKey, label, value, valueClass = "text-[#0766B5]" }: { labelKey: string; label: string; value: string; valueClass?: string }) {
   return (

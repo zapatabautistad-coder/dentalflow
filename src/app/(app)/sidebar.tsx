@@ -4,13 +4,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { CLINIC_NAME } from "@/lib/clinic";
 import { formatHour } from "@/lib/timezone";
 import { logout } from "./actions";
 import { getNotifications, type NotificationItem } from "./notifications";
-
-// Nombre de la clínica bajo el logo y en el perfil. Se cambia con
-// NEXT_PUBLIC_CLINIC_NAME en .env.local, sin tocar el código.
-const CLINIC_NAME = process.env.NEXT_PUBLIC_CLINIC_NAME || "Bright Smile Dental";
 
 type IconName =
   | "home"
