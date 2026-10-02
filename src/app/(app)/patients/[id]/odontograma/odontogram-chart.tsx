@@ -77,6 +77,28 @@ function describe(state: ToothState | undefined): string {
   return parts.join(", ");
 }
 
+// Resumen visible del diente; cada condición es un texto fijo traducible.
+function ToothSummary({ state }: { state: ToothState | undefined }) {
+  const parts: { condition: OdontogramCondition; surface?: string }[] = [
+    ...(state?.whole ?? []).map((condition) => ({ condition })),
+    ...Object.entries(state?.surfaces ?? {}).map(([surface, condition]) => ({ condition: condition!, surface })),
+  ];
+  if (parts.length === 0) {
+    return <p className="text-sm text-slate-600" data-i18n="odontogram.noFindings">Sin hallazgos</p>;
+  }
+  return (
+    <p className="text-sm text-slate-600">
+      {parts.map((part, index) => (
+        <span key={`${part.condition}-${part.surface ?? ""}`}>
+          {index > 0 ? ", " : ""}
+          <span data-i18n={`odontogram.cond.${part.condition}`}>{CONDITION_LABELS[part.condition]}</span>
+          {part.surface ? ` ${part.surface}` : ""}
+        </span>
+      ))}
+    </p>
+  );
+}
+
 function ToothGlyph({ tooth, state }: { tooth: number; state: ToothState | undefined }) {
   const sides = surfaceSides(tooth);
   const fill = (surface: Surface) => (state?.surfaces[surface] ? SURFACE_FILL[state.surfaces[surface]!] : "#FFFFFF");
@@ -327,7 +349,7 @@ export function OdontogramChart({
               <h2 className="text-lg font-bold text-[#0F172A]">
                 <span data-i18n="odontogram.tooth">Diente</span> {selected}
               </h2>
-              <p className="text-sm text-slate-600">{describe(state.get(selected))}</p>
+              <ToothSummary state={state.get(selected)} />
             </div>
 
             {canWrite ? (
