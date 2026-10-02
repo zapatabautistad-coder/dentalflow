@@ -149,7 +149,7 @@ export default async function PatientBillingPage({
   const charges = chargesResult.data ?? [];
   const payments = paymentsResult.data ?? [];
   const canManage = canManageBilling(profile.role);
-  const chargeIds = new Set(charges.map((charge) => charge.treatment_plan_item_id).filter((value): value is string => Boolean(value)));
+  const chargeIds = new Set(charges.filter((charge) => !charge.voided_at).map((charge) => charge.treatment_plan_item_id).filter((value): value is string => Boolean(value)));
   const unbilledProcedures = (planResult.data ?? []).filter((item) => !chargeIds.has(item.id));
   const balance = patientBalance(charges, payments);
   const balanceHasError = chargesResult.error || paymentsResult.error;
