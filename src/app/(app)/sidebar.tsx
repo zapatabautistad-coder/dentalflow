@@ -165,7 +165,9 @@ function NotificationLabel({ item }: { item: NotificationItem }) {
         ? "notifications.queueWaiting"
         : item.kind === "appointmentUnconfirmed"
           ? "notifications.appointmentUnconfirmed"
-          : "notifications.missingHistory";
+          : item.kind === "accessRequest"
+            ? "notifications.accessRequest"
+            : "notifications.missingHistory";
   const label =
     item.kind === "appointmentSoon"
       ? "Cita en los próximos 30 minutos:"
@@ -173,7 +175,9 @@ function NotificationLabel({ item }: { item: NotificationItem }) {
         ? "Paciente en sala de espera:"
         : item.kind === "appointmentUnconfirmed"
           ? "Cita sin confirmar:"
-          : "Registrar historial médico de";
+          : item.kind === "accessRequest"
+            ? "Quiere entrar otra vez (visita):"
+            : "Registrar historial médico de";
 
   return (
     <>

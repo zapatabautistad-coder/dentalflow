@@ -5,6 +5,11 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireProfile, ROLE_LABELS, type Role } from "@/lib/auth";
 import { isStrongPassword, PASSWORD_RULE_TEXT } from "@/lib/password";
+import { guestExpiry } from "@/lib/guest";
+
+function guestHours(formData: FormData): number {
+  return Number(formData.get("guest_hours") ?? 0);
+}
 
 export type AccountFormState = { error?: string; success?: string } | undefined;
 
@@ -64,7 +69,12 @@ export async function createAccount(
   const supabase = await createClient();
   const { data: updated, error: roleError } = await supabase
     .from("profiles")
-    .update({ role, full_name: fullName })
+    .update({
+      role,
+      full_name: fullName,
+      // Cuenta temporal (visita): vence sola y se cierra al salir.
+      guest_expires_at: formData.get("temporary") === "on" ? guestExpiry(guestHours(formData)) : null,
+    })
     .eq("id", data.user.id)
     .select("id");
 
@@ -154,7 +164,13 @@ export async function deactivateAccount(
   return undefined;
 }
 
-export async function reactivateAccount(userId: string): Promise<AccountFormState> {
+// Para una cuenta temporal, "reactivar" es darle acceso otra vez por las
+// horas elegidas; además se dan por atendidas sus solicitudes de acceso.
+export async function reactivateAccount(
+  userId: string,
+  _prev?: AccountFormState,
+  formData?: FormData
+): Promise<AccountFormState> {
   const profile = await requireAdmin();
   if (!profile) return { error: "Solo un administrador puede reactivar cuentas." };
 
@@ -162,8 +178,25 @@ export async function reactivateAccount(userId: string): Promise<AccountFormStat
   if (!admin) return { error: MISSING_KEY_ERROR };
 
   const supabase = await createClient();
-  const { error } = await supabase.from("profiles").update({ active: true }).eq("id", userId);
+  const { data: target } = await supabase
+    .from("profiles")
+    .select("guest_expires_at")
+    .eq("id", userId)
+    .maybeSingle<{ guest_expires_at: string | null }>();
+  const isGuest = Boolean(target?.guest_expires_at);
+  const { error } = await supabase
+    .from("profiles")
+    .update(isGuest ? { active: true, guest_expires_at: guestExpiry(formData ? guestHours(formData) : 0) } : { active: true })
+    .eq("id", userId);
   if (error) return { error: "No se pudo reactivar la cuenta. Inténtalo de nuevo." };
+
+  if (isGuest) {
+    await supabase
+      .from("access_requests")
+      .update({ resolved_at: new Date().toISOString() })
+      .eq("profile_id", userId)
+      .is("resolved_at", null);
+  }
 
   const { error: unbanError } = await admin.auth.admin.updateUserById(userId, { ban_duration: "none" });
   revalidatePath("/accounts");
