@@ -17,7 +17,7 @@ Sistema de gestión para clínicas dentales. Stack: Next.js (App Router, TypeScr
 - **Nada clínico se borra**: pacientes y citas no tienen permiso DELETE en la base; un paciente se archiva (con motivo) y una cita se cancela. No agregar botones de borrar.
 - **Todo cambio queda auditado**: `audit_log` guarda versión anterior, nueva, quién y cuándo (trigger `audit_row`). Toda tabla clínica nueva debe llevar ese trigger y no tener DELETE.
 - Autor y fecha de un registro los pone la base de datos (triggers), nunca la app.
-- **Registro clínico** (`clinical_entries`): solo INSERT y SELECT. Nunca agregar UPDATE/DELETE; un error se corrige con otra entrada (`corrects_entry_id` + `correction_reason`). Escriben solo doctor y enfermería.
+- **Registro clínico** (`clinical_entries`): solo INSERT y SELECT. Nunca agregar UPDATE/DELETE; un error se corrige con otra entrada (`corrects_entry_id` + `correction_reason`). Escriben solo doctor y asistente dental (`enfermeria`); medicamentos solo el doctor (023).
 - `data-i18n` solo en textos fijos, nunca en elementos que muestran datos de Supabase (nombres, motivos).
 - Antes de decir que una tarea está terminada, ejecuta `npm run build` y `npm run lint`, corrige todos los errores que salgan y repite hasta que pasen sin errores. Luego haz commit.
 

@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { canCreatePatients, canManagePatients, canWriteClinicalEntries, requireProfile } from "@/lib/auth";
+import { canCreatePatients, canManagePatients, canRecordMedication, canWriteClinicalEntries, requireProfile } from "@/lib/auth";
 import { combineDateTime, isValidDateKey } from "@/lib/timezone";
 import { cleanDocumentIdDigits, cleanPhoneDigits } from "@/lib/phone";
 import { matchingMedicationAllergy, type MedicationAllergyHistory } from "@/lib/medication-allergy";
@@ -312,6 +312,9 @@ export async function addClinicalEntry(
   const kind = field(formData, "kind") as ClinicalKind;
   if (!CLINICAL_KINDS.includes(kind)) {
     return { error: "Elige el tipo de entrada." };
+  }
+  if (kind === "medicamento" && !canRecordMedication(profile.role)) {
+    return { error: "Solo el doctor registra medicamentos administrados." };
   }
 
   const correctsEntryId = field(formData, "corrects_entry_id") || null;

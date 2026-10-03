@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { canManageAppointments, canManagePatients, canViewBilling, canWriteClinicalEntries, requireProfile } from "@/lib/auth";
+import { canManageAppointments, canManagePatients, canRecordMedication, canViewBilling, canWriteClinicalEntries, requireProfile } from "@/lib/auth";
 import { formatDominicanDocumentId, formatDominicanPhone } from "@/lib/phone";
 import {
   TIME_ZONE,
@@ -369,6 +369,7 @@ export default async function PatientChartPage({ params }: { params: Promise<{ i
             action={addEntry}
             nowIso={nowIso}
             medicalHistoryStatus={historyFailed ? "unavailable" : history ? "recorded" : "missing"}
+            canRecordMedication={canRecordMedication(profile.role)}
           />
         )}
       </section>

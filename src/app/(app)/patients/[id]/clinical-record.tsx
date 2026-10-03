@@ -63,12 +63,14 @@ function EntryForm({
   action,
   nowIso,
   medicalHistoryStatus,
+  canRecordMedication,
   original,
   onCancel,
 }: {
   action: Action;
   nowIso: string;
   medicalHistoryStatus: "recorded" | "missing" | "unavailable";
+  canRecordMedication: boolean;
   original?: ClinicalEntry;
   onCancel?: () => void;
 }) {
@@ -90,7 +92,9 @@ function EntryForm({
 
       {!original && (
         <div role="radiogroup" aria-label="Tipo de entrada" className="flex flex-wrap gap-2">
-          {(Object.keys(KIND_LABELS) as ClinicalEntry["kind"][]).map((option) => (
+          {(Object.keys(KIND_LABELS) as ClinicalEntry["kind"][])
+            .filter((option) => option !== "medicamento" || canRecordMedication)
+            .map((option) => (
             <button
               key={option}
               type="button"
@@ -228,12 +232,14 @@ export function ClinicalRecord({
   action,
   nowIso,
   medicalHistoryStatus,
+  canRecordMedication,
 }: {
   entries: ClinicalEntry[];
   canWrite: boolean;
   action: Action;
   nowIso: string;
   medicalHistoryStatus: "recorded" | "missing" | "unavailable";
+  canRecordMedication: boolean;
 }) {
   const [correcting, setCorrecting] = useState<string | null>(null);
   const correctionOf = new Map(entries.filter((e) => e.corrects_entry_id).map((e) => [e.corrects_entry_id as string, e]));
@@ -242,7 +248,7 @@ export function ClinicalRecord({
   return (
     <div className="flex flex-col gap-5">
       {canWrite ? (
-        <EntryForm action={action} nowIso={nowIso} medicalHistoryStatus={medicalHistoryStatus} />
+        <EntryForm action={action} nowIso={nowIso} medicalHistoryStatus={medicalHistoryStatus} canRecordMedication={canRecordMedication} />
       ) : (
         <p className="text-sm text-slate-600" data-i18n="clinical.onlyStaff">Solo doctores y asistentes dentales pueden escribir en el registro clínico.</p>
       )}
@@ -298,7 +304,7 @@ export function ClinicalRecord({
                   </p>
                 )}
 
-                {canWrite && !correction && correcting !== entry.id && (
+                {canWrite && !correction && correcting !== entry.id && (entry.kind !== "medicamento" || canRecordMedication) && (
                   <button
                     type="button"
                     onClick={() => setCorrecting(entry.id)}
@@ -312,7 +318,7 @@ export function ClinicalRecord({
                     <p className="mb-2 text-sm font-semibold text-amber-800">
                       La entrada original seguirá visible, tachada, con tu corrección y el motivo.
                     </p>
-                    <EntryForm action={action} nowIso={nowIso} medicalHistoryStatus={medicalHistoryStatus} original={entry} onCancel={() => setCorrecting(null)} />
+                    <EntryForm action={action} nowIso={nowIso} medicalHistoryStatus={medicalHistoryStatus} canRecordMedication={canRecordMedication} original={entry} onCancel={() => setCorrecting(null)} />
                   </div>
                 )}
               </li>

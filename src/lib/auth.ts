@@ -30,6 +30,12 @@ export function canWriteClinicalEntries(role: Role) {
   return role === "doctor" || role === "enfermeria";
 }
 
+// Solo el doctor registra medicamentos administrados: en una clínica dental la
+// asistente no administra medicamentos (ver RLS en 023_medicamento_solo_doctor.sql).
+export function canRecordMedication(role: Role) {
+  return role === "doctor";
+}
+
 // Solo el doctor registra hallazgos del odontograma (ver RLS en 018_odontogram.sql).
 export function canWriteOdontogram(role: Role) {
   return role === "doctor";
