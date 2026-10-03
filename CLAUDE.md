@@ -8,7 +8,7 @@ Sistema de gestión para clínicas dentales. Stack: Next.js (App Router, TypeScr
 
 ## Cómo trabajar
 - Responder siempre en **español**, breve y paso a paso.
-- **Producto real** para clínicas en República Dominicana, dentales y de medicina general (no es demo ni portafolio). Lo usan doctores, secretarias y enfermería con pacientes reales.
+- **Producto real** para clínicas **dentales** en República Dominicana (no es demo ni portafolio). Lo usan doctores, secretarias y asistentes dentales con pacientes reales. La medicina general irá en un proyecto aparte.
 - Nunca mostrar datos inventados: todo número, lista o estado en pantalla sale de Supabase. Si no hay datos, se muestra un estado vacío honesto.
 - Nunca inventar métricas, testimonios ni certificaciones (nada de "HIPAA compliant" ni similares).
 - Nada de botones u opciones de menú que no hagan nada: si una función no existe todavía, no se muestra.
@@ -59,6 +59,6 @@ Sistema de gestión para clínicas dentales. Stack: Next.js (App Router, TypeScr
 - Clientes: `src/lib/supabase/client.ts` (navegador) y `src/lib/supabase/server.ts` (servidor).
 - En Next 16 `middleware` se llama `proxy`: el refresco de sesión del login irá en `src/proxy.ts`.
 - Toda tabla nueva necesita GRANT a `authenticated`, porque la exposición automática de tablas está desactivada.
-- Pacientes: Enfermería puede **crear** pacientes nuevos (`canCreatePatients`, migración 013) pero no editarlos ni archivarlos (`canManagePatients`, solo admin/recepción).
+- Rol `enfermeria` en la base = "Asistente dental" en pantalla (solo cambia la etiqueta). Pacientes: el asistente dental puede **crear** pacientes nuevos (`canCreatePatients`, migración 013) pero no editarlos ni archivarlos (`canManagePatients`, solo admin/recepción).
 - Cédula: `src/lib/cedula.ts` valida el dígito verificador (módulo 10) con pruebas en `src/lib/cedula.test.ts` (`npm test`, Vitest). Al crear un paciente (no al editar), `/api/patients/lookup-cedula` primero busca la cédula en `patients` (si ya existe, no autocompleta: avisa y enlaza a la ficha para no duplicar) y solo si no está localmente intenta un proveedor externo configurado por `IDENTITY_API_URL`/`IDENTITY_API_KEY`. Sin esas variables no hay mock ni datos inventados: el mensaje pide llenar a mano. Los campos autocompletados siguen editables.
 - Tareas propuestas o en pausa (administración de cuentas, sala de espera, proveedor externo de cédula, chatbot de IA) documentadas en `pendientes/`, cada una con lo que falta y quién lo bloquea. Revisar ahí antes de asumir que algo no se ha discutido.

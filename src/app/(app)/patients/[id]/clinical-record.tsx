@@ -29,7 +29,7 @@ const KIND_LABELS: Record<ClinicalEntry["kind"], string> = {
 
 const ROLE_LABELS: Record<string, string> = {
   doctor: "Doctor",
-  enfermeria: "Enfermería",
+  enfermeria: "Asistente dental",
   recepcion: "Recepción",
   admin: "Admin",
 };
@@ -244,7 +244,7 @@ export function ClinicalRecord({
       {canWrite ? (
         <EntryForm action={action} nowIso={nowIso} medicalHistoryStatus={medicalHistoryStatus} />
       ) : (
-        <p className="text-sm text-slate-600" data-i18n="clinical.onlyStaff">Solo doctores y enfermería pueden escribir en el registro clínico.</p>
+        <p className="text-sm text-slate-600" data-i18n="clinical.onlyStaff">Solo doctores y asistentes dentales pueden escribir en el registro clínico.</p>
       )}
 
       {entries.length === 0 ? (

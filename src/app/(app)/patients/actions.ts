@@ -306,7 +306,7 @@ export async function addClinicalEntry(
 ): Promise<ClinicalEntryState> {
   const profile = await requireProfile();
   if (!canWriteClinicalEntries(profile.role)) {
-    return { error: "Solo doctores y enfermería pueden escribir en el registro clínico." };
+    return { error: "Solo doctores y asistentes dentales pueden escribir en el registro clínico." };
   }
 
   const kind = field(formData, "kind") as ClinicalKind;

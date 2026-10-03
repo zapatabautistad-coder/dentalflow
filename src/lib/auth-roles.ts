@@ -5,6 +5,6 @@ export type Role = "doctor" | "recepcion" | "enfermeria" | "admin";
 export const ROLE_LABELS: Record<Role, string> = {
   doctor: "Doctor",
   recepcion: "Recepción",
-  enfermeria: "Enfermería",
+  enfermeria: "Asistente dental",
   admin: "Admin",
 };

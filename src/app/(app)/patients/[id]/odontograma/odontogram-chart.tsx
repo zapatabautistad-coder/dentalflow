@@ -40,7 +40,7 @@ const SURFACE_FILL: Record<string, string> = {
   sellante: "#53B6F7",
 };
 
-const ROLE_LABELS: Record<string, string> = { doctor: "Doctor", enfermeria: "Enfermería", recepcion: "Recepción", admin: "Admin" };
+const ROLE_LABELS: Record<string, string> = { doctor: "Doctor", enfermeria: "Asistente dental", recepcion: "Recepción", admin: "Admin" };
 
 function formatStamp(iso: string): string {
   return new Intl.DateTimeFormat("es-DO", {
