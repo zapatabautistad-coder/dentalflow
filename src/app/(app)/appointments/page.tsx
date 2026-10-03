@@ -8,6 +8,7 @@ import { DayNav } from "./day-nav";
 import { StatusChip } from "./status-chip";
 
 export const metadata: Metadata = { title: "Citas · DentalFlow" };
+const CLINIC_NAME = process.env.NEXT_PUBLIC_CLINIC_NAME || "Bright Smile Dental";
 
 type AppointmentRow = {
   id: string;
@@ -17,9 +18,24 @@ type AppointmentRow = {
   duration_minutes: number;
   reason: string | null;
   status: string;
-  patients: { full_name: string } | null;
+  patients: { full_name: string; phone: string | null } | null;
   profiles: { full_name: string } | null;
 };
+
+function appointmentWhatsAppUrl(appointment: AppointmentRow, dateKey: string): string | null {
+  if (
+    (appointment.status !== "programada" && appointment.status !== "confirmada") ||
+    !appointment.patients?.phone
+  ) {
+    return null;
+  }
+
+  const phoneDigits = appointment.patients.phone.replace(/\D/g, "");
+  if (!phoneDigits) return null;
+
+  const message = `Hola ${appointment.patients.full_name}, le recordamos su cita en ${CLINIC_NAME} el ${formatDateLong(dateKey)} a las ${formatHour(appointment.starts_at)}. Responda SÍ para confirmar.`;
+  return `https://wa.me/1${phoneDigits}?text=${encodeURIComponent(message)}`;
+}
 
 export default async function AppointmentsPage({
   searchParams,
@@ -38,7 +54,7 @@ export default async function AppointmentsPage({
   const [appointmentsResult, queueResult] = await Promise.all([
     supabase
       .from("appointments")
-      .select("id, patient_id, doctor_id, starts_at, duration_minutes, reason, status, patients(full_name), profiles(full_name)")
+      .select("id, patient_id, doctor_id, starts_at, duration_minutes, reason, status, patients(full_name, phone), profiles(full_name)")
       .gte("starts_at", start)
       .lt("starts_at", end)
       .order("starts_at", { ascending: true })
@@ -103,43 +119,57 @@ export default async function AppointmentsPage({
           </p>
         ) : (
           <div className="divide-y divide-white/70">
-            {appointments.map((appointment) => (
-              <div key={appointment.id} className="flex flex-col gap-3 px-4 py-3 transition hover:bg-white/40 sm:flex-row sm:items-center sm:justify-between">
-                <Link href={`/appointments/${appointment.id}/edit`} className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center">
-                  <div className="flex items-center gap-3">
-                    <div className="w-14 shrink-0 text-center">
-                      <div className="text-[13px] font-black text-slate-900">{formatHour(appointment.starts_at)}</div>
-                      <div className="text-xs font-semibold text-slate-400">{appointment.duration_minutes} min</div>
-                    </div>
-                    <div className="hidden h-8 w-[2px] rounded-full bg-slate-200 sm:block" />
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <div className="text-sm font-black text-slate-900">
-                          {appointment.patients?.full_name ?? "Paciente"}
+            {appointments.map((appointment) => {
+              const whatsappUrl = appointmentWhatsAppUrl(appointment, dateKey);
+
+              return (
+                <div key={appointment.id} className="flex flex-col gap-3 px-4 py-3 transition hover:bg-white/40 sm:flex-row sm:items-center sm:justify-between">
+                  <Link href={`/appointments/${appointment.id}/edit`} className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center">
+                    <div className="flex items-center gap-3">
+                      <div className="w-14 shrink-0 text-center">
+                        <div className="text-[13px] font-black text-slate-900">{formatHour(appointment.starts_at)}</div>
+                        <div className="text-xs font-semibold text-slate-400">{appointment.duration_minutes} min</div>
+                      </div>
+                      <div className="hidden h-8 w-[2px] rounded-full bg-slate-200 sm:block" />
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <div className="text-sm font-black text-slate-900">
+                            {appointment.patients?.full_name ?? "Paciente"}
+                          </div>
+                          <StatusChip status={appointment.status} />
                         </div>
-                        <StatusChip status={appointment.status} />
-                      </div>
-                      <div className="mt-1 break-words text-[13px] text-slate-500">
-                        <span>{appointment.reason ?? "Sin motivo registrado"}</span>
-                        {appointment.profiles?.full_name ? (
-                          <>
-                            {" "}
-                            · <span className="font-semibold text-slate-700">{appointment.profiles.full_name}</span>
-                          </>
-                        ) : null}
+                        <div className="mt-1 break-words text-[13px] text-slate-500">
+                          <span>{appointment.reason ?? "Sin motivo registrado"}</span>
+                          {appointment.profiles?.full_name ? (
+                            <>
+                              {" "}
+                              · <span className="font-semibold text-slate-700">{appointment.profiles.full_name}</span>
+                            </>
+                          ) : null}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </Link>
-                {canManage && isToday && !queueResult.error && (appointment.status === "programada" || appointment.status === "confirmada") && !queueAppointmentIds.has(appointment.id) && (
-                  <form action={checkInAppointment.bind(null, appointment.id)}>
-                    <button type="submit" className="glass-button min-h-11 w-full px-4 text-sm font-semibold sm:w-auto" data-i18n="waitingRoom.action.arrived">
-                      Llegó
-                    </button>
-                  </form>
-                )}
-              </div>
-            ))}
+                  </Link>
+                  {whatsappUrl && (
+                    <a
+                      href={whatsappUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex min-h-11 items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 px-4 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100"
+                    >
+                      WhatsApp
+                    </a>
+                  )}
+                  {canManage && isToday && !queueResult.error && (appointment.status === "programada" || appointment.status === "confirmada") && !queueAppointmentIds.has(appointment.id) && (
+                    <form action={checkInAppointment.bind(null, appointment.id)}>
+                      <button type="submit" className="glass-button min-h-11 w-full px-4 text-sm font-semibold sm:w-auto" data-i18n="waitingRoom.action.arrived">
+                        Llegó
+                      </button>
+                    </form>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
