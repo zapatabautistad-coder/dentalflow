@@ -5,7 +5,7 @@ Hecho: la 022 de cuentas temporales se descartó (revertida). Medicamentos solo 
 
 ## Orden
 1. **Horarios** (022 aplicada en producción; pantalla pendiente con Copilot): horario por doctor, días libres, bloquear citas fuera de turno (trigger en la base) y ver huecos libres. Base: Claude, con OK antes de aplicar. Pantalla: Copilot.
-2. **Índices de rendimiento** (`024_indices_claves_foraneas.sql`, 19 índices, sin aplicar): 15 claves foráneas sin índice, según el asesor de Supabase (`*_created_by`, `*_voided_by`, `audit_log.changed_by`, `queue.appointment_id`, etc.). Es una migración pequeña y necesita OK.
+2. **Índices de rendimiento** (`024_indices_claves_foraneas.sql`, 19 índices, aplicada en producción): 15 claves foráneas sin índice, según el asesor de Supabase (`*_created_by`, `*_voided_by`, `audit_log.changed_by`, `queue.appointment_id`, etc.). Es una migración pequeña y necesita OK.
 3. **Pruebas de punta a punta** con Playwright: login, paciente, cita, sala, odontograma, plan, cobro y horarios (cita fuera de horario rechazada), con cada rol.
 4. **Revisión de seguridad** completa del código.
 5. **Mejoras clínicas** (detalle en `09-mejoras-clinicas-revision.md`):
