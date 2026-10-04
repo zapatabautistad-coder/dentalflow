@@ -17,7 +17,7 @@ Hecho: la 022 de cuentas temporales se descartó (revertida). Medicamentos solo 
 6. **Antes de la primera clínica**, lo hace el usuario con pasos:
    - plan Pro de Supabase
    - "Prevent use of leaked passwords"
-   - borrar los datos de prueba (con OK)
+   - borrar los datos de prueba (con OK): hoy son 3 pacientes con cédula usados para probar las citas y sus 4 citas (conteo del 2026-10-04). Las cédulas son solo de prueba.
    - desactivar las cuentas de prueba (Dr. Prueba, JHON MAXWEL)
    - respaldos
 
