@@ -56,10 +56,12 @@ export function AppointmentForm({
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
-      <label className="flex flex-col gap-1.5 text-sm font-medium" data-i18n="appointments.form.patient">
+      {/* div y no label: dentro de un label, el clic en un resultado se reenvía
+          al botón "Cambiar" que aparece al seleccionar y borra la selección. */}
+      <div className="flex flex-col gap-1.5 text-sm font-medium" data-i18n="appointments.form.patient">
         Paciente
         <PatientPicker defaultPatient={defaultPatient} />
-      </label>
+      </div>
 
       <label className="flex flex-col gap-1.5 text-sm font-medium" data-i18n="appointments.form.doctor">
         Doctor
