@@ -1,7 +1,7 @@
 // El texto de búsqueda entra en un filtro or() de PostgREST, donde
-// `%`, `,`, `(` y `)` tienen significado especial: se descartan.
+// `%`, `*`, `,`, `(`, `)`, `"` y `\` tienen significado especial: se descartan.
 function sanitizeSearch(value: string) {
-  return value.replace(/[%,()]/g, "").trim();
+  return value.replace(/[%*,()"\\]/g, "").trim();
 }
 
 // document_id y phone se guardan sin guiones (solo dígitos), así que si el

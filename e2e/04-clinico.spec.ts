@@ -73,3 +73,14 @@ test("doctor no puede cobrar (solo la base, sin pantalla)", async () => {
   const { error } = await supabase.from("billing_charges").insert({ patient_id: patientId, description: "No permitido", amount: 100 });
   expect(error).not.toBeNull();
 });
+
+test("asistente dental no ve cobros ni a través de la auditoría (025)", async () => {
+  const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!);
+  await supabase.auth.signInWithPassword({ email: "enfermeria@e2e.test", password: PASSWORD });
+  const { data } = await supabase
+    .from("audit_log")
+    .select("id")
+    .eq("patient_id", patientId)
+    .in("table_name", ["billing_charges", "billing_payments"]);
+  expect(data ?? []).toHaveLength(0);
+});
