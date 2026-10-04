@@ -1,7 +1,10 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import type { ArchiveState } from "../actions";
+
+// Motivos frecuentes: llenan el campo y se pueden completar a mano.
+const QUICK_REASONS = ["Creado por error", "Registro duplicado", "Paciente de prueba"];
 
 export function ArchiveForm({
   action,
@@ -9,6 +12,7 @@ export function ArchiveForm({
   action: (prev: ArchiveState, formData: FormData) => Promise<ArchiveState>;
 }) {
   const [state, formAction, pending] = useActionState(action, undefined);
+  const [reason, setReason] = useState("");
 
   return (
     <details className="group rounded-2xl border border-slate-200 bg-white/50 p-4">
@@ -18,10 +22,25 @@ export function ArchiveForm({
           El paciente deja de aparecer en listas y búsquedas, pero su historial, citas y cambios se conservan.
           Solo un administrador puede restaurarlo.
         </p>
+        <div className="flex flex-wrap gap-2">
+          {QUICK_REASONS.map((quick) => (
+            <button
+              key={quick}
+              type="button"
+              onClick={() => setReason(quick)}
+              aria-pressed={reason === quick}
+              className="min-h-9 rounded-full border border-slate-300 bg-white/70 px-3 text-sm font-medium text-slate-700 transition hover:border-[#0E9BF3] hover:text-[#0766B5] aria-pressed:border-[#0E9BF3] aria-pressed:bg-[#E0F2FE] aria-pressed:text-[#0766B5]"
+            >
+              {quick}
+            </button>
+          ))}
+        </div>
         <label className="flex flex-col gap-1.5 text-sm font-medium text-slate-700">
           Motivo (obligatorio)
           <textarea
             name="archived_reason"
+            value={reason}
+            onChange={(event) => setReason(event.target.value)}
             required
             minLength={5}
             maxLength={500}
