@@ -5,10 +5,16 @@ Hecho: la 022 de cuentas temporales se descartó (revertida). Medicamentos solo 
 
 ## Orden
 1. **Horarios** (022 aplicada en producción; pantalla pendiente con Copilot): horario por doctor, días libres, bloquear citas fuera de turno (trigger en la base) y ver huecos libres. Base: Claude, con OK antes de aplicar. Pantalla: Copilot.
-2. **Índices de rendimiento**: 15 claves foráneas sin índice, según el asesor de Supabase (`*_created_by`, `*_voided_by`, `audit_log.changed_by`, `queue.appointment_id`, etc.). Es una migración pequeña y necesita OK.
-3. **Pruebas de punta a punta** con Playwright: login, paciente, cita, sala, odontograma, plan y cobro, con cada rol.
+2. **Índices de rendimiento** (`024_indices_claves_foraneas.sql`, 19 índices, sin aplicar): 15 claves foráneas sin índice, según el asesor de Supabase (`*_created_by`, `*_voided_by`, `audit_log.changed_by`, `queue.appointment_id`, etc.). Es una migración pequeña y necesita OK.
+3. **Pruebas de punta a punta** con Playwright: login, paciente, cita, sala, odontograma, plan, cobro y horarios (cita fuera de horario rechazada), con cada rol.
 4. **Revisión de seguridad** completa del código.
-5. **Antes de la primera clínica**, lo hace el usuario con pasos:
+5. **Mejoras clínicas** (detalle en `09-mejoras-clinicas-revision.md`):
+   1. Signos vitales antes del procedimiento (PA, pulso, glucemia).
+   2. Chip rojo de alerta médica en Pacientes y Sala de espera.
+   3. Odontograma: estado inicial vs. hecho en la clínica.
+   4. Superficie I (incisal) separada de O (oclusal).
+   5. Sillón / box en la sala de espera.
+6. **Antes de la primera clínica**, lo hace el usuario con pasos:
    - plan Pro de Supabase
    - "Prevent use of leaked passwords"
    - borrar los datos de prueba (con OK)
