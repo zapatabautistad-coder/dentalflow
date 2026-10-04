@@ -175,7 +175,9 @@ export async function createAppointment(
   });
 
   if (error) {
-    return { error: "No se pudo guardar la cita. Inténtalo de nuevo.", values: parsed.submitted, attemptId: randomUUID() };
+    // La base rechaza citas fuera del horario del doctor (migración 022).
+    const message = error.hint === "fuera_de_horario" ? error.message : "No se pudo guardar la cita. Inténtalo de nuevo.";
+    return { error: message, values: parsed.submitted, attemptId: randomUUID() };
   }
 
   revalidatePath("/appointments");
@@ -227,7 +229,9 @@ export async function updateAppointment(
     .eq("id", appointmentId);
 
   if (error) {
-    return { error: "No se pudo actualizar la cita. Inténtalo de nuevo.", values: parsed.submitted, attemptId: randomUUID() };
+    // La base rechaza citas fuera del horario del doctor (migración 022).
+    const message = error.hint === "fuera_de_horario" ? error.message : "No se pudo actualizar la cita. Inténtalo de nuevo.";
+    return { error: message, values: parsed.submitted, attemptId: randomUUID() };
   }
 
   revalidatePath("/appointments");
