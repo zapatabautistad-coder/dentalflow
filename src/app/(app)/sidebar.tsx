@@ -4,13 +4,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { CLINIC_NAME } from "@/lib/clinic";
 import { formatHour } from "@/lib/timezone";
 import { logout } from "./actions";
 import { getNotifications, type NotificationItem } from "./notifications";
-
-// Nombre de la clínica bajo el logo y en el perfil. Se cambia con
-// NEXT_PUBLIC_CLINIC_NAME en .env.local, sin tocar el código.
-const CLINIC_NAME = process.env.NEXT_PUBLIC_CLINIC_NAME || "Bright Smile Dental";
 
 type IconName =
   | "home"
@@ -316,13 +313,14 @@ function NotificationPopover({
 
 // Módulos del menú, en el mismo orden del diseño. Los que no tienen `href`
 // todavía no existen en la app: se ven igual pero no llevan a ninguna parte.
-type NavItem = { label: string; key?: string; icon: IconName; href?: string; adminOnly?: boolean };
+type NavItem = { label: string; key?: string; icon: IconName; href?: string; adminOnly?: boolean; doctorOrAdminOnly?: boolean };
 
 const NAV: NavItem[] = [
   { label: "PANEL", key: "sidebar.panel", icon: "home", href: "/panel" },
   { label: "PACIENTES", key: "sidebar.patients", icon: "users", href: "/patients" },
   { label: "CITAS", key: "sidebar.appointments", icon: "calendar", href: "/appointments" },
   { label: "SALA DE ESPERA", key: "sidebar.waitingRoom", icon: "turnos", href: "/waiting-room" },
+  { label: "ANÁLISIS", key: "sidebar.analysis", icon: "chart", href: "/analisis", doctorOrAdminOnly: true },
   { label: "CUENTAS", key: "sidebar.accounts", icon: "settings", href: "/accounts", adminOnly: true },
 ];
 
@@ -384,10 +382,10 @@ function Brand({ compact = false, onNavigate }: { compact?: boolean; onNavigate?
   );
 }
 
-function NavList({ pathname, isAdmin, onNavigate }: { pathname: string; isAdmin: boolean; onNavigate?: () => void }) {
+function NavList({ pathname, isAdmin, isDoctor, onNavigate }: { pathname: string; isAdmin: boolean; isDoctor: boolean; onNavigate?: () => void }) {
   return (
     <nav aria-label="Menú principal" className="flex flex-col gap-1">
-      {NAV.filter((item) => !item.adminOnly || isAdmin).map((item) => {
+      {NAV.filter((item) => (!item.adminOnly || isAdmin) && (!item.doctorOrAdminOnly || isAdmin || isDoctor)).map((item) => {
         if (!item.href) {
           return (
             <div
@@ -699,7 +697,7 @@ export function Sidebar({ fullName, roleLabel, role, isAdmin }: SidebarProps) {
               </div>
 
               <div className="sidebar-scroll min-h-0 flex-1 overflow-y-auto pb-4">
-                <NavList pathname={pathname} isAdmin={isAdmin} onNavigate={() => setMobileOpen(false)} />
+                <NavList pathname={pathname} isAdmin={isAdmin} isDoctor={role === "doctor"} onNavigate={() => setMobileOpen(false)} />
               </div>
 
               <SidebarFooter fullName={fullName} roleLabel={roleLabel} role={role} />
@@ -722,7 +720,7 @@ export function Sidebar({ fullName, roleLabel, role, isAdmin }: SidebarProps) {
           </div>
 
           <div className="sidebar-scroll -mx-1 min-h-0 flex-1 overflow-y-auto px-1">
-            <NavList pathname={pathname} isAdmin={isAdmin} />
+            <NavList pathname={pathname} isAdmin={isAdmin} isDoctor={role === "doctor"} />
           </div>
 
           <div className="pt-4">
