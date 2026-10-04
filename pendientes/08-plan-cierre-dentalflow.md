@@ -8,12 +8,7 @@ Hecho: la 022 de cuentas temporales se descartó (revertida). Medicamentos solo 
 2. **Índices de rendimiento** (`024_indices_claves_foraneas.sql`, 19 índices, aplicada en producción): 15 claves foráneas sin índice, según el asesor de Supabase (`*_created_by`, `*_voided_by`, `audit_log.changed_by`, `queue.appointment_id`, etc.). Es una migración pequeña y necesita OK.
 3. **Pruebas de punta a punta** con Playwright: login, paciente, cita, sala, odontograma, plan, cobro y horarios (cita fuera de horario rechazada), con cada rol.
 4. **Revisión de seguridad** completa del código.
-5. **Mejoras clínicas** (detalle en `09-mejoras-clinicas-revision.md`):
-   1. Signos vitales antes del procedimiento (PA, pulso, glucemia).
-   2. Chip rojo de alerta médica en Pacientes y Sala de espera.
-   3. Odontograma: estado inicial vs. hecho en la clínica.
-   4. Superficie I (incisal) separada de O (oclusal).
-   5. Sillón / box en la sala de espera.
+5. **Mejoras clínicas y legales** (orden y detalle en `09-mejoras-clinicas-revision.md`): signos vitales, alerta médica, recetas con exequátur, NCF (tras hablar con un contador), consentimientos y radiografías, odontograma previo vs. hecho, superficie incisal y sillón. Base: Claude; pantallas: Copilot.
 6. **Antes de la primera clínica**, lo hace el usuario con pasos:
    - plan Pro de Supabase
    - "Prevent use of leaked passwords"
