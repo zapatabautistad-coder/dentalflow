@@ -15,7 +15,7 @@ Cada hallazgo se comprobó contra Supabase **local** (nunca producción).
 2. **Facturación visible en la auditoría (media).** `audit_log` mostraba a quien veía al paciente
    todos sus cambios: la asistente dental leía montos de cargos y pagos, y el doctor citas del
    paciente con otros doctores. Arreglo: migración **025** (cada fila se ve solo si el rol ve la
-   tabla de origen). Prueba E2E en `04-clinico`. **Pendiente: aplicar en producción (con OK).**
+   tabla de origen). Prueba E2E en `04-clinico`. Aplicada en producción el 2026-10-04.
 3. **Sin cabeceras de seguridad (media).** Se agregan en `next.config.ts`: X-Frame-Options DENY y
    `frame-ancestors 'none'` (clickjacking), HSTS, Referrer-Policy, Permissions-Policy.
 4. **Búsqueda de pacientes (baja).** Se descartan también `*`, `"` y `\` del filtro de PostgREST.

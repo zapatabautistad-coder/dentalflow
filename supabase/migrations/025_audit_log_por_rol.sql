@@ -7,10 +7,10 @@
 -- origen. El admin sigue viendo todo. Solo cambia la política de lectura.
 -- =============================================================
 
-drop policy "audit_log: ver" on public.audit_log;
-
-create policy "audit_log: ver"
-  on public.audit_log for select to authenticated
+-- ALTER POLICY (no drop + create) para cambiar la condición sin dejar ni un
+-- instante la tabla sin política.
+alter policy "audit_log: ver"
+  on public.audit_log
   using (
     (select public.get_my_role()) = 'admin'
     or (
