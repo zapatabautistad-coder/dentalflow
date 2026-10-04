@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
-import { login, type E2ERole } from "./helpers";
+import { createClient } from "@supabase/supabase-js";
+import { PASSWORD, login, type E2ERole } from "./helpers";
 
 const MENU: Record<E2ERole, { visible: string[]; hidden: string[] }> = {
   admin: { visible: ["Pacientes", "Citas", "Sala de espera", "Análisis", "Cuentas"], hidden: [] },
@@ -30,4 +31,18 @@ test("recepción no entra a Cuentas", async ({ page }) => {
   await login(page, "recepcion");
   await page.goto("/accounts");
   await expect(page).not.toHaveURL(/\/accounts$/);
+});
+
+test("una cabecera de usuario falsificada no da permisos de admin", async ({ page }) => {
+  const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!);
+  await supabase.auth.signInWithPassword({ email: "enfermeria@e2e.test", password: PASSWORD });
+  const { data: admin } = await supabase.from("profiles").select("id").eq("role", "admin").single();
+  await login(page, "enfermeria");
+  // El proxy debe correr también en rutas que terminan en .png y borrar la cabecera.
+  await page.setExtraHTTPHeaders({ "x-df-user-id": admin!.id });
+  for (const path of ["/patients", "/patients/x.png"]) {
+    await page.goto(path);
+    await expect(page.locator("nav").first().getByRole("link", { name: "Cuentas" })).toHaveCount(0);
+    await expect(page).not.toHaveURL(/\/login/);
+  }
 });
