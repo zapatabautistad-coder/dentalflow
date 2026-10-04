@@ -1,9 +1,8 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import { ROLE_LABELS, type Role } from "@/lib/auth-roles";
 import { PASSWORD_RULE_TEXT } from "@/lib/password";
-import { DEFAULT_GUEST_HOURS, GUEST_HOURS } from "@/lib/guest-hours";
 import type { AccountFormState } from "./actions";
 
 type Action = (prev: AccountFormState, formData: FormData) => Promise<AccountFormState>;
@@ -30,28 +29,9 @@ function Message({ state }: { state: AccountFormState }) {
 
 const PRIMARY_BUTTON = "glass-button min-h-11 self-start px-5 text-[15px] font-semibold disabled:opacity-60";
 
-function GuestHoursField() {
-  return (
-    <label className="flex min-w-0 flex-col gap-1.5 text-sm font-medium text-slate-700">
-      <span data-i18n="accounts.guestHours">Tiempo de acceso de la visita</span>
-      <select name="guest_hours" defaultValue={DEFAULT_GUEST_HOURS} className="glass-input text-[15px]">
-        {GUEST_HOURS.map((hours) => (
-          <option key={hours} value={hours}>
-            {hours} h
-          </option>
-        ))}
-      </select>
-      <span className="text-xs font-normal text-slate-500" data-i18n="accounts.guestHint">
-        Al cerrar sesión o al vencer el tiempo, su acceso se cierra solo. Si quiere volver, te llega un aviso.
-      </span>
-    </label>
-  );
-}
-
 export function CreateAccountForm({ action }: { action: Action }) {
   const [state, formAction, pending] = useActionState(action, undefined);
   const formRef = useRef<HTMLFormElement>(null);
-  const [temporary, setTemporary] = useState(false);
 
   useEffect(() => {
     if (state?.success) formRef.current?.reset();
@@ -93,17 +73,6 @@ export function CreateAccountForm({ action }: { action: Action }) {
           ))}
         </select>
       </label>
-      <label className="flex min-h-11 items-center gap-2 text-sm font-medium text-slate-700 md:col-span-2">
-        <input
-          type="checkbox"
-          name="temporary"
-          checked={temporary}
-          onChange={(event) => setTemporary(event.target.checked)}
-          className="h-4 w-4 accent-[#0766B5]"
-        />
-        <span data-i18n="accounts.temporary">Cuenta temporal (visita)</span>
-      </label>
-      {temporary && <GuestHoursField />}
       <div className="flex min-w-0 flex-col gap-3 md:col-span-2">
         <Message state={state} />
         <button type="submit" disabled={pending} className={PRIMARY_BUTTON}>
@@ -179,18 +148,17 @@ export function DeactivateForm({ action }: { action: Action }) {
   );
 }
 
-export function ReactivateForm({ action, isGuest = false }: { action: Action; isGuest?: boolean }) {
-  const [state, formAction, pending] = useActionState(action, undefined);
+export function ReactivateForm({ action }: { action: () => Promise<AccountFormState> }) {
+  const [state, formAction, pending] = useActionState(async () => action(), undefined);
 
   return (
     <form action={formAction} className="flex min-w-0 flex-col gap-2">
-      {isGuest && <GuestHoursField />}
       <button
         type="submit"
         disabled={pending}
         className="min-h-11 self-start rounded-xl border border-[#0766B5]/30 bg-white/60 px-4 text-sm font-semibold text-[#0766B5] transition hover:bg-white disabled:opacity-60"
       >
-        {pending ? "Reactivando…" : isGuest ? <span data-i18n="accounts.grantAgain">Dar acceso otra vez</span> : "Reactivar cuenta"}
+        {pending ? "Reactivando…" : "Reactivar cuenta"}
       </button>
       <Message state={state} />
     </form>

@@ -8,8 +8,7 @@ export type NotificationKind =
   | "appointmentSoon"
   | "queueWaiting"
   | "appointmentUnconfirmed"
-  | "missingHistory"
-  | "accessRequest";
+  | "missingHistory";
 
 export type NotificationItem = {
   id: string;
@@ -148,26 +147,6 @@ export async function getNotifications(): Promise<NotificationsResult> {
       patientName,
       href: `/patients/${patientId}`,
     });
-  }
-
-  // Admin: visitas (cuentas temporales) que quieren entrar otra vez.
-  if (profile.role === "admin") {
-    const { data: requests, error: requestsError } = await supabase
-      .from("access_requests")
-      .select("id, profiles!access_requests_profile_id_fkey(full_name)")
-      .is("resolved_at", null)
-      .order("created_at", { ascending: false })
-      .limit(20)
-      .returns<{ id: string; profiles: { full_name: string } | null }[]>();
-    if (requestsError) return { items: [], error: true };
-    for (const request of requests ?? []) {
-      items.unshift({
-        id: `access:${request.id}`,
-        kind: "accessRequest",
-        patientName: request.profiles?.full_name || "Visita",
-        href: "/accounts",
-      });
-    }
   }
 
   return { items, error: false };
