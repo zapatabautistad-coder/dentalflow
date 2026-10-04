@@ -31,6 +31,10 @@ const ACTION_ERROR_MESSAGES: Record<string, string> = {
   "schedule.error.timeOffInvalid": "Revisa las fechas y el motivo del día libre.",
   "schedule.error.voidReasonRequired": "Escribe el motivo de la anulación.",
   "schedule.error.timeOffNotFound": "El día libre ya está anulado o no existe.",
+  "schedule.error.overlap": "Ese bloque se cruza con otro horario del mismo día.",
+  "schedule.error.reasonLength": "El motivo del día libre debe tener entre 3 y 200 caracteres.",
+  "schedule.error.voidReasonLength": "El motivo de la anulación debe tener entre 5 y 500 caracteres.",
+  "schedule.error.saveFailed": "No se pudo guardar. Inténtalo de nuevo.",
 };
 
 function firstValue(value: SearchValue): string | undefined {
@@ -44,7 +48,7 @@ function displayTime(value: string): string {
 export default async function SchedulesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ doctor?: SearchValue; day?: SearchValue; error?: SearchValue; errorKey?: SearchValue }>;
+  searchParams: Promise<{ doctor?: SearchValue; day?: SearchValue; errorKey?: SearchValue }>;
 }) {
   const profile = await requireProfile();
   const isDoctor = profile.role === "doctor";
@@ -131,7 +135,7 @@ export default async function SchedulesPage({
   const freeRanges = availabilityKnown
     ? getFreeTimeRanges(dayKey, scheduleBlocks, timeOffEntries, appointments)
     : [];
-  const actionError = firstValue(params.error);
+  // Solo claves conocidas: un texto libre en la URL nunca se muestra.
   const actionErrorKey = firstValue(params.errorKey);
   const translatedActionError = actionErrorKey ? ACTION_ERROR_MESSAGES[actionErrorKey] : undefined;
 
@@ -177,11 +181,6 @@ export default async function SchedulesPage({
         </form>
       </header>
 
-      {actionError && (
-        <p role="alert" className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-          {actionError}
-        </p>
-      )}
       {translatedActionError && (
         <p role="alert" data-i18n={actionErrorKey} className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
           {translatedActionError}
@@ -294,7 +293,7 @@ export default async function SchedulesPage({
                 </label>
                 <label className="flex flex-col gap-1 text-xs font-bold text-slate-600 sm:col-span-2">
                   <span data-i18n="schedule.reason">Motivo</span>
-                  <textarea name="reason" required maxLength={500} rows={2} className="glass-input resize-y px-3 py-2 text-sm" />
+                  <textarea name="reason" required minLength={3} maxLength={200} rows={2} className="glass-input resize-y px-3 py-2 text-sm" />
                 </label>
                 <button type="submit" className="glass-button min-h-11 px-4 text-sm font-semibold sm:col-span-2" data-i18n="schedule.addTimeOff">
                   Agregar día libre
@@ -331,7 +330,7 @@ export default async function SchedulesPage({
                             <input type="hidden" name="time_off_id" value={entry.id} />
                             <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs font-bold text-slate-600">
                               <span data-i18n="schedule.voidReason">Motivo de anulación</span>
-                              <input type="text" name="void_reason" required maxLength={500} className="glass-input min-h-10 min-w-0 px-2 text-sm" />
+                              <input type="text" name="void_reason" required minLength={5} maxLength={500} className="glass-input min-h-10 min-w-0 px-2 text-sm" />
                             </label>
                             <button type="submit" className="min-h-10 shrink-0 rounded-lg border border-rose-200 bg-rose-50 px-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-100" data-i18n="schedule.void">
                               Anular

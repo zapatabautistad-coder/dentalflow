@@ -8,23 +8,34 @@ import { isValidDateKey, todayDateKey } from "@/lib/timezone";
 
 type ActionContext =
   | { ok: true; doctorId: string; dayKey: string; supabase: Awaited<ReturnType<typeof createClient>> }
-  | { ok: false; dayKey: string; error?: string; errorKey?: string };
+  | { ok: false; dayKey: string; errorKey: string };
+
+// Los errores viajan en la URL solo como clave conocida, nunca como texto libre:
+// así nadie puede armar un enlace que muestre un mensaje falso dentro de la app.
+// Los mensajes de los triggers de la migración 022 se traducen a su clave.
+const DB_ERROR_KEYS: Record<string, string> = {
+  "Ese bloque se cruza con otro horario del mismo día.": "schedule.error.overlap",
+  "El horario debe ser de un doctor activo.": "schedule.error.doctorInvalid",
+  "El día libre debe ser de un doctor activo.": "schedule.error.doctorInvalid",
+  "Un horario no se edita: desactívalo y crea otro.": "schedule.error.blockNotFound",
+  "Un día libre no se edita: anúlalo con motivo y crea otro.": "schedule.error.timeOffNotFound",
+};
+
+function dbErrorKey(message: string): string {
+  return DB_ERROR_KEYS[message] ?? "schedule.error.saveFailed";
+}
 
 function value(formData: FormData, name: string): string {
   return String(formData.get(name) ?? "").trim();
 }
 
-function redirectToSchedule(
-  formData: FormData,
-  feedback?: { error?: string; errorKey?: string }
-): never {
+function redirectToSchedule(formData: FormData, feedback?: { errorKey: string }): never {
   const params = new URLSearchParams();
   const doctorId = value(formData, "doctor_id");
   const day = value(formData, "day");
 
   if (doctorId) params.set("doctor", doctorId);
   params.set("day", isValidDateKey(day) ? day : todayDateKey());
-  if (feedback?.error) params.set("error", feedback.error);
   if (feedback?.errorKey) params.set("errorKey", feedback.errorKey);
 
   redirect(`/horarios?${params.toString()}`);
@@ -55,7 +66,7 @@ async function getActionContext(formData: FormData): Promise<ActionContext> {
     .eq("active", true)
     .maybeSingle();
 
-  if (error) return { ok: false, dayKey, error: error.message };
+  if (error) return { ok: false, dayKey, errorKey: "schedule.error.saveFailed" };
   if (!doctor) return { ok: false, dayKey, errorKey: "schedule.error.doctorInvalid" };
 
   return { ok: true, doctorId, dayKey, supabase };
@@ -92,7 +103,7 @@ export async function addScheduleBlock(formData: FormData) {
     active: true,
   });
 
-  if (error) redirectToSchedule(formData, { error: error.message });
+  if (error) redirectToSchedule(formData, { errorKey: dbErrorKey(error.message) });
   finishSuccess(context.doctorId, context.dayKey);
 }
 
@@ -112,7 +123,7 @@ export async function deactivateScheduleBlock(formData: FormData) {
     .select("id")
     .maybeSingle();
 
-  if (error) redirectToSchedule(formData, { error: error.message });
+  if (error) redirectToSchedule(formData, { errorKey: dbErrorKey(error.message) });
   if (!data) redirectToSchedule(formData, { errorKey: "schedule.error.blockNotFound" });
   finishSuccess(context.doctorId, context.dayKey);
 }
@@ -124,8 +135,12 @@ export async function addTimeOff(formData: FormData) {
   const startsOn = value(formData, "starts_on");
   const endsOn = value(formData, "ends_on");
   const reason = value(formData, "reason");
-  if (!isValidDateKey(startsOn) || !isValidDateKey(endsOn) || startsOn > endsOn || !reason) {
+  if (!isValidDateKey(startsOn) || !isValidDateKey(endsOn) || startsOn > endsOn) {
     redirectToSchedule(formData, { errorKey: "schedule.error.timeOffInvalid" });
+  }
+  // Mismos límites que la base (022): motivo de 3 a 200 caracteres.
+  if (reason.length < 3 || reason.length > 200) {
+    redirectToSchedule(formData, { errorKey: "schedule.error.reasonLength" });
   }
 
   const { error } = await context.supabase.from("doctor_time_off").insert({
@@ -135,7 +150,7 @@ export async function addTimeOff(formData: FormData) {
     reason,
   });
 
-  if (error) redirectToSchedule(formData, { error: error.message });
+  if (error) redirectToSchedule(formData, { errorKey: dbErrorKey(error.message) });
   finishSuccess(context.doctorId, context.dayKey);
 }
 
@@ -148,6 +163,10 @@ export async function voidTimeOff(formData: FormData) {
   if (!timeOffId || !voidReason) {
     redirectToSchedule(formData, { errorKey: "schedule.error.voidReasonRequired" });
   }
+  // Mismos límites que la base (022): motivo de anulación de 5 a 500 caracteres.
+  if (voidReason.length < 5 || voidReason.length > 500) {
+    redirectToSchedule(formData, { errorKey: "schedule.error.voidReasonLength" });
+  }
 
   const { data, error } = await context.supabase
     .from("doctor_time_off")
@@ -158,7 +177,7 @@ export async function voidTimeOff(formData: FormData) {
     .select("id")
     .maybeSingle();
 
-  if (error) redirectToSchedule(formData, { error: error.message });
+  if (error) redirectToSchedule(formData, { errorKey: dbErrorKey(error.message) });
   if (!data) redirectToSchedule(formData, { errorKey: "schedule.error.timeOffNotFound" });
   finishSuccess(context.doctorId, context.dayKey);
 }
