@@ -1,6 +1,6 @@
 # Plan para terminar DentalFlow (acordado el 2026-10-03, empieza al día siguiente)
 
-Antes de empezar: el usuario debe confirmar "descarta 022 y empieza".
+Hecho: la 022 de cuentas temporales se descartó (revertida). Medicamentos solo doctor: 023 aplicada.
 - La migración `022_temporary_accounts.sql` (cuentas temporales) está solo en la rama `claude/gifted-newton-nwaspk`, sin aplicar ni publicar. Recomendación: descartarla junto con su código. Así Horarios toma el número 022.
 
 ## Orden
