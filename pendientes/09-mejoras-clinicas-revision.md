@@ -9,7 +9,7 @@ y la lógica con pruebas; **Copilot** hace la pantalla con un prompt que prepara
 Claude revisa el PR de Copilot antes del merge.
 
 ## Orden (después de Horarios, pruebas E2E y revisión de seguridad)
-1. **Signos vitales** antes del procedimiento: PA sistólica/diastólica, frecuencia cardíaca,
+1. **Signos vitales** (base y lógica hechas: migración 026 y `src/lib/vital-signs.ts`; 026 aplicada; falta la pantalla con Copilot) antes del procedimiento: PA sistólica/diastólica, frecuencia cardíaca,
    glucemia; ligados a la cita o al turno. Solo INSERT/SELECT, auditado, autor y hora por la base.
 2. **Chip rojo de alerta médica** junto al nombre en Pacientes y Sala de espera, con los
    antecedentes ya guardados (alergias, hipertensión, anticoagulantes, etc.). Solo pantalla: Copilot.
