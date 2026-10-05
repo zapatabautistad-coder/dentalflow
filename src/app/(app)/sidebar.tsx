@@ -488,14 +488,14 @@ function LanguageToggle() {
       </button>
 
       <div
-        className={`absolute inset-x-0 top-[calc(100%+0.55rem)] z-20 origin-top overflow-hidden rounded-2xl border border-[#0E9BF3]/25 bg-[#062F55]/96 p-1.5 shadow-[0_18px_42px_-20px_rgba(15,23,42,0.8)] backdrop-blur-xl transition-all duration-220 ease-[cubic-bezier(0.2,0.8,0.2,1)] ${
+        className={`absolute inset-x-0 top-[calc(100%+0.55rem)] z-20 origin-top overflow-hidden rounded-2xl border border-[#0E9BF3]/25 bg-white/95 p-1.5 shadow-[0_18px_42px_-20px_rgba(7,102,181,0.45)] backdrop-blur-xl transition-all duration-220 ease-[cubic-bezier(0.2,0.8,0.2,1)] ${
           open
             ? "pointer-events-auto scale-y-100 opacity-100 translate-y-0"
             : "pointer-events-none scale-y-95 opacity-0 -translate-y-1"
         }`}
         onMouseLeave={() => setOpen(false)}
       >
-        <div className="max-h-72 overflow-y-auto overscroll-contain scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
+        <div className="max-h-72 overflow-y-auto overscroll-contain scrollbar-thin scrollbar-thumb-[#0E9BF3]/25 scrollbar-track-transparent">
           {LANGUAGE_OPTIONS.map((lang) => {
             const active = selected.code === lang.code;
 
@@ -510,15 +510,15 @@ function LanguageToggle() {
                   event.currentTarget.style.setProperty("--x", `${x}%`);
                   event.currentTarget.style.setProperty("--y", `${y}%`);
                   event.currentTarget.style.background = active
-                    ? "linear-gradient(135deg, rgba(255,255,255,0.12), rgba(149,211,250,0.14))"
-                    : "radial-gradient(circle at var(--x) var(--y), rgba(149,211,250,0.22), transparent 26%), rgba(255,255,255,0.02)";
+                    ? "linear-gradient(135deg, rgba(14,155,243,0.12), rgba(149,211,250,0.22))"
+                    : "radial-gradient(circle at var(--x) var(--y), rgba(14,155,243,0.16), transparent 26%), rgba(14,155,243,0.04)";
                   event.currentTarget.style.boxShadow = active
-                    ? "inset 0 0 0 1px rgba(255,255,255,0.12), 0 0 18px rgba(149,211,250,0.18)"
-                    : "inset 0 0 0 1px rgba(255,255,255,0.04)";
+                    ? "inset 0 0 0 1px rgba(14,155,243,0.22)"
+                    : "inset 0 0 0 1px rgba(14,155,243,0.08)";
                 }}
                 onMouseLeave={(event) => {
-                  event.currentTarget.style.background = active ? "rgba(255,255,255,0.12)" : "transparent";
-                  event.currentTarget.style.boxShadow = active ? "inset 0 0 0 1px rgba(255,255,255,0.12), 0 0 18px rgba(149,211,250,0.18)" : "none";
+                  event.currentTarget.style.background = active ? "rgba(149,211,250,0.22)" : "transparent";
+                  event.currentTarget.style.boxShadow = active ? "inset 0 0 0 1px rgba(14,155,243,0.22)" : "none";
                 }}
                 onClick={() => {
                   setSelected(lang);
@@ -526,17 +526,17 @@ function LanguageToggle() {
                   setOpen(false);
                 }}
                 className={`relative flex w-full items-center justify-between overflow-hidden rounded-xl px-2.5 py-2 text-left text-[13px] transition-all duration-150 ${
-                  active ? "text-[#062F55]" : "text-[#062F55]/80 hover:text-[#062F55]"
+                  active ? "font-semibold text-[#062F55]" : "text-[#062F55]/80 hover:text-[#062F55]"
                 }`}
                 style={{
-                  background: active ? "rgba(255,255,255,0.12)" : "transparent",
-                  boxShadow: active ? "inset 0 0 0 1px rgba(255,255,255,0.12), 0 0 18px rgba(149,211,250,0.18)" : "none",
+                  background: active ? "rgba(149,211,250,0.22)" : "transparent",
+                  boxShadow: active ? "inset 0 0 0 1px rgba(14,155,243,0.22)" : "none",
                 }}
               >
                 <span className="relative z-10">{lang.name}</span>
                 <span
                   className={`relative z-10 text-xs font-black uppercase tracking-[0.08em] transition-opacity duration-150 ${
-                    active ? "text-[#0E9BF3] opacity-100" : "opacity-0"
+                    active ? "text-[#0766B5] opacity-100" : "opacity-0"
                   }`}
                 >
                   {active ? "ON" : ""}
