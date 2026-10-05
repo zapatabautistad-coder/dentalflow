@@ -13,12 +13,14 @@ import {
   todayDateKey,
 } from "@/lib/timezone";
 import { StatusChip } from "../../appointments/status-chip";
-import { addClinicalEntry, archivePatient, restorePatient, saveMedicalHistory } from "../actions";
+import { addClinicalEntry, addVitalSigns, archivePatient, restorePatient, saveMedicalHistory } from "../actions";
 import { ArchiveForm } from "./archive-form";
 import { ChangeLog, type AuditRow } from "./change-log";
 import { ClinicalRecord, type ClinicalEntry } from "./clinical-record";
 import { MedicalHistoryForm, type MedicalHistoryValues } from "./medical-history-form";
+import { VitalSignsRecord, type PatientVitalSignsEntry } from "./vital-signs-record";
 import { arsName } from "@/lib/insurance";
+import { vitalSignsReasons } from "@/lib/vital-signs";
 
 export const metadata: Metadata = { title: "Ficha del paciente · DentalFlow" };
 
@@ -108,6 +110,33 @@ function formatHistoryDate(iso: string): string {
   }).format(new Date(iso));
 }
 
+async function loadVitalSigns(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  patientId: string
+): Promise<{ data: PatientVitalSignsEntry[]; error: string | null }> {
+  const pageSize = 1000;
+  const entries: PatientVitalSignsEntry[] = [];
+  let offset = 0;
+
+  while (true) {
+    const { data, error } = await supabase
+      .from("vital_signs")
+      .select("id, systolic, diastolic, heart_rate, glucose_mg_dl, oxygen_saturation, note, corrects_entry_id, correction_reason, created_at, author_role, profiles(full_name)")
+      .eq("patient_id", patientId)
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
+      .range(offset, offset + pageSize - 1)
+      .returns<PatientVitalSignsEntry[]>();
+
+    if (error) return { data: [], error: error.message };
+
+    const page = data ?? [];
+    entries.push(...page);
+    if (page.length < pageSize) return { data: entries, error: null };
+    offset += pageSize;
+  }
+}
+
 function AppointmentList({ items, empty }: { items: PatientAppointment[]; empty: string }) {
   if (items.length === 0) {
     return <p className="text-sm text-slate-500">{empty}</p>;
@@ -148,7 +177,7 @@ export default async function PatientChartPage({ params }: { params: Promise<{ i
   if (!patient) notFound();
 
   const nowIso = new Date().toISOString();
-  const [historyResult, upcomingResult, pastResult, auditResult, entriesResult] = await Promise.all([
+  const [historyResult, upcomingResult, pastResult, auditResult, entriesResult, vitalSignsResult] = await Promise.all([
     supabase
       .from("patient_medical_history")
       .select(
@@ -188,6 +217,7 @@ export default async function PatientChartPage({ params }: { params: Promise<{ i
       .order("created_at", { ascending: false })
       .limit(100)
       .returns<ClinicalEntry[]>(),
+    loadVitalSigns(supabase, id),
   ]);
 
   const history = historyResult.data;
@@ -199,6 +229,8 @@ export default async function PatientChartPage({ params }: { params: Promise<{ i
   const restoreThisPatient = restorePatient.bind(null, patient.id);
   const auditRows = auditResult.data ?? [];
   const addEntry = addClinicalEntry.bind(null, patient.id);
+  const addVital = addVitalSigns.bind(null, patient.id);
+  const vitalReasons = history && !historyFailed ? vitalSignsReasons(history) : [];
 
 
   return (
@@ -370,6 +402,37 @@ export default async function PatientChartPage({ params }: { params: Promise<{ i
             nowIso={nowIso}
             medicalHistoryStatus={historyFailed ? "unavailable" : history ? "recorded" : "missing"}
             canRecordMedication={canRecordMedication(profile.role)}
+          />
+        )}
+      </section>
+
+      <section className="glass-card p-5 sm:p-6">
+        <h2 className="text-lg font-bold text-[#0F172A]" data-i18n="vitalSigns.title">Signos vitales</h2>
+        <p className="mb-4 mt-1 text-sm text-slate-600" data-i18n="vitalSigns.hint">
+          Las tomas se conservan; un error se corrige con una nueva entrada y su motivo.
+        </p>
+        {vitalReasons.length > 0 && (
+          <p role="status" className="mb-4 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900">
+            <span data-i18n="vitalSigns.recommended">Se recomienda tomar signos vitales:</span>{" "}
+            {vitalReasons.map((reason, index) => (
+              <span key={reason}>
+                {index > 0 ? ", " : ""}
+                <span data-i18n={`vitalSigns.reason.${reason === "hipertensión" ? "hypertension" : reason === "diabetes" ? "diabetes" : "heartDisease"}`}>
+                  {reason}
+                </span>
+              </span>
+            ))}
+          </p>
+        )}
+        {vitalSignsResult.error ? (
+          <p role="alert" className="text-[15px] text-rose-700" data-i18n="vitalSigns.loadError">
+            No se pudieron cargar los signos vitales. Recarga la página.
+          </p>
+        ) : (
+          <VitalSignsRecord
+            entries={vitalSignsResult.data}
+            canWrite={canWriteClinicalEntries(profile.role) && !patient.archived_at}
+            action={addVital}
           />
         )}
       </section>

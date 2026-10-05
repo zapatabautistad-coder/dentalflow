@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   classifyBloodPressure,
   currentVitalSigns,
+  parseVitalSignsInput,
   vitalAlerts,
   vitalSignsReasons,
   type VitalSignsEntry,
@@ -75,5 +76,70 @@ describe("currentVitalSigns", () => {
       entry("c", "2026-10-04T11:05:00Z", "b"),
     ]);
     expect(result.map((e) => e.id)).toEqual(["c", "a"]);
+  });
+});
+
+describe("parseVitalSignsInput", () => {
+  const emptyInput = {
+    systolic: "",
+    diastolic: "",
+    heart_rate: "",
+    glucose_mg_dl: "",
+    oxygen_saturation: "",
+    note: "",
+  };
+
+  it("accepts values at the database limits", () => {
+    expect(parseVitalSignsInput({
+      systolic: "260",
+      diastolic: "160",
+      heart_rate: "220",
+      glucose_mg_dl: "600",
+      oxygen_saturation: "100",
+      note: "",
+    })).toEqual({
+      ok: true,
+      values: {
+        systolic: 260,
+        diastolic: 160,
+        heart_rate: 220,
+        glucose_mg_dl: 600,
+        oxygen_saturation: 100,
+        note: null,
+      },
+    });
+  });
+
+  it.each([
+    ["systolic", "59", "vitalSigns.error.systolic"],
+    ["diastolic", "161", "vitalSigns.error.diastolic"],
+    ["heart_rate", "221", "vitalSigns.error.heartRate"],
+    ["glucose_mg_dl", "19", "vitalSigns.error.glucose"],
+    ["oxygen_saturation", "49", "vitalSigns.error.oxygenSaturation"],
+  ] as const)("rejects out-of-range %s", (field, value, errorKey) => {
+    expect(parseVitalSignsInput({ ...emptyInput, [field]: value })).toEqual({ ok: false, errorKey });
+  });
+
+  it("requires a complete blood pressure pair with systolic above diastolic", () => {
+    expect(parseVitalSignsInput({ ...emptyInput, systolic: "120" })).toEqual({
+      ok: false,
+      errorKey: "vitalSigns.error.pressurePair",
+    });
+    expect(parseVitalSignsInput({ ...emptyInput, systolic: "80", diastolic: "80" })).toEqual({
+      ok: false,
+      errorKey: "vitalSigns.error.pressureOrder",
+    });
+  });
+
+  it("requires at least one value, rejects decimals, and limits the note", () => {
+    expect(parseVitalSignsInput(emptyInput)).toEqual({ ok: false, errorKey: "vitalSigns.error.someValue" });
+    expect(parseVitalSignsInput({ ...emptyInput, heart_rate: "72.5" })).toEqual({
+      ok: false,
+      errorKey: "vitalSigns.error.heartRate",
+    });
+    expect(parseVitalSignsInput({ ...emptyInput, heart_rate: "72", note: "x".repeat(501) })).toEqual({
+      ok: false,
+      errorKey: "vitalSigns.error.noteLength",
+    });
   });
 });
