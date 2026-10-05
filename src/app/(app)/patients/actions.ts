@@ -8,6 +8,7 @@ import { canCreatePatients, canManagePatients, canRecordMedication, canWriteClin
 import { combineDateTime, isValidDateKey } from "@/lib/timezone";
 import { cleanDocumentIdDigits, cleanPhoneDigits } from "@/lib/phone";
 import { matchingMedicationAllergy, type MedicationAllergyHistory } from "@/lib/medication-allergy";
+import { parseVitalSignsInput, type VitalSignsInput } from "@/lib/vital-signs";
 
 export type PatientFormState = { error: string } | undefined;
 
@@ -425,6 +426,97 @@ export async function addClinicalEntry(
     }
     return { error: "No se pudo guardar la entrada. Inténtalo de nuevo." };
   }
+
+  revalidatePath(`/patients/${patientId}`);
+  return { saved: true, at: Date.now() };
+}
+
+export type VitalSignsFormValues = VitalSignsInput & {
+  correction_reason: string;
+};
+
+export type VitalSignsFormState =
+  | { errorKey: string; values?: VitalSignsFormValues; attemptId?: string }
+  | { saved: true; at: number }
+  | undefined;
+
+function vitalSignsFormValues(formData: FormData): VitalSignsFormValues {
+  return {
+    systolic: field(formData, "systolic"),
+    diastolic: field(formData, "diastolic"),
+    heart_rate: field(formData, "heart_rate"),
+    glucose_mg_dl: field(formData, "glucose_mg_dl"),
+    oxygen_saturation: field(formData, "oxygen_saturation"),
+    note: String(formData.get("note") ?? ""),
+    correction_reason: field(formData, "correction_reason"),
+  };
+}
+
+export async function addVitalSigns(
+  patientId: string,
+  _prev: VitalSignsFormState,
+  formData: FormData
+): Promise<VitalSignsFormState> {
+  const profile = await requireProfile();
+  if (!canWriteClinicalEntries(profile.role)) {
+    return { errorKey: "vitalSigns.error.permission" };
+  }
+
+  const submittedValues = vitalSignsFormValues(formData);
+  const parsed = parseVitalSignsInput(submittedValues);
+  if (!parsed.ok) {
+    return { errorKey: parsed.errorKey, values: submittedValues, attemptId: randomUUID() };
+  }
+
+  const correctsEntryId = field(formData, "corrects_entry_id") || null;
+  const correctionReason = submittedValues.correction_reason;
+  if (!correctsEntryId && correctionReason) {
+    return { errorKey: "vitalSigns.error.correctionEntry", values: submittedValues, attemptId: randomUUID() };
+  }
+  if (correctsEntryId && correctionReason.length < 5) {
+    return { errorKey: "vitalSigns.error.correctionReasonShort", values: submittedValues, attemptId: randomUUID() };
+  }
+  if (correctionReason.length > 500) {
+    return { errorKey: "vitalSigns.error.correctionReasonLong", values: submittedValues, attemptId: randomUUID() };
+  }
+
+  const supabase = await createClient();
+  const { data: patient, error: patientError } = await supabase
+    .from("patients")
+    .select("archived_at")
+    .eq("id", patientId)
+    .maybeSingle<{ archived_at: string | null }>();
+  if (patientError || !patient) return { errorKey: "vitalSigns.error.database" };
+  if (patient.archived_at) return { errorKey: "vitalSigns.error.archived" };
+
+  if (correctsEntryId) {
+    const { data: original, error: originalError } = await supabase
+      .from("vital_signs")
+      .select("id")
+      .eq("id", correctsEntryId)
+      .eq("patient_id", patientId)
+      .maybeSingle();
+    if (originalError) return { errorKey: "vitalSigns.error.database" };
+    if (!original) return { errorKey: "vitalSigns.error.entryNotFound" };
+
+    const { data: existingCorrection, error: correctionError } = await supabase
+      .from("vital_signs")
+      .select("id")
+      .eq("corrects_entry_id", correctsEntryId)
+      .limit(1)
+      .maybeSingle();
+    if (correctionError) return { errorKey: "vitalSigns.error.database" };
+    if (existingCorrection) return { errorKey: "vitalSigns.error.alreadyCorrected" };
+  }
+
+  const { error } = await supabase.from("vital_signs").insert({
+    patient_id: patientId,
+    ...parsed.values,
+    corrects_entry_id: correctsEntryId,
+    correction_reason: correctsEntryId ? correctionReason : null,
+  });
+
+  if (error) return { errorKey: "vitalSigns.error.database" };
 
   revalidatePath(`/patients/${patientId}`);
   return { saved: true, at: Date.now() };
