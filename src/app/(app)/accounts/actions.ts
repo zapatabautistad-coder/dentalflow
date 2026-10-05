@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireProfile, ROLE_LABELS, type Role } from "@/lib/auth";
 import { isStrongPassword, PASSWORD_RULE_TEXT } from "@/lib/password";
+import { isValidExequatur } from "@/lib/prescriptions";
 
 export type AccountFormState = { error?: string; success?: string } | undefined;
 
@@ -171,4 +172,31 @@ export async function reactivateAccount(userId: string): Promise<AccountFormStat
     return { error: "La cuenta quedó activa, pero no se pudo desbloquear su inicio de sesión. Inténtalo de nuevo." };
   }
   return undefined;
+}
+
+// Exequátur del doctor (027): lo registra el admin con su propia sesión, así la
+// auditoría guarda quién lo cambió. Se copia en cada receta al crearla.
+export async function setExequatur(
+  userId: string,
+  _prev: AccountFormState,
+  formData: FormData
+): Promise<AccountFormState> {
+  if (!(await requireAdmin())) return { error: "Solo un administrador puede registrar el exequátur." };
+
+  const exequatur = String(formData.get("exequatur") ?? "").trim();
+  if (exequatur && !isValidExequatur(exequatur)) {
+    return { error: "El exequátur solo admite letras, números, punto, barra y guion (hasta 30)." };
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("profiles")
+    .update({ exequatur: exequatur || null })
+    .eq("id", userId)
+    .eq("role", "doctor")
+    .select("id");
+  if (error || !data?.length) return { error: "No se pudo guardar el exequátur. Inténtalo de nuevo." };
+
+  revalidatePath("/accounts");
+  return { success: exequatur ? "Exequátur guardado." : "Exequátur borrado." };
 }

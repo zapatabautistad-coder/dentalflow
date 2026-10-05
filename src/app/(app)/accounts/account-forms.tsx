@@ -164,3 +164,32 @@ export function ReactivateForm({ action }: { action: () => Promise<AccountFormSt
     </form>
   );
 }
+
+export function ExequaturForm({ action, current }: { action: Action; current: string | null }) {
+  const [state, formAction, pending] = useActionState(action, undefined);
+
+  return (
+    <form action={formAction} className="flex min-w-0 flex-col gap-2">
+      <div className="flex min-w-0 flex-wrap items-end gap-2">
+        <label className="flex min-w-0 flex-col gap-1 text-xs font-medium text-slate-600">
+          <span data-i18n="accounts.exequatur">Exequátur (para recetas)</span>
+          <input
+            name="exequatur"
+            defaultValue={current ?? ""}
+            maxLength={30}
+            autoComplete="off"
+            className="glass-input min-h-11 text-[15px]"
+          />
+        </label>
+        <button
+          type="submit"
+          disabled={pending}
+          className="min-h-11 rounded-xl border border-[#0766B5]/30 bg-white/60 px-3 text-sm font-semibold text-[#0766B5] transition hover:bg-white disabled:opacity-60"
+        >
+          {pending ? "Guardando…" : <span data-i18n="accounts.saveExequatur">Guardar exequátur</span>}
+        </button>
+      </div>
+      <Message state={state} />
+    </form>
+  );
+}

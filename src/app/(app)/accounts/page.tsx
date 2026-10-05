@@ -3,8 +3,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireProfile, ROLE_LABELS, type Role } from "@/lib/auth";
-import { changeRole, createAccount, deactivateAccount, reactivateAccount } from "./actions";
-import { ChangeRoleForm, CreateAccountForm, DeactivateForm, ReactivateForm } from "./account-forms";
+import { changeRole, createAccount, deactivateAccount, reactivateAccount, setExequatur } from "./actions";
+import { ChangeRoleForm, CreateAccountForm, DeactivateForm, ExequaturForm, ReactivateForm } from "./account-forms";
 
 export const metadata: Metadata = { title: "Cuentas · DentalFlow" };
 
@@ -16,6 +16,7 @@ type AccountRow = {
   deactivated_at: string | null;
   deactivated_reason: string | null;
   created_at: string;
+  exequatur: string | null;
 };
 
 function formatDate(iso: string): string {
@@ -37,7 +38,7 @@ export default async function AccountsPage() {
   const [{ data, error }, usersResult] = await Promise.all([
     supabase
       .from("profiles")
-      .select("id, full_name, role, active, deactivated_at, deactivated_reason, created_at")
+      .select("id, full_name, role, active, deactivated_at, deactivated_reason, created_at, exequatur")
       .order("active", { ascending: false })
       .order("full_name", { ascending: true })
       .returns<AccountRow[]>(),
@@ -92,7 +93,14 @@ export default async function AccountsPage() {
                     </p>
                     <p className="break-words text-sm text-slate-600">{emails.get(account.id) ?? "—"}</p>
                     <p className="mt-1 text-xs text-slate-500">
-                      <span data-i18n={`role.${account.role}`}>{ROLE_LABELS[account.role]}</span> · <span data-i18n="accounts.createdOn">Creada el</span> {formatDate(account.created_at)}
+                      <span data-i18n={`role.${account.role}`}>{ROLE_LABELS[account.role]}</span>
+                      {account.role === "doctor" && account.exequatur && (
+                        <>
+                          {" · "}
+                          <span data-i18n="rx.exequatur">Exequátur</span> {account.exequatur}
+                        </>
+                      )}{" "}
+                      · <span data-i18n="accounts.createdOn">Creada el</span> {formatDate(account.created_at)}
                     </p>
                   </div>
                   <span
@@ -118,6 +126,9 @@ export default async function AccountsPage() {
                     {account.active ? (
                       <>
                         <ChangeRoleForm action={changeRole.bind(null, account.id)} currentRole={account.role} />
+                        {account.role === "doctor" && (
+                          <ExequaturForm action={setExequatur.bind(null, account.id)} current={account.exequatur} />
+                        )}
                         {admin && <DeactivateForm action={deactivateAccount.bind(null, account.id)} />}
                       </>
                     ) : (

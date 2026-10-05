@@ -299,6 +299,9 @@ export default async function PatientChartPage({ params }: { params: Promise<{ i
           <Link href={`/patients/${patient.id}/plan-tratamiento`} className="glass-button-light min-h-11 text-[15px]" data-i18n="plan.title">
             Plan de tratamiento
           </Link>
+          <Link href={`/patients/${patient.id}/recetas`} className="glass-button-light min-h-11 text-[15px]" data-i18n="rx.title">
+            Recetas
+          </Link>
           {canViewBilling(profile.role) && (
             <Link href={`/patients/${patient.id}/facturacion`} className="glass-button-light min-h-11 text-[15px]" data-i18n="billing.title">
               Facturación
