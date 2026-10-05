@@ -7,6 +7,8 @@ import { buildPatientSearchFilter } from "@/lib/patient-search";
 import { PatientRow } from "./patient-row";
 import { SearchBox } from "./search-box";
 import { InsuranceLabel } from "../insurance-label";
+import { MedicalAlertChip } from "../medical-alert-chip";
+import { medicalAlerts, type MedicalAlert, type MedicalHistoryAlerts } from "@/lib/medical-alerts";
 
 export const metadata: Metadata = { title: "Pacientes · DentalFlow" };
 
@@ -128,6 +130,23 @@ export default async function PatientsPage({
   }
 
   const { data: patients } = await query.returns<PatientRow[]>();
+  const patientIds = (patients ?? []).map((patient) => patient.id);
+  const medicalAlertsByPatient = new Map<string, MedicalAlert[]>();
+
+  if (patientIds.length > 0) {
+    const { data: histories, error } = await supabase
+      .from("patient_medical_history")
+      .select("patient_id, allergy_penicillin, allergy_local_anesthetic, allergy_latex, allergy_nsaids, allergies_other, takes_anticoagulants, takes_bisphosphonates, has_hypertension, has_diabetes, has_heart_disease, is_pregnant")
+      .in("patient_id", patientIds)
+      .returns<(MedicalHistoryAlerts & { patient_id: string })[]>();
+
+    if (!error) {
+      for (const history of histories ?? []) {
+        const alerts = medicalAlerts(history);
+        if (alerts.length > 0) medicalAlertsByPatient.set(history.patient_id, alerts);
+      }
+    }
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -163,8 +182,13 @@ export default async function PatientsPage({
                 const contact = contactLinks(patient);
                 return (
                   <li key={patient.id} className="p-3">
-                    <Link href={`/patients/${patient.id}`} className="block rounded-xl active:bg-white/40">
-                      <p className="text-base font-semibold text-[#0F172A]">{patient.full_name}</p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Link href={`/patients/${patient.id}`} className="rounded-xl active:bg-white/40">
+                        <span className="text-base font-semibold text-[#0F172A]">{patient.full_name}</span>
+                      </Link>
+                      <MedicalAlertChip alerts={medicalAlertsByPatient.get(patient.id) ?? []} />
+                    </div>
+                    <div className="mt-0.5">
                       <p className="mt-0.5 text-sm text-slate-600">
                         <span data-i18n="patients.recordShort">N.°</span> {String(patient.record_number).padStart(4, "0")}
                         {patient.document_id ? ` · ${formatDominicanDocumentId(patient.document_id)}` : ""}
@@ -173,7 +197,7 @@ export default async function PatientsPage({
                         <InsuranceLabel type={patient.insurance_type} provider={patient.insurance_provider} />
                         {patient.phone ? ` · ${formatDominicanPhone(patient.phone)}` : ""}
                       </p>
-                    </Link>
+                    </div>
                     <ContactButtons patient={patient} links={contact} size="lg" />
                   </li>
                 );
@@ -197,7 +221,12 @@ export default async function PatientsPage({
                     <td className="px-4 py-2.5 text-[13px] text-slate-600">
                       {String(patient.record_number).padStart(4, "0")}
                     </td>
-                    <td className="px-4 py-2.5 text-sm font-medium">{patient.full_name}</td>
+                    <td className="px-4 py-2.5 text-sm font-medium">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span>{patient.full_name}</span>
+                        <MedicalAlertChip alerts={medicalAlertsByPatient.get(patient.id) ?? []} />
+                      </div>
+                    </td>
                     <td className="px-4 py-2.5 text-[13px] text-slate-600">
                       {patient.document_id ? formatDominicanDocumentId(patient.document_id) : "—"}
                     </td>
