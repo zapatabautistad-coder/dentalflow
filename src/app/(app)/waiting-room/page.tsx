@@ -4,6 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { canManageAppointments, requireProfile } from "@/lib/auth";
 import { formatDateLong, todayDateKey } from "@/lib/timezone";
 import { callNextPatient, setQueueStatus } from "./actions";
+import { MedicalAlertChip } from "../medical-alert-chip";
+import { medicalAlerts, type MedicalAlert, type MedicalHistoryAlerts } from "@/lib/medical-alerts";
 
 export const metadata: Metadata = { title: "Sala de espera · DentalFlow" };
 
@@ -15,7 +17,7 @@ type WaitingRoomRow = {
   status: QueueStatus;
   doctor_id: string | null;
   checked_in_at: string;
-  patients: { full_name: string } | null;
+  patients: { id: string; full_name: string } | null;
   profiles: { full_name: string } | null;
 };
 
@@ -71,12 +73,28 @@ export default async function WaitingRoomPage({
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("queue")
-    .select("id, position, status, doctor_id, checked_in_at, patients(full_name), profiles(full_name)")
+    .select("id, position, status, doctor_id, checked_in_at, patients(id, full_name), profiles(full_name)")
     .eq("queue_date", dateKey)
     .order("position", { ascending: true })
     .returns<WaitingRoomRow[]>();
 
   const entries = data ?? [];
+  const patientIds = [...new Set(entries.map((entry) => entry.patients?.id).filter((id): id is string => Boolean(id)))];
+  const medicalAlertsByPatient = new Map<string, MedicalAlert[]>();
+  if (patientIds.length > 0) {
+    const { data: histories, error: historyError } = await supabase
+      .from("patient_medical_history")
+      .select("patient_id, allergy_penicillin, allergy_local_anesthetic, allergy_latex, allergy_nsaids, allergies_other, takes_anticoagulants, takes_bisphosphonates, has_hypertension, has_diabetes, has_heart_disease, is_pregnant")
+      .in("patient_id", patientIds)
+      .returns<(MedicalHistoryAlerts & { patient_id: string })[]>();
+
+    if (!historyError) {
+      for (const history of histories ?? []) {
+        const alerts = medicalAlerts(history);
+        if (alerts.length > 0) medicalAlertsByPatient.set(history.patient_id, alerts);
+      }
+    }
+  }
   const now = new Date().getTime();
   const isDoctor = profile.role === "doctor";
   const myWaiting = isDoctor
@@ -144,7 +162,10 @@ export default async function WaitingRoomPage({
                       {entry.position}
                     </span>
                     <div className="min-w-0">
-                      <h2 className="break-words text-base font-black text-[#0F172A]">{entry.patients?.full_name ?? "Paciente"}</h2>
+                      <div className="flex min-w-0 flex-wrap items-center gap-2">
+                        <h2 className="break-words text-base font-black text-[#0F172A]">{entry.patients?.full_name ?? "Paciente"}</h2>
+                        {entry.patients && <MedicalAlertChip alerts={medicalAlertsByPatient.get(entry.patients.id) ?? []} />}
+                      </div>
                       <p className="mt-1 break-words text-sm text-slate-600">
                         <span data-i18n="waitingRoom.doctor">Doctor</span>: {entry.profiles?.full_name ?? "—"}
                       </p>
