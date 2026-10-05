@@ -4,7 +4,7 @@ Hecho: la 022 de cuentas temporales se descartó (revertida). Medicamentos solo 
 - La migración `022_temporary_accounts.sql` (cuentas temporales) está solo en la rama `claude/gifted-newton-nwaspk`, sin aplicar ni publicar. Recomendación: descartarla junto con su código. Así Horarios toma el número 022.
 
 ## Orden
-1. **Horarios** (022 aplicada en producción; pantalla pendiente con Copilot): horario por doctor, días libres, bloquear citas fuera de turno (trigger en la base) y ver huecos libres. Base: Claude, con OK antes de aplicar. Pantalla: Copilot.
+1. **Horarios** (hecho: 022 aplicada y pantalla de Copilot en el PR #13): horario por doctor, días libres, bloquear citas fuera de turno (trigger en la base) y ver huecos libres. Base: Claude, con OK antes de aplicar. Pantalla: Copilot.
 2. **Índices de rendimiento** (`024_indices_claves_foraneas.sql`, 19 índices, aplicada en producción): 15 claves foráneas sin índice, según el asesor de Supabase (`*_created_by`, `*_voided_by`, `audit_log.changed_by`, `queue.appointment_id`, etc.). Es una migración pequeña y necesita OK.
 3. **Pruebas de punta a punta** (hechas, 17 pruebas en `e2e/`, contra Supabase local) con Playwright: login, paciente, cita, sala, odontograma, plan, cobro y horarios (cita fuera de horario rechazada), con cada rol.
 4. **Revisión de seguridad** (hecha; informe en `10-revision-seguridad.md`; 025 aplicada).
