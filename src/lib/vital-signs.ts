@@ -14,6 +14,90 @@ export type VitalSignsEntry = {
   created_at: string;
 };
 
+export type VitalSignsInput = {
+  systolic: string;
+  diastolic: string;
+  heart_rate: string;
+  glucose_mg_dl: string;
+  oxygen_saturation: string;
+  note: string;
+};
+
+export type ParsedVitalSignsInput = {
+  systolic: number | null;
+  diastolic: number | null;
+  heart_rate: number | null;
+  glucose_mg_dl: number | null;
+  oxygen_saturation: number | null;
+  note: string | null;
+};
+
+export type VitalSignsInputErrorKey =
+  | "vitalSigns.error.systolic"
+  | "vitalSigns.error.diastolic"
+  | "vitalSigns.error.heartRate"
+  | "vitalSigns.error.glucose"
+  | "vitalSigns.error.oxygenSaturation"
+  | "vitalSigns.error.pressurePair"
+  | "vitalSigns.error.pressureOrder"
+  | "vitalSigns.error.someValue"
+  | "vitalSigns.error.noteLength";
+
+export type VitalSignsInputResult =
+  | { ok: true; values: ParsedVitalSignsInput }
+  | { ok: false; errorKey: VitalSignsInputErrorKey };
+
+function parseMeasurement(value: string, min: number, max: number): number | null | undefined {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  const parsed = Number(trimmed);
+  if (!Number.isInteger(parsed) || parsed < min || parsed > max) return undefined;
+  return parsed;
+}
+
+export function parseVitalSignsInput(input: VitalSignsInput): VitalSignsInputResult {
+  const systolic = parseMeasurement(input.systolic, 60, 260);
+  if (systolic === undefined) return { ok: false, errorKey: "vitalSigns.error.systolic" };
+
+  const diastolic = parseMeasurement(input.diastolic, 30, 160);
+  if (diastolic === undefined) return { ok: false, errorKey: "vitalSigns.error.diastolic" };
+
+  const heartRate = parseMeasurement(input.heart_rate, 30, 220);
+  if (heartRate === undefined) return { ok: false, errorKey: "vitalSigns.error.heartRate" };
+
+  const glucose = parseMeasurement(input.glucose_mg_dl, 20, 600);
+  if (glucose === undefined) return { ok: false, errorKey: "vitalSigns.error.glucose" };
+
+  const oxygenSaturation = parseMeasurement(input.oxygen_saturation, 50, 100);
+  if (oxygenSaturation === undefined) return { ok: false, errorKey: "vitalSigns.error.oxygenSaturation" };
+
+  if ((systolic === null) !== (diastolic === null)) {
+    return { ok: false, errorKey: "vitalSigns.error.pressurePair" };
+  }
+  if (systolic !== null && diastolic !== null && systolic <= diastolic) {
+    return { ok: false, errorKey: "vitalSigns.error.pressureOrder" };
+  }
+
+  const note = input.note.trim();
+  if (input.note.length > 500) return { ok: false, errorKey: "vitalSigns.error.noteLength" };
+  if (systolic === null && heartRate === null && glucose === null && oxygenSaturation === null) {
+    return { ok: false, errorKey: "vitalSigns.error.someValue" };
+  }
+
+  return {
+    ok: true,
+    values: {
+      systolic,
+      diastolic,
+      heart_rate: heartRate,
+      glucose_mg_dl: glucose,
+      oxygen_saturation: oxygenSaturation,
+      note: note || null,
+    },
+  };
+}
+
 export type BloodPressureCategory = "normal" | "elevada" | "hta1" | "hta2" | "crisis";
 
 export const BLOOD_PRESSURE_LABELS: Record<BloodPressureCategory, string> = {
