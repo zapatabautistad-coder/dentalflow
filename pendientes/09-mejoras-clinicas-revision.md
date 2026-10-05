@@ -13,7 +13,7 @@ Claude revisa el PR de Copilot antes del merge.
    glucemia; ligados a la cita o al turno. Solo INSERT/SELECT, auditado, autor y hora por la base.
 2. **Chip rojo de alerta médica** junto al nombre en Pacientes y Sala de espera, con los
    antecedentes ya guardados (alergias, hipertensión, anticoagulantes, etc.). Solo pantalla: Copilot.
-3. **Recetas** para la farmacia: `prescriptions` + `prescription_items` (medicamento, dosis,
+3. **Recetas** (base hecha: migración 027, sin aplicar; falta pantalla con Copilot) para la farmacia: `prescriptions` + `prescription_items` (medicamento, dosis,
    posología para casa). Solo el doctor. Agregar **exequátur** al perfil del doctor e imprimirlo.
 4. **Comprobantes fiscales DGII (NCF / e-CF)**. Bloqueado: antes consultar con un contador qué
    tipo usa la clínica (B01/B02, papel o electrónico). Los NCF salen de rangos autorizados por la
