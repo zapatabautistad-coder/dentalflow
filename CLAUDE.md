@@ -7,6 +7,7 @@
 Sistema de gestión para clínicas dentales. Stack: Next.js (App Router, TypeScript, Tailwind, ESLint) + Supabase.
 
 ## Cómo trabajar
+- **Fundador: Darys Zapata.** Ambicioso, innovador, quiere convertir DentalFlow en algo más que un SaaS. Respuestas cortas y precisas; separar lo real hoy de la visión. Ahorrar tokens: una tarea por sesión, ver `pendientes/11-multi-tenant.md` (prioridad actual).
 - Responder siempre en **español**, breve y paso a paso.
 - **Producto real** para clínicas **dentales** en República Dominicana (no es demo ni portafolio). Lo usan doctores, secretarias y asistentes dentales con pacientes reales. La medicina general irá en un proyecto aparte.
 - Nunca mostrar datos inventados: todo número, lista o estado en pantalla sale de Supabase. Si no hay datos, se muestra un estado vacío honesto.
