@@ -25,10 +25,18 @@ test.beforeAll(async () => {
     ids.push(data!.id);
   }
   patientId = ids[0];
-  // Lunes 08:00: dentro del horario que carga 03-recepcion-horarios (lunes 08:00–12:00).
+  // Lunes desde las 09:00, una cita cada 15 min: dentro del horario que carga
+  // 03-recepcion-horarios (lunes 08:00–12:00) y sin solaparse (la base lo impide, 028).
   const { data: appts, error } = await recepcion
     .from("appointments")
-    .insert(ids.map((id) => ({ patient_id: id, doctor_id: doctor!.id, starts_at: "2027-01-04T08:00:00-04:00", duration_minutes: 15 })))
+    .insert(
+      ids.map((id, i) => ({
+        patient_id: id,
+        doctor_id: doctor!.id,
+        starts_at: new Date(Date.parse("2027-01-04T09:00:00-04:00") + i * 15 * 60_000).toISOString(),
+        duration_minutes: 15,
+      }))
+    )
     .select("id, patient_id");
   expect(error).toBeNull();
   otherAppointmentId = appts!.find((a) => a.patient_id === ids[1])!.id;
