@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { canViewBilling, requireProfile } from "@/lib/auth";
 import { PAYMENT_METHOD_LABELS, type PaymentMethod } from "@/lib/billing";
-import { CLINIC_ADDRESS, CLINIC_NAME, CLINIC_PHONE, CLINIC_TAX_ID } from "@/lib/clinic";
+import { getMyClinic } from "@/lib/clinic";
 import { formatBillingDate } from "@/lib/billing-format";
 import { formatPesos } from "@/lib/treatment-plan";
 import { BillingLanguageBridge } from "../../billing-forms";
@@ -43,7 +43,7 @@ export default async function BillingReceiptPage({
   if (!Number.isSafeInteger(receiptNumber) || receiptNumber < 1) notFound();
 
   const supabase = await createClient();
-  const [patientResult, paymentResult] = await Promise.all([
+  const [patientResult, paymentResult, clinic] = await Promise.all([
     supabase
       .from("patients")
       .select("id, full_name, record_number")
@@ -55,6 +55,7 @@ export default async function BillingReceiptPage({
       .eq("patient_id", patientId)
       .eq("receipt_number", receiptNumber)
       .maybeSingle<ReceiptPayment>(),
+    getMyClinic(),
   ]);
 
   if (patientResult.error || paymentResult.error) {
@@ -87,20 +88,20 @@ export default async function BillingReceiptPage({
         )}
 
         <header className="border-b border-[#95D3FA]/70 pb-5 text-center">
-          <p className="break-words text-lg font-bold text-[#0766B5]">{CLINIC_NAME}</p>
-          {CLINIC_ADDRESS && (
+          {clinic?.name && <p className="break-words text-lg font-bold text-[#0766B5]">{clinic.name}</p>}
+          {clinic?.address && (
             <p className="mt-1 break-words text-sm text-slate-600">
-              <span data-i18n="billing.receipt.address">Dirección</span>: {CLINIC_ADDRESS}
+              <span data-i18n="billing.receipt.address">Dirección</span>: {clinic.address}
             </p>
           )}
-          {CLINIC_PHONE && (
+          {clinic?.phone && (
             <p className="mt-1 break-words text-sm text-slate-600">
-              <span data-i18n="billing.receipt.phone">Teléfono</span>: {CLINIC_PHONE}
+              <span data-i18n="billing.receipt.phone">Teléfono</span>: {clinic.phone}
             </p>
           )}
-          {CLINIC_TAX_ID && (
+          {clinic?.taxId && (
             <p className="mt-1 break-words text-sm text-slate-600">
-              <span data-i18n="billing.receipt.taxId">Identificación fiscal</span>: {CLINIC_TAX_ID}
+              <span data-i18n="billing.receipt.taxId">Identificación fiscal</span>: {clinic.taxId}
             </p>
           )}
           <h1 className="mt-2 text-2xl font-black text-[#0F172A]" data-i18n="billing.receipt.title">Recibo</h1>

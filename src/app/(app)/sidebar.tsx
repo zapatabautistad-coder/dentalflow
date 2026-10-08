@@ -4,7 +4,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { CLINIC_NAME } from "@/lib/clinic";
 import { formatHour } from "@/lib/timezone";
 import { logout } from "./actions";
 import { getNotifications, type NotificationItem } from "./notifications";
@@ -331,12 +330,13 @@ const NAV: NavItem[] = [
   { label: "ANÁLISIS", key: "sidebar.analysis", icon: "chart", href: "/analisis", doctorOrAdminOnly: true },
   { label: "HORARIOS", key: "sidebar.schedules", icon: "clock", href: "/horarios", allowedRoles: ["admin", "recepcion", "doctor"] },
   { label: "CUENTAS", key: "sidebar.accounts", icon: "settings", href: "/accounts", adminOnly: true },
+  { label: "CLÍNICA", key: "sidebar.clinic", icon: "home", href: "/clinica", adminOnly: true },
 ];
 
 const NAV_ITEM =
   "group relative flex items-center gap-3.5 overflow-hidden rounded-[22px] border px-3.5 py-2.5 text-[13px] font-black uppercase tracking-[0.08em] shadow-[0_12px_24px_-18px_rgba(15,23,42,0.65)] transition-all duration-200 [@media(max-height:800px)]:py-1.5";
 
-type ProfileProps = { fullName: string; roleLabel: string; role: string };
+type ProfileProps = { fullName: string; roleLabel: string; role: string; clinicName: string | null };
 type SidebarProps = ProfileProps & { isAdmin: boolean };
 
 function initialsOf(fullName: string) {
@@ -349,7 +349,7 @@ function initialsOf(fullName: string) {
     .toUpperCase();
 }
 
-function Brand({ compact = false, onNavigate }: { compact?: boolean; onNavigate?: () => void }) {
+function Brand({ compact = false, clinicName, onNavigate }: { compact?: boolean; clinicName: string | null; onNavigate?: () => void }) {
   return (
     <Link
       href="/panel"
@@ -382,10 +382,14 @@ function Brand({ compact = false, onNavigate }: { compact?: boolean; onNavigate?
         <span className="text-[20px] font-semibold leading-none tracking-[-0.03em] text-[#062F55] drop-shadow-sm">
           DentalFlow
         </span>
-        <span aria-hidden="true" className="my-2 block h-px w-7 bg-gradient-to-r from-[#95D3FA] to-transparent" />
-        <span className="line-clamp-2 text-xs font-medium uppercase leading-[1.55] tracking-[0.08em] text-[#0766B5]/80">
-          {CLINIC_NAME}
-        </span>
+        {clinicName && (
+          <>
+            <span aria-hidden="true" className="my-2 block h-px w-7 bg-gradient-to-r from-[#95D3FA] to-transparent" />
+            <span className="line-clamp-2 text-xs font-medium uppercase leading-[1.55] tracking-[0.08em] text-[#0766B5]/80">
+              {clinicName}
+            </span>
+          </>
+        )}
       </div>
     </Link>
   );
@@ -550,7 +554,7 @@ function LanguageToggle() {
   );
 }
 
-function ProfileCard({ fullName, roleLabel, role }: ProfileProps) {
+function ProfileCard({ fullName, roleLabel, role, clinicName }: ProfileProps) {
   return (
     <div className="profile-glass rounded-2xl p-3">
       <div className="flex items-center gap-3">
@@ -560,7 +564,7 @@ function ProfileCard({ fullName, roleLabel, role }: ProfileProps) {
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold text-[#062F55]">{fullName}</p>
           <p className="truncate text-xs text-[#062F55]/70">
-            <span data-i18n={`role.${role}`}>{roleLabel}</span> · {CLINIC_NAME}
+            <span data-i18n={`role.${role}`}>{roleLabel}</span>{clinicName ? ` · ${clinicName}` : ""}
           </p>
         </div>
       </div>
@@ -578,7 +582,7 @@ function ProfileCard({ fullName, roleLabel, role }: ProfileProps) {
   );
 }
 
-function SidebarFooter({ fullName, roleLabel, role }: ProfileProps) {
+function SidebarFooter({ fullName, roleLabel, role, clinicName }: ProfileProps) {
   return (
     <div className="space-y-4">
       <div className="px-2 [@media(max-height:860px)]:hidden">
@@ -592,7 +596,7 @@ function SidebarFooter({ fullName, roleLabel, role }: ProfileProps) {
         <span aria-hidden="true" className="mt-3 block h-px w-10 bg-[#95D3FA]/80" />
       </div>
       <LanguageToggle />
-      <ProfileCard fullName={fullName} roleLabel={roleLabel} role={role} />
+      <ProfileCard fullName={fullName} roleLabel={roleLabel} role={role} clinicName={clinicName} />
     </div>
   );
 }
@@ -611,7 +615,7 @@ function Watermark({ className }: { className: string }) {
   );
 }
 
-export function Sidebar({ fullName, roleLabel, role, isAdmin }: SidebarProps) {
+export function Sidebar({ fullName, roleLabel, role, isAdmin, clinicName }: SidebarProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
@@ -677,7 +681,7 @@ export function Sidebar({ fullName, roleLabel, role, isAdmin }: SidebarProps) {
     <>
       <div className="md:hidden">
         <header className="topbar-crystal sticky top-0 z-40 flex items-center justify-between gap-3 px-4 py-3">
-          <Brand compact />
+          <Brand compact clinicName={clinicName} />
           <div className="flex shrink-0 items-center gap-2">
             <NotificationPopover id="notifications-mobile" mobile items={notifications} error={notificationsError} loading={notificationsLoading} />
             <button
@@ -698,7 +702,7 @@ export function Sidebar({ fullName, roleLabel, role, isAdmin }: SidebarProps) {
 
             <div className="relative z-10 flex h-full flex-col px-4 py-4">
               <div className="mb-5 flex items-center justify-between gap-3">
-                <Brand compact onNavigate={() => setMobileOpen(false)} />
+                <Brand compact clinicName={clinicName} onNavigate={() => setMobileOpen(false)} />
                 <button
                   type="button"
                   aria-label="Cerrar menú"
@@ -713,7 +717,7 @@ export function Sidebar({ fullName, roleLabel, role, isAdmin }: SidebarProps) {
                 <NavList pathname={pathname} isAdmin={isAdmin} isDoctor={role === "doctor"} role={role} onNavigate={() => setMobileOpen(false)} />
               </div>
 
-              <SidebarFooter fullName={fullName} roleLabel={roleLabel} role={role} />
+              <SidebarFooter fullName={fullName} roleLabel={roleLabel} role={role} clinicName={clinicName} />
             </div>
           </div>
         )}
@@ -729,7 +733,7 @@ export function Sidebar({ fullName, roleLabel, role, isAdmin }: SidebarProps) {
 
         <div className="relative z-10 flex h-full flex-col px-3.5 py-5">
           <div className="px-2.5 pb-6">
-            <Brand />
+            <Brand clinicName={clinicName} />
           </div>
 
           <div className="sidebar-scroll -mx-1 min-h-0 flex-1 overflow-y-auto px-1">
@@ -737,7 +741,7 @@ export function Sidebar({ fullName, roleLabel, role, isAdmin }: SidebarProps) {
           </div>
 
           <div className="pt-4">
-            <SidebarFooter fullName={fullName} roleLabel={roleLabel} role={role} />
+            <SidebarFooter fullName={fullName} roleLabel={roleLabel} role={role} clinicName={clinicName} />
           </div>
         </div>
       </aside>
