@@ -262,27 +262,50 @@ create trigger a1_billing_payments_receipt before insert on public.billing_payme
 -- ---------- 6. Funciones que ya existían ----------
 -- Perfil nuevo: la clínica viene en app_metadata (solo la puede escribir el
 -- servidor con la clave service_role; el usuario no puede cambiarla).
--- Transición: si no viene y existe una sola clínica activa, se usa esa.
-create or replace function public.handle_new_user()
-returns trigger
+-- Supabase Auth inserta el usuario SIN el app_metadata propio y lo agrega con un
+-- UPDATE inmediato; por eso el perfil se crea en el primer momento en que la
+-- clínica se conoce: al INSERT (si ya viene, o si hay una sola clínica activa) o
+-- en ese UPDATE. Mientras no haya clínica no hay perfil, y sin perfil
+-- get_my_role() es null: el usuario no ve nada.
+create or replace function public.ensure_profile_for_user(p_user auth.users)
+returns void
 language plpgsql security definer set search_path = ''
 as $$
 declare
-  v_clinic uuid := nullif(new.raw_app_meta_data ->> 'clinic_id', '')::uuid;
+  v_clinic uuid := nullif(p_user.raw_app_meta_data ->> 'clinic_id', '')::uuid;
 begin
+  if exists (select 1 from public.profiles where id = p_user.id) then
+    return;  -- la clínica de un perfil no cambia nunca
+  end if;
   if v_clinic is null then
     select case when count(*) = 1 then min(c.id::text)::uuid end
       into v_clinic from public.clinics c where c.active;
   end if;
   if v_clinic is null then
-    raise exception 'El usuario necesita una clínica (app_metadata.clinic_id).';
+    return;  -- sin clínica: sin perfil y sin acceso
   end if;
-
   insert into public.profiles (id, full_name, clinic_id)
-  values (new.id, coalesce(new.raw_user_meta_data ->> 'full_name', ''), v_clinic);
+  values (p_user.id, coalesce(p_user.raw_user_meta_data ->> 'full_name', ''), v_clinic)
+  on conflict (id) do nothing;
+end;
+$$;
+revoke all on function public.ensure_profile_for_user(auth.users) from public, anon, authenticated;
+
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql security definer set search_path = ''
+as $$
+begin
+  perform public.ensure_profile_for_user(new);
   return new;
 end;
 $$;
+
+create trigger on_auth_user_clinic_set
+  after update of raw_app_meta_data on auth.users
+  for each row
+  when (new.raw_app_meta_data ->> 'clinic_id' is distinct from old.raw_app_meta_data ->> 'clinic_id')
+  execute function public.handle_new_user();
 
 -- La bitácora guarda la clínica de la fila auditada.
 create or replace function public.audit_row()

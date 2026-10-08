@@ -120,15 +120,21 @@ test("una cita de B con un doctor de A es rechazada", async () => {
   expect(created).toHaveLength(0);
 });
 
-test("un usuario nuevo sin clínica falla cuando hay dos clínicas", async () => {
+test("un usuario nuevo sin clínica no tiene perfil ni acceso cuando hay dos clínicas", async () => {
   const service = createClient(URL, SERVICE);
   const email = `sin-clinica-${Date.now().toString(36)}@e2e.test`;
   const { data, error } = await service.auth.admin.createUser({ email, password: PASSWORD, email_confirm: true });
-  expect(error).not.toBeNull();
-  expect(data.user).toBeNull();
+  expect(error).toBeNull();
 
-  const { data: profiles } = await service.from("profiles").select("id, full_name").eq("full_name", "").limit(1);
-  expect(profiles ?? []).toHaveLength(0);
+  // Sin clínica la base no le crea perfil (029): get_my_role() es null y no ve nada.
+  const { data: profile } = await service.from("profiles").select("id").eq("id", data.user!.id).maybeSingle();
+  expect(profile).toBeNull();
+
+  const user = createClient(URL, ANON);
+  const { error: loginError } = await user.auth.signInWithPassword({ email, password: PASSWORD });
+  expect(loginError).toBeNull();
+  const { data: seen } = await user.from("patients").select("id").limit(1);
+  expect(seen ?? []).toHaveLength(0);
 });
 
 test("nadie puede cambiar su clinic_id", async () => {
