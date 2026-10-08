@@ -43,11 +43,19 @@ export async function createAccount(
   const admin = createAdminClient();
   if (!admin) return { error: MISSING_KEY_ERROR };
 
+  // La clínica del usuario nuevo es la del admin que lo crea (con su sesión).
+  const supabase = await createClient();
+  const { data: clinicId, error: clinicError } = await supabase.rpc("get_my_clinic");
+  if (clinicError || !clinicId) {
+    return { error: "No se pudo determinar tu clínica, así que no se creó la cuenta. Avísale al encargado técnico." };
+  }
+
   const { data, error } = await admin.auth.admin.createUser({
     email,
     password,
     email_confirm: true,
     user_metadata: { full_name: fullName },
+    app_metadata: { clinic_id: clinicId },
     // Nace bloqueada: solo se desbloquea cuando el rol ya quedó asignado.
     ban_duration: BAN_FOREVER,
   });
@@ -61,7 +69,6 @@ export async function createAccount(
   // El trigger handle_new_user ya creó el perfil con el rol por defecto. El rol
   // lo asigna el admin con su propia sesión para que la auditoría lo registre
   // como autor. Mientras no quede asignado, la cuenta sigue bloqueada en Auth.
-  const supabase = await createClient();
   const { data: updated, error: roleError } = await supabase
     .from("profiles")
     .update({ role, full_name: fullName })

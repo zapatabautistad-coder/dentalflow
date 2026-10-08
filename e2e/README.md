@@ -10,6 +10,9 @@ que la base no deja borrar, así que nunca se apuntan a producción.
 3. En otra terminal: `set -a; . ./.env.e2e; set +a; npm run test:e2e`
    (en la nube: `E2E_CHROMIUM=/opt/pw-browsers/chromium`).
 
+El paso 1 también crea una segunda clínica ("Clínica B E2E") con `admin-b`, `recepcion-b` y
+`doctor-b` (`@e2e.test`), que usa `11-aislamiento-clinicas`.
+
 Repetir el paso 1 antes de cada corrida: las pruebas cuentan con una base limpia
 (02-sala crea una cita de hoy antes de que 03 cargue el horario del doctor).
 
