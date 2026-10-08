@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile } from "@/lib/auth";
-import { CLINIC_ADDRESS, CLINIC_NAME, CLINIC_PHONE } from "@/lib/clinic";
+import { getMyClinic } from "@/lib/clinic";
 import { formatDominicanDocumentId } from "@/lib/phone";
 import { BillingLanguageBridge } from "../../facturacion/billing-forms";
 import { PrintButton } from "../../facturacion/recibo/[numero]/print-button";
@@ -23,7 +23,7 @@ export default async function PrescriptionPrintPage({
   if (!UUID.test(recetaId)) notFound();
 
   const supabase = await createClient();
-  const [patientResult, rxResult] = await Promise.all([
+  const [patientResult, rxResult, clinic] = await Promise.all([
     supabase
       .from("patients")
       .select("id, full_name, record_number, document_id")
@@ -37,6 +37,7 @@ export default async function PrescriptionPrintPage({
       .eq("id", recetaId)
       .eq("patient_id", patientId)
       .maybeSingle<Prescription>(),
+    getMyClinic(),
   ]);
 
   if (patientResult.error || rxResult.error) {
@@ -67,11 +68,11 @@ export default async function PrescriptionPrintPage({
         )}
 
         <header className="border-b border-[#95D3FA]/70 pb-5 text-center">
-          <p className="break-words text-lg font-bold text-[#0766B5]">{CLINIC_NAME}</p>
-          {CLINIC_ADDRESS && <p className="mt-1 break-words text-sm text-slate-600">{CLINIC_ADDRESS}</p>}
-          {CLINIC_PHONE && (
+          {clinic?.name && <p className="break-words text-lg font-bold text-[#0766B5]">{clinic.name}</p>}
+          {clinic?.address && <p className="mt-1 break-words text-sm text-slate-600">{clinic.address}</p>}
+          {clinic?.phone && (
             <p className="mt-1 break-words text-sm text-slate-600">
-              <span data-i18n="billing.receipt.phone">Teléfono</span>: {CLINIC_PHONE}
+              <span data-i18n="billing.receipt.phone">Teléfono</span>: {clinic.phone}
             </p>
           )}
           <h1 className="mt-2 text-2xl font-black text-[#0F172A]" data-i18n="rx.printTitle">Receta</h1>

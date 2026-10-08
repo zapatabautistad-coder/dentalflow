@@ -2,13 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { canManageAppointments, requireProfile } from "@/lib/auth";
+import { getMyClinic } from "@/lib/clinic";
 import { dayBoundsUtc, formatDateLong, formatHour, isValidDateKey, todayDateKey } from "@/lib/timezone";
 import { checkInAppointment } from "../waiting-room/actions";
 import { DayNav } from "./day-nav";
 import { StatusChip } from "./status-chip";
 
 export const metadata: Metadata = { title: "Citas · DentalFlow" };
-const CLINIC_NAME = process.env.NEXT_PUBLIC_CLINIC_NAME || "Bright Smile Dental";
 
 type AppointmentRow = {
   id: string;
@@ -22,7 +22,7 @@ type AppointmentRow = {
   profiles: { full_name: string } | null;
 };
 
-function appointmentWhatsAppUrl(appointment: AppointmentRow, dateKey: string): string | null {
+function appointmentWhatsAppUrl(appointment: AppointmentRow, dateKey: string, clinicName: string | null): string | null {
   if (
     (appointment.status !== "programada" && appointment.status !== "confirmada") ||
     !appointment.patients?.phone
@@ -33,7 +33,8 @@ function appointmentWhatsAppUrl(appointment: AppointmentRow, dateKey: string): s
   const phoneDigits = appointment.patients.phone.replace(/\D/g, "");
   if (!phoneDigits) return null;
 
-  const message = `Hola ${appointment.patients.full_name}, le recordamos su cita en ${CLINIC_NAME} el ${formatDateLong(dateKey)} a las ${formatHour(appointment.starts_at)}. Responda SÍ para confirmar.`;
+  const place = clinicName ? ` en ${clinicName}` : "";
+  const message = `Hola ${appointment.patients.full_name}, le recordamos su cita${place} el ${formatDateLong(dateKey)} a las ${formatHour(appointment.starts_at)}. Responda SÍ para confirmar.`;
   return `https://wa.me/1${phoneDigits}?text=${encodeURIComponent(message)}`;
 }
 
@@ -51,7 +52,7 @@ export default async function AppointmentsPage({
   const { start, end } = dayBoundsUtc(dateKey);
 
   const supabase = await createClient();
-  const [appointmentsResult, queueResult] = await Promise.all([
+  const [appointmentsResult, queueResult, clinic] = await Promise.all([
     supabase
       .from("appointments")
       .select("id, patient_id, doctor_id, starts_at, duration_minutes, reason, status, patients(full_name, phone), profiles(full_name)")
@@ -66,6 +67,7 @@ export default async function AppointmentsPage({
           .eq("queue_date", dateKey)
           .neq("status", "cancelado")
       : Promise.resolve({ data: [], error: null }),
+    getMyClinic(),
   ]);
 
   const appointments = appointmentsResult.data ?? [];
@@ -120,7 +122,7 @@ export default async function AppointmentsPage({
         ) : (
           <div className="divide-y divide-white/70">
             {appointments.map((appointment) => {
-              const whatsappUrl = appointmentWhatsAppUrl(appointment, dateKey);
+              const whatsappUrl = appointmentWhatsAppUrl(appointment, dateKey, clinic?.name ?? null);
 
               return (
                 <div key={appointment.id} className="flex flex-col gap-3 px-4 py-3 transition hover:bg-white/40 sm:flex-row sm:items-center sm:justify-between">

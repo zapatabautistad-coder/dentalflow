@@ -18,11 +18,9 @@ Necesitas un archivo `.env.local` con:
 ```
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
-NEXT_PUBLIC_CLINIC_NAME=
-NEXT_PUBLIC_CLINIC_ADDRESS=
-NEXT_PUBLIC_CLINIC_PHONE=
-NEXT_PUBLIC_CLINIC_TAX_ID=
 ```
+
+Los datos de la clínica (nombre, dirección, teléfono y RNC) se editan en `/clinica` (solo admin) y se guardan en Supabase.
 
 ## Antes de dar una tarea por terminada
 
