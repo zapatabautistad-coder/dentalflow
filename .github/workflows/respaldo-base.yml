@@ -1,0 +1,71 @@
+# Respaldo diario de la base de producción (gratis, sin plan Pro).
+# La copia se cifra con age ANTES de guardarse: el repo es público y la copia
+# trae datos de pacientes. Sin la llave pública configurada, el respaldo falla
+# y no guarda nada. Cómo activarlo y cómo restaurar: supabase/RESPALDO.md.
+
+name: Respaldo de la base
+
+on:
+  schedule:
+    - cron: "17 7 * * *" # 3:17 a. m. en República Dominicana
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: respaldo-base
+  cancel-in-progress: false
+
+jobs:
+  respaldo:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+      BACKUP_AGE_RECIPIENT: ${{ vars.BACKUP_AGE_RECIPIENT }}
+    steps:
+      - name: Comprobar configuración
+        run: |
+          if [ -z "$SUPABASE_DB_URL" ]; then
+            echo "::error::Falta el secreto SUPABASE_DB_URL (ver supabase/RESPALDO.md)."
+            exit 1
+          fi
+          if [ -z "$BACKUP_AGE_RECIPIENT" ]; then
+            echo "::error::Falta la variable BACKUP_AGE_RECIPIENT (llave pública age). Sin ella no se guarda nada."
+            exit 1
+          fi
+
+      - name: Instalar pg_dump 17 y age
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-common age
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install -y -qq postgresql-client-17
+
+      - name: Copiar y cifrar
+        run: |
+          set -euo pipefail
+          umask 077
+          name="dentalflow-$(date -u +%Y-%m-%d)"
+          mkdir -p out
+          # public: tablas, funciones, triggers, políticas y permisos.
+          # auth: usuarios (contraseñas solo como hash). supabase_migrations: historial.
+          # La copia sin cifrar vive solo en este runner temporal y se borra al terminar.
+          /usr/lib/postgresql/17/bin/pg_dump "$SUPABASE_DB_URL" \
+            --format=custom --no-owner \
+            --schema=public --schema=auth --schema=supabase_migrations \
+            --file="$RUNNER_TEMP/$name.dump"
+          /usr/lib/postgresql/17/bin/pg_restore --list "$RUNNER_TEMP/$name.dump" > /dev/null
+          age --encrypt --recipient "$BACKUP_AGE_RECIPIENT" \
+            --output "out/$name.dump.age" "$RUNNER_TEMP/$name.dump"
+          rm -f "$RUNNER_TEMP/$name.dump"
+          ls -l out
+
+      - name: Guardar copia cifrada (30 días)
+        uses: actions/upload-artifact@v4
+        with:
+          name: respaldo-base
+          path: out/*.age
+          retention-days: 30
+          if-no-files-found: error
