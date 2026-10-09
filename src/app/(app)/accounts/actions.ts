@@ -6,12 +6,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { requireProfile, ROLE_LABELS, type Role } from "@/lib/auth";
 import { isStrongPassword, PASSWORD_RULE_TEXT } from "@/lib/password";
 import { isValidExequatur } from "@/lib/prescriptions";
+import { BAN_FOREVER } from "@/lib/auth-ban";
 
 export type AccountFormState = { error?: string; success?: string } | undefined;
-
-// Bloqueo de inicio de sesión en Supabase Auth mientras la cuenta esté
-// desactivada (~100 años). "none" lo quita.
-const BAN_FOREVER = "876000h";
 
 const MISSING_KEY_ERROR =
   "Falta configurar la clave del servidor (SUPABASE_SERVICE_ROLE_KEY). Avísale al encargado técnico.";
