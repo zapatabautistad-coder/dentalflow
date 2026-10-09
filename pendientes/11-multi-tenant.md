@@ -4,26 +4,20 @@ Acordado el 2026-10-08. Ruta del producto: 1) multi-tenant, 2) dictado por voz �
 (la IA propone, el doctor firma), 3) seguimiento de planes con aprobación de recepción,
 4) copiloto de radiografías (segunda opinión), 5) visión: gemelo digital/biomecánica.
 
-Hoy DentalFlow es **una base = una clínica** (no hay `clinic_id`). Sin multi-tenant no es SaaS.
+Desde el 2026-10-09 DentalFlow es **multi-tenant**: cada fila tiene `clinic_id` y la base aísla las clínicas (029 y 030 aplicadas en producción).
 
 ## Tareas (una por sesión para ahorrar tokens)
 Reparto: **Claude** = base de datos y seguridad (1, 2, revisión de cada PR). **Copilot** = pantallas y pruebas (3, 4 pantalla, 5), solo después de que la 2 esté aplicada. Copilot nunca toca `supabase/migrations` ni la base. Una IA a la vez.
-1. **[Claude] Inventario (solo lectura):** listar en la base real cada tabla, sus políticas RLS, triggers
-   y funciones `security definer`; marcar cuáles necesitan `clinic_id`. Entregar tabla corta.
-2. **[Claude] Migración (con OK del usuario):** tabla `clinics`; `clinic_id` en `profiles` y en toda tabla
-   clínica/financiera; rellenar con una clínica inicial; `get_my_clinic()` (como `get_my_role()`);
-   cada política RLS filtra también por clínica; secuencias por clínica (recibos, expedientes).
-   Sin DELETE, con auditoría.
-3. **[Copilot] App:** nombre/dirección/teléfono de la clínica desde la base (hoy `src/lib/clinic.ts`);
-   crear cuentas dentro de la clínica del admin.
-4. **[Claude base + Copilot pantalla] Alta de clínica nueva** (rol de plataforma, fuera del alcance de los admins de clínica).
-5. **[Copilot, revisa Claude] Pruebas E2E de aislamiento:** dos clínicas; ninguna ve datos de la otra.
+1. ✅ **[Claude] Inventario** — hecho (`11-inventario-multi-tenant.md`).
+2. ✅ **[Claude] Migración 029** — hecha y aplicada el 2026-10-09.
+3. ✅ **[Copilot] App:** la clínica sale de la base (`src/lib/clinic.ts`); las cuentas se crean dentro de la clínica del admin.
+4. ✅ **[Claude base + Copilot pantalla] Alta de clínica nueva** — 030 aplicada y pantalla `/plataforma`.
+5. ✅ **[Copilot, revisa Claude] Pruebas E2E de aislamiento** — `e2e/11-aislamiento-clinicas.spec.ts` y `e2e/12-plataforma.spec.ts`.
+
+Falta: al desactivar una clínica, bloquear también el inicio de sesión de sus usuarios (Copilot, en la app; Claude revisa el PR).
 
 ## Pendiente aparte
-- PR #18 (Recetas) revisado: build, lint y 80 pruebas OK. Falta "publica en producción".
-- `028_appointments_no_overlap.sql` está en la rama `claude/gifted-newton-nwaspk` (ya aplicada en la
-  base); llevarlo a `main` al publicar.
-
+- Respaldo diario (`supabase/RESPALDO.md`): nunca ha corrido. Falta crear la llave age y configurar `SUPABASE_DB_URL` y `BACKUP_AGE_RECIPIENT` en GitHub.
 ## IA nº 1 — Dictado por voz → odontograma (EN PAUSA desde 2026-10-09)
 - **En pausa por decisión del fundador:** se retoma cuando exista la primera clínica real, porque la
   API de Claude tiene costo aparte. No crear clave ni código que la llame hasta entonces.
