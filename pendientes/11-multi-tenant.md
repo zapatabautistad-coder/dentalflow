@@ -23,3 +23,11 @@ Reparto: **Claude** = base de datos y seguridad (1, 2, revisión de cada PR). **
 - PR #18 (Recetas) revisado: build, lint y 80 pruebas OK. Falta "publica en producción".
 - `028_appointments_no_overlap.sql` está en la rama `claude/gifted-newton-nwaspk` (ya aplicada en la
   base); llevarlo a `main` al publicar.
+
+## IA nº 1 — Dictado por voz → odontograma (empezado 2026-10-09)
+- Hecho: `src/lib/dictation.ts` (+ pruebas) revisa la propuesta de la IA: diente FDI válido,
+  superficies M/D/O/V/L, condición permitida; lo dudoso se vuelve pregunta al doctor, nunca se adivina.
+- Falta: (a) dictado en el navegador (Web Speech API, es-DO); (b) server action que manda el
+  texto a la API de Claude y devuelve JSON (requiere `ANTHROPIC_API_KEY` en Vercel y decidir el
+  consentimiento del paciente para enviar datos clínicos a un tercero); (c) pantalla de revisión:
+  el doctor confirma y se guarda con el flujo normal del odontograma.
