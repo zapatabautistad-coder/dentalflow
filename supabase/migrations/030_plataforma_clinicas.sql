@@ -13,6 +13,7 @@ create table public.platform_admins (
   created_at  timestamptz not null default now()
 );
 alter table public.platform_admins enable row level security;
+revoke all on public.platform_admins from anon, authenticated;
 -- Sin políticas ni GRANT: nadie la lee ni la escribe desde la API.
 
 -- No va a audit_log (esa bitácora es por clínica y exige clinic_id). Esta lista

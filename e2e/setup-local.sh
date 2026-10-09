@@ -26,10 +26,12 @@ else
 fi
 
 eval "$(npx -y supabase@latest status -o env | grep -E '^(API_URL|ANON_KEY|SERVICE_ROLE_KEY)=')"
+DB=$(docker ps --format '{{.Names}}' | grep -m1 supabase_db)
+CLINIC_A=$(docker exec -i "$DB" psql -U postgres -tA -c "select id from public.clinics order by created_at limit 1;")
 for role in admin recepcion doctor enfermeria; do
   curl -sf -o /dev/null "$API_URL/auth/v1/admin/users" \
     -H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" -H 'Content-Type: application/json' \
-    -d "{\"email\":\"$role@e2e.test\",\"password\":\"Prueba-E2e-2026!\",\"email_confirm\":true}"
+    -d "{\"email\":\"$role@e2e.test\",\"password\":\"Prueba-E2e-2026!\",\"email_confirm\":true,\"app_metadata\":{\"clinic_id\":\"$CLINIC_A\"}}"
 done
 DB=$(docker ps --format '{{.Names}}' | grep -m1 supabase_db)
 docker exec -i "$DB" psql -U postgres -q -c \

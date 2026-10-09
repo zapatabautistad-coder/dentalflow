@@ -113,6 +113,13 @@ returns trigger
 language plpgsql security definer set search_path = ''
 as $$
 begin
+  if tg_op = 'UPDATE' then
+    -- Sin identity, el expediente sería editable: se bloquea aquí.
+    if new.record_number is distinct from old.record_number then
+      raise exception 'El número de expediente no se cambia.';
+    end if;
+    return new;
+  end if;
   new.record_number = public.next_clinic_number(new.clinic_id, 'record');
   return new;
 end;
@@ -204,15 +211,17 @@ begin
     if new.clinic_id is distinct from old.clinic_id then
       raise exception 'La clínica de un registro no se puede cambiar.';
     end if;
-    return new;
-  end if;
-
-  if tg_table_name = 'prescription_items' then
+    -- Si cambia el doctor o la cita, se validan abajo igual que al crear.
+    if (v_row ->> 'doctor_id') is not distinct from (to_jsonb(old) ->> 'doctor_id')
+       and (v_row ->> 'appointment_id') is not distinct from (to_jsonb(old) ->> 'appointment_id') then
+      return new;
+    end if;
+    v_clinic := old.clinic_id;
+  elsif tg_table_name = 'prescription_items' then
     select r.clinic_id into v_clinic
       from public.prescriptions r where r.id = (v_row ->> 'prescription_id')::uuid;
   elsif tg_table_name = 'profiles' then
-    -- handle_new_user manda la clínica; si no, la del admin que crea el perfil.
-    v_clinic := coalesce(new.clinic_id, public.get_my_clinic());
+    v_clinic := new.clinic_id;  -- solo ensure_profile_for_user crea perfiles
   elsif v_row ? 'patient_id' then
     select p.clinic_id into v_clinic
       from public.patients p where p.id = (v_row ->> 'patient_id')::uuid;
@@ -229,6 +238,16 @@ begin
     select 1 from public.profiles d where d.id = v_doctor and d.clinic_id = v_clinic
   ) then
     raise exception 'El doctor no pertenece a esta clínica.';
+  end if;
+
+  -- Una cita enlazada debe ser del mismo paciente (y por tanto de la misma clínica).
+  if tg_table_name <> 'appointments' and nullif(v_row ->> 'appointment_id', '') is not null
+     and not exists (
+       select 1 from public.appointments a
+        where a.id = (v_row ->> 'appointment_id')::uuid
+          and a.patient_id = (v_row ->> 'patient_id')::uuid
+     ) then
+    raise exception 'La cita no es de este paciente.';
   end if;
 
   new.clinic_id = v_clinic;
@@ -254,7 +273,7 @@ begin
   end loop;
 end $$;
 
-create trigger a1_patients_record_number before insert on public.patients
+create trigger a1_patients_record_number before insert or update on public.patients
   for each row execute function public.assign_record_number();
 create trigger a1_billing_payments_receipt before insert on public.billing_payments
   for each row execute function public.assign_receipt_number();
@@ -264,8 +283,7 @@ create trigger a1_billing_payments_receipt before insert on public.billing_payme
 -- servidor con la clave service_role; el usuario no puede cambiarla).
 -- Supabase Auth inserta el usuario SIN el app_metadata propio y lo agrega con un
 -- UPDATE inmediato; por eso el perfil se crea en el primer momento en que la
--- clínica se conoce: al INSERT (si ya viene, o si hay una sola clínica activa) o
--- en ese UPDATE. Mientras no haya clínica no hay perfil, y sin perfil
+-- clínica se conoce: al INSERT (si ya viene) o en ese UPDATE. Mientras no haya clínica no hay perfil, y sin perfil
 -- get_my_role() es null: el usuario no ve nada.
 create or replace function public.ensure_profile_for_user(p_user auth.users)
 returns void
@@ -277,12 +295,10 @@ begin
   if exists (select 1 from public.profiles where id = p_user.id) then
     return;  -- la clínica de un perfil no cambia nunca
   end if;
-  if v_clinic is null then
-    select case when count(*) = 1 then min(c.id::text)::uuid end
-      into v_clinic from public.clinics c where c.active;
-  end if;
-  if v_clinic is null then
-    return;  -- sin clínica: sin perfil y sin acceso
+  -- Sin clínica en app_metadata (la escribe solo el servidor): sin perfil y sin
+  -- acceso. Así un registro público en Auth nunca entra a ninguna clínica.
+  if v_clinic is null or not exists (select 1 from public.clinics c where c.id = v_clinic and c.active) then
+    return;
   end if;
   insert into public.profiles (id, full_name, clinic_id)
   values (p_user.id, coalesce(p_user.raw_user_meta_data ->> 'full_name', ''), v_clinic)
@@ -437,6 +453,10 @@ create policy "clinics: admin edita la suya" on public.clinics
   using (id = (select public.get_my_clinic()) and (select public.get_my_role()) = 'admin')
   with check (id = (select public.get_my_clinic()) and (select public.get_my_role()) = 'admin');
 
+-- Permisos explícitos (aunque el proyecto no da permisos automáticos).
+revoke all on public.clinics, public.clinic_counters from anon, authenticated;
+-- Los perfiles los crea solo la base (ensure_profile_for_user), nunca la app.
+revoke insert on public.profiles from authenticated;
 grant select on public.clinics to authenticated;
 grant update (name, address, phone, tax_id) on public.clinics to authenticated;
 
