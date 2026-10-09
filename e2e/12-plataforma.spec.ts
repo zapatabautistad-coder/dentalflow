@@ -96,7 +96,8 @@ test.describe("activar y desactivar clínicas", () => {
     await login(page, "admin");
     await toggleClinic(page, "Desactivar");
 
-    expect(await canSignIn("doctor-b@e2e.test")).toBe(false);
+    // El bloqueo en Auth termina después de que la tarjeta cambia: se espera a que aplique.
+    await expect.poll(() => canSignIn("doctor-b@e2e.test")).toBe(false);
     expect(await canSignIn("admin-b@e2e.test")).toBe(false);
     expect(await canSignIn(inactiveEmail)).toBe(false);
     // Ni el administrador de plataforma ni otras clínicas quedan bloqueados.
@@ -108,7 +109,7 @@ test.describe("activar y desactivar clínicas", () => {
     await login(page, "admin");
     await toggleClinic(page, "Activar");
 
-    expect(await canSignIn("doctor-b@e2e.test")).toBe(true);
+    await expect.poll(() => canSignIn("doctor-b@e2e.test")).toBe(true);
     expect(await canSignIn("admin-b@e2e.test")).toBe(true);
     // Desactivado en Cuentas: sigue sin poder entrar.
     expect(await canSignIn(inactiveEmail)).toBe(false);

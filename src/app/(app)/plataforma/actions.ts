@@ -129,7 +129,6 @@ export async function setClinicActive(clinicId: string, active: boolean): Promis
 
   // Primero la base: si falla, no se toca Auth.
   const { error } = await supabase.rpc("platform_set_clinic_active", { p_clinic: clinicId, p_active: active });
-  revalidatePath("/plataforma");
   if (error) return { error: active ? "No se pudo activar la clínica." : "No se pudo desactivar la clínica." };
 
   // Con la clave de servidor se ven los perfiles de otras clínicas (el cliente normal no, por RLS).
@@ -141,6 +140,7 @@ export async function setClinicActive(clinicId: string, active: boolean): Promis
   // El texto termina en "…:" y el número de usuarios se muestra aparte (data-i18n no interpola).
   const failMessage = active ? PLATFORM_UNBAN_FAILED : PLATFORM_BAN_FAILED;
   if (profilesError || !profiles) {
+    revalidatePath("/plataforma");
     return {
       error: active ? PLATFORM_LIST_FAILED_ACTIVE : PLATFORM_LIST_FAILED_INACTIVE,
       errorKey: active ? "platform.listFailedActive" : "platform.listFailedInactive",
@@ -157,6 +157,8 @@ export async function setClinicActive(clinicId: string, active: boolean): Promis
     targets.map((p) => admin.auth.admin.updateUserById(p.id, { ban_duration: active ? "none" : BAN_FOREVER }))
   );
   const failed = results.filter((r) => r.error).length;
+  // La pantalla se refresca al final, cuando Auth ya quedó igual que la base.
+  revalidatePath("/plataforma");
   if (failed > 0) return { error: failMessage, errorKey, failedCount: failed };
   return undefined;
 }
