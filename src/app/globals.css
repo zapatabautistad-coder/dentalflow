@@ -356,10 +356,13 @@ body {
   }
 }
 
-/* Ícono principal: orbe de vidrio con el molar de cristal girando (lujo minimalista). */
+/* Ícono principal: orbe de vidrio con el molar de cristal (lujo minimalista):
+   oscila como una joya en vitrina, flota y un destello cruza el vidrio. */
 .molar-orb {
+  position: relative;
+  overflow: hidden;
   border-radius: 9999px;
-  perspective: 600px;
+  perspective: 520px;
   background: radial-gradient(circle at 32% 24%, rgba(255, 255, 255, 0.98), rgba(224, 242, 254, 0.9) 42%, rgba(149, 211, 250, 0.65) 100%);
   border: 1px solid rgba(255, 255, 255, 0.85);
   box-shadow:
@@ -367,14 +370,28 @@ body {
     inset 0 -6px 12px rgba(14, 155, 243, 0.18),
     0 10px 22px rgba(7, 102, 181, 0.28);
 }
+.molar-orb::after {
+  content: "";
+  position: absolute;
+  inset: -20%;
+  background: linear-gradient(115deg, transparent 38%, rgba(255, 255, 255, 0.75) 50%, transparent 62%);
+  transform: translateX(-120%);
+  animation: molar-shine 6s ease-in-out infinite;
+  pointer-events: none;
+}
 .molar-spin {
   transform-style: preserve-3d;
-  animation: molar-spin 9s linear infinite;
+  animation: molar-sway 6s ease-in-out infinite;
+  will-change: transform;
 }
-@keyframes molar-spin {
-  from { transform: rotateY(0deg); }
-  to { transform: rotateY(360deg); }
+@keyframes molar-sway {
+  0%, 100% { transform: rotateY(-28deg) translateY(1.5%); }
+  50% { transform: rotateY(28deg) translateY(-3.5%); }
+}
+@keyframes molar-shine {
+  0%, 55% { transform: translateX(-120%); }
+  80%, 100% { transform: translateX(120%); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .molar-spin { animation: none; }
+  .molar-spin, .molar-orb::after { animation: none; }
 }
