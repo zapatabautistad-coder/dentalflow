@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { MolarOrb } from "../molar-orb";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
@@ -365,18 +366,7 @@ function Brand({ compact = false, clinicName, onNavigate }: { compact?: boolean;
         }`}
       >
         {/* Ícono: orbe de vidrio azul cielo con el molar facetado que oscila como joya en vitrina */}
-        <span className="molar-orb block h-full w-full">
-          <span aria-hidden="true" className="molar-base" />
-          <span aria-hidden="true" className="molar-contact" />
-          <Image
-            src="/dentalflow-molar-diamond.png"
-            alt="DentalFlow"
-            width={371}
-            height={512}
-            priority
-            className="molar-spin [filter:drop-shadow(0_4px_5px_rgba(7,55,90,0.3))]"
-          />
-        </span>
+        <MolarOrb priority />
 
         <span className={`absolute flex h-3 w-3 ${compact ? "right-0 top-0" : "right-1.5 top-1.5"}`}>
           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#95D3FA] opacity-75" />

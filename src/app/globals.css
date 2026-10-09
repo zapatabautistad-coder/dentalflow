@@ -434,3 +434,18 @@ body {
   .molar-spin, .molar-orb::after, .molar-contact { animation: none; }
   .molar-spin { transform: translateX(-50%); }
 }
+/* Versión grande (inicio de sesión): canto y sombras proporcionales. */
+.molar-orb--lg {
+  box-shadow:
+    inset 0 4px 12px rgba(255, 255, 255, 0.95),
+    inset 0 -14px 28px rgba(14, 155, 243, 0.18),
+    0 22px 44px rgba(7, 102, 181, 0.28);
+}
+.molar-orb--lg .molar-base {
+  box-shadow:
+    inset 0 2px 4px rgba(255, 255, 255, 1),
+    0 5px 0 0 rgba(149, 211, 250, 0.95),
+    0 10px 0 0 rgba(83, 182, 247, 0.6),
+    0 18px 22px rgba(7, 102, 181, 0.3);
+}
+.molar-orb--lg .molar-contact { filter: blur(3px); }

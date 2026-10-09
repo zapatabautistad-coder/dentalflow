@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Image from "next/image";
+import { MolarOrb } from "../molar-orb";
 import { LoginForm } from "./login-form";
 
 export const metadata: Metadata = { title: "Iniciar sesión · DentalFlow" };
@@ -18,14 +18,9 @@ export default function LoginPage() {
                   "radial-gradient(circle, rgba(149,211,250,0.6) 0%, rgba(149,211,250,0) 70%)",
               }}
             />
-            <Image
-              src="/dentalflow-app-icon-3d-sky.png"
-              alt="DentalFlow"
-              width={640}
-              height={640}
-              priority
-              className="relative h-[240px] w-[240px] drop-shadow-[0_18px_22px_rgba(7,102,181,0.22)]"
-            />
+            <span className="relative block h-[220px] w-[220px]">
+              <MolarOrb large priority />
+            </span>
           </div>
           <h1 className="text-3xl font-black tracking-tight text-[#0766B5]">DentalFlow</h1>
           <p className="mt-1 text-sm text-slate-500">
