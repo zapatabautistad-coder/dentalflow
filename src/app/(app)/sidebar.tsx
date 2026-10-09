@@ -384,7 +384,7 @@ function Brand({ compact = false, clinicName, onNavigate }: { compact?: boolean;
           compact ? "h-12 w-12" : "h-20 w-20"
         }`}
       >
-        {/* Ícono: orbe de vidrio azul cielo con el molar de cristal que oscila como joya en vitrina.
+        {/* Ícono: orbe de vidrio azul profundo con el molar de cristal (quieto).
             unoptimized: se sirve el PNG original, sin recompresión, para no perder nitidez. */}
         <span className="molar-orb flex h-full w-full items-center justify-center">
           <Image
@@ -394,7 +394,7 @@ function Brand({ compact = false, clinicName, onNavigate }: { compact?: boolean;
             height={398}
             priority
             unoptimized
-            className="molar-spin h-[84%] w-auto [filter:drop-shadow(0_6px_8px_rgba(7,55,90,0.35))]"
+            className="h-[84%] w-auto [filter:drop-shadow(0_4px_6px_rgba(6,47,85,0.45))]"
           />
         </span>
 
