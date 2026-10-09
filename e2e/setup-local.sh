@@ -49,6 +49,10 @@ done
 docker exec -i "$DB" psql -U postgres -q -c \
   "update public.profiles p set role = split_part(split_part(u.email,'@',1),'-',1)::public.user_role, full_name = 'E2E '||split_part(u.email,'@',1) from auth.users u where u.id = p.id and u.email like '%-b@e2e.test';"
 
+# admin@e2e.test es también administrador de plataforma (030), para 12-plataforma.
+docker exec -i "$DB" psql -U postgres -q -c \
+  "insert into public.platform_admins (user_id) select id from auth.users where email = 'admin@e2e.test' on conflict do nothing;"
+
 cat > "$ROOT/.env.e2e" <<ENV
 NEXT_PUBLIC_SUPABASE_URL=$API_URL
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$ANON_KEY

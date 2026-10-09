@@ -63,6 +63,8 @@ export async function createClinic(_prev: PlatformFormState, formData: FormData)
     email_confirm: true,
     user_metadata: { full_name: adminName },
     app_metadata: { clinic_id: clinicId },
+    // Nace bloqueado: solo entra cuando ya es administrador (igual que en Cuentas).
+    ban_duration: "876000h",
   });
   revalidatePath("/plataforma");
   if (error || !data.user) {
@@ -83,6 +85,13 @@ export async function createClinic(_prev: PlatformFormState, formData: FormData)
   if (assignError) {
     return {
       error: `La clínica "${name}" y el usuario ${adminEmail} se crearon, pero no se pudo asignar el rol de administrador. Nada se borró; avísale al encargado técnico.`,
+    };
+  }
+
+  const { error: unbanError } = await admin.auth.admin.updateUserById(data.user.id, { ban_duration: "none" });
+  if (unbanError) {
+    return {
+      error: `La clínica "${name}" y su administrador se crearon, pero no se pudo desbloquear su inicio de sesión. Avísale al encargado técnico.`,
     };
   }
 
