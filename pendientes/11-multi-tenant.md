@@ -24,7 +24,9 @@ Reparto: **Claude** = base de datos y seguridad (1, 2, revisión de cada PR). **
 - `028_appointments_no_overlap.sql` está en la rama `claude/gifted-newton-nwaspk` (ya aplicada en la
   base); llevarlo a `main` al publicar.
 
-## IA nº 1 — Dictado por voz → odontograma (empezado 2026-10-09)
+## IA nº 1 — Dictado por voz → odontograma (EN PAUSA desde 2026-10-09)
+- **En pausa por decisión del fundador:** se retoma cuando exista la primera clínica real, porque la
+  API de Claude tiene costo aparte. No crear clave ni código que la llame hasta entonces.
 - Hecho: `src/lib/dictation.ts` (+ pruebas) revisa la propuesta de la IA: diente FDI válido,
   superficies M/D/O/V/L, condición permitida; lo dudoso se vuelve pregunta al doctor, nunca se adivina.
 - Falta: (a) dictado en el navegador (Web Speech API, es-DO); (b) server action que manda el
