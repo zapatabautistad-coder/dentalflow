@@ -26,14 +26,15 @@ else
 fi
 
 eval "$(npx -y supabase@latest status -o env | grep -E '^(API_URL|ANON_KEY|SERVICE_ROLE_KEY)=')"
-for role in admin recepcion doctor enfermeria; do
+for role in admin recepcion doctor enfermeria plataforma; do
   curl -sf -o /dev/null "$API_URL/auth/v1/admin/users" \
     -H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" -H 'Content-Type: application/json' \
     -d "{\"email\":\"$role@e2e.test\",\"password\":\"Prueba-E2e-2026!\",\"email_confirm\":true}"
 done
 DB=$(docker ps --format '{{.Names}}' | grep -m1 supabase_db)
 docker exec -i "$DB" psql -U postgres -q -c \
-  "update public.profiles p set role = split_part(u.email,'@',1)::public.user_role, full_name = 'E2E '||split_part(u.email,'@',1) from auth.users u where u.id = p.id;"
+  "update public.profiles p set role = (case when split_part(u.email,'@',1) = 'plataforma' then 'admin' else split_part(u.email,'@',1) end)::public.user_role, full_name = 'E2E '||split_part(u.email,'@',1) from auth.users u where u.id = p.id;
+   insert into public.platform_admins (user_id) select id from auth.users where email = 'plataforma@e2e.test' on conflict do nothing;"
 
 # Segunda clínica (B) con su admin, recepción y doctor, para 11-aislamiento-clinicas.
 # Se crea después de los usuarios de A: con una sola clínica un usuario sin clínica
