@@ -1,3 +1,6 @@
+-- ⚠️ BORRADOR, NO EJECUTAR TODAVÍA. Probar primero en Supabase local (Docker) y ver
+-- pendientes/11-multi-tenant.md. Falta agregar país, moneda y zona horaria a clinics.
+
 -- =============================================================
 -- DentalFlow · Migración 029 · Multi-tenant (varias clínicas en una base)
 --
