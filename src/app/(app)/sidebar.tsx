@@ -318,6 +318,7 @@ type NavItem = {
   icon: IconName;
   href?: string;
   adminOnly?: boolean;
+  platformOnly?: boolean;
   doctorOrAdminOnly?: boolean;
   allowedRoles?: string[];
 };
@@ -331,13 +332,14 @@ const NAV: NavItem[] = [
   { label: "HORARIOS", key: "sidebar.schedules", icon: "clock", href: "/horarios", allowedRoles: ["admin", "recepcion", "doctor"] },
   { label: "CUENTAS", key: "sidebar.accounts", icon: "settings", href: "/accounts", adminOnly: true },
   { label: "CLÍNICA", key: "sidebar.clinic", icon: "home", href: "/clinica", adminOnly: true },
+  { label: "PLATAFORMA", key: "sidebar.platform", icon: "settings", href: "/plataforma", platformOnly: true },
 ];
 
 const NAV_ITEM =
   "group relative flex items-center gap-3.5 overflow-hidden rounded-[22px] border px-3.5 py-2.5 text-[13px] font-black uppercase tracking-[0.08em] shadow-[0_12px_24px_-18px_rgba(15,23,42,0.65)] transition-all duration-200 [@media(max-height:800px)]:py-1.5";
 
 type ProfileProps = { fullName: string; roleLabel: string; role: string; clinicName: string | null };
-type SidebarProps = ProfileProps & { isAdmin: boolean };
+type SidebarProps = ProfileProps & { isAdmin: boolean; isPlatformAdmin: boolean };
 
 function initialsOf(fullName: string) {
   return fullName
@@ -395,11 +397,12 @@ function Brand({ compact = false, clinicName, onNavigate }: { compact?: boolean;
   );
 }
 
-function NavList({ pathname, isAdmin, isDoctor, role, onNavigate }: { pathname: string; isAdmin: boolean; isDoctor: boolean; role: string; onNavigate?: () => void }) {
+function NavList({ pathname, isAdmin, isPlatformAdmin, isDoctor, role, onNavigate }: { pathname: string; isAdmin: boolean; isPlatformAdmin: boolean; isDoctor: boolean; role: string; onNavigate?: () => void }) {
   return (
     <nav aria-label="Menú principal" className="flex flex-col gap-1">
       {NAV.filter((item) =>
         (!item.adminOnly || isAdmin) &&
+        (!item.platformOnly || isPlatformAdmin) &&
         (!item.doctorOrAdminOnly || isAdmin || isDoctor) &&
         (!item.allowedRoles || item.allowedRoles.includes(role))
       ).map((item) => {
@@ -615,7 +618,7 @@ function Watermark({ className }: { className: string }) {
   );
 }
 
-export function Sidebar({ fullName, roleLabel, role, isAdmin, clinicName }: SidebarProps) {
+export function Sidebar({ fullName, roleLabel, role, isAdmin, isPlatformAdmin, clinicName }: SidebarProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
@@ -714,7 +717,7 @@ export function Sidebar({ fullName, roleLabel, role, isAdmin, clinicName }: Side
               </div>
 
               <div className="sidebar-scroll min-h-0 flex-1 overflow-y-auto pb-4">
-                <NavList pathname={pathname} isAdmin={isAdmin} isDoctor={role === "doctor"} role={role} onNavigate={() => setMobileOpen(false)} />
+                <NavList pathname={pathname} isAdmin={isAdmin} isPlatformAdmin={isPlatformAdmin} isDoctor={role === "doctor"} role={role} onNavigate={() => setMobileOpen(false)} />
               </div>
 
               <SidebarFooter fullName={fullName} roleLabel={roleLabel} role={role} clinicName={clinicName} />
@@ -737,7 +740,7 @@ export function Sidebar({ fullName, roleLabel, role, isAdmin, clinicName }: Side
           </div>
 
           <div className="sidebar-scroll -mx-1 min-h-0 flex-1 overflow-y-auto px-1">
-            <NavList pathname={pathname} isAdmin={isAdmin} isDoctor={role === "doctor"} role={role} />
+            <NavList pathname={pathname} isAdmin={isAdmin} isPlatformAdmin={isPlatformAdmin} isDoctor={role === "doctor"} role={role} />
           </div>
 
           <div className="pt-4">
