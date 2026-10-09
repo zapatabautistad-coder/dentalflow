@@ -5,10 +5,25 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireProfile } from "@/lib/auth";
 import { isStrongPassword, PASSWORD_RULE_TEXT } from "@/lib/password";
+import { BAN_FOREVER } from "@/lib/auth-ban";
 
-export type PlatformFormState = { error?: string; success?: string } | undefined;
+export type PlatformFormState =
+  | { error?: string; success?: string; errorKey?: string; failedCount?: number }
+  | undefined;
 
 const NOT_ALLOWED = "Solo un administrador de la plataforma puede hacer esto.";
+const PLATFORM_BAN_FAILED =
+  "La clínica quedó desactivada y sus usuarios ya no ven datos, pero no se pudo bloquear el inicio de sesión de estos usuarios. Inténtalo de nuevo. Usuarios sin bloquear:";
+const PLATFORM_UNBAN_FAILED =
+  "La clínica quedó activa, pero no se pudo desbloquear el inicio de sesión de estos usuarios. Inténtalo de nuevo. Usuarios sin desbloquear:";
+const PLATFORM_LIST_FAILED_INACTIVE =
+  "La clínica quedó desactivada y sus usuarios ya no ven datos, pero no se pudo leer la lista de usuarios para bloquear su inicio de sesión. Inténtalo de nuevo.";
+const PLATFORM_LIST_FAILED_ACTIVE =
+  "La clínica quedó activa, pero no se pudo leer la lista de usuarios para desbloquear su inicio de sesión. Inténtalo de nuevo.";
+const OWN_CLINIC =
+  "Tu propia clínica no se puede desactivar desde aquí: perderías el acceso a la plataforma.";
+const MISSING_KEY_ERROR =
+  "Falta configurar la clave del servidor (SUPABASE_SERVICE_ROLE_KEY). Avísale al encargado técnico.";
 
 async function requirePlatformAdmin() {
   await requireProfile();
@@ -102,8 +117,46 @@ export async function setClinicActive(clinicId: string, active: boolean): Promis
   const supabase = await requirePlatformAdmin();
   if (!supabase) return { error: NOT_ALLOWED };
 
+  const admin = createAdminClient();
+  if (!admin) return { error: MISSING_KEY_ERROR };
+
+  // Desactivar la propia clínica dejaría al administrador de plataforma sin rol y sin
+  // poder reactivarla desde la app.
+  if (!active) {
+    const { data: myClinic } = await supabase.rpc("get_my_clinic");
+    if (myClinic === clinicId) return { error: OWN_CLINIC, errorKey: "platform.ownClinic" };
+  }
+
+  // Primero la base: si falla, no se toca Auth.
   const { error } = await supabase.rpc("platform_set_clinic_active", { p_clinic: clinicId, p_active: active });
   revalidatePath("/plataforma");
   if (error) return { error: active ? "No se pudo activar la clínica." : "No se pudo desactivar la clínica." };
+
+  // Con la clave de servidor se ven los perfiles de otras clínicas (el cliente normal no, por RLS).
+  const [{ data: profiles, error: profilesError }, { data: me }] = await Promise.all([
+    admin.from("profiles").select("id, active").eq("clinic_id", clinicId),
+    supabase.auth.getUser(),
+  ]);
+  const errorKey = active ? "platform.unbanFailed" : "platform.banFailed";
+  // El texto termina en "…:" y el número de usuarios se muestra aparte (data-i18n no interpola).
+  const failMessage = active ? PLATFORM_UNBAN_FAILED : PLATFORM_BAN_FAILED;
+  if (profilesError || !profiles) {
+    return {
+      error: active ? PLATFORM_LIST_FAILED_ACTIVE : PLATFORM_LIST_FAILED_INACTIVE,
+      errorKey: active ? "platform.listFailedActive" : "platform.listFailedInactive",
+    };
+  }
+
+  // Al desactivar se bloquea a todos menos a quien hace la acción. Al reactivar solo
+  // se desbloquea a los perfiles activos: los desactivados en Cuentas siguen bloqueados.
+  const targets = active
+    ? profiles.filter((p) => p.active)
+    : profiles.filter((p) => p.id !== me.user?.id);
+
+  const results = await Promise.all(
+    targets.map((p) => admin.auth.admin.updateUserById(p.id, { ban_duration: active ? "none" : BAN_FOREVER }))
+  );
+  const failed = results.filter((r) => r.error).length;
+  if (failed > 0) return { error: failMessage, errorKey, failedCount: failed };
   return undefined;
 }

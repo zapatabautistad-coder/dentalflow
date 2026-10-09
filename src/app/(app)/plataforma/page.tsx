@@ -31,7 +31,10 @@ export default async function PlatformPage() {
   const { data: isPlatform } = await supabase.rpc("is_platform_admin");
   if (isPlatform !== true) redirect("/panel");
 
-  const { data, error } = await supabase.rpc("platform_list_clinics");
+  const [{ data, error }, { data: myClinic }] = await Promise.all([
+    supabase.rpc("platform_list_clinics"),
+    supabase.rpc("get_my_clinic"),
+  ]);
   const clinics = (data ?? []) as ClinicRow[];
 
   return (
@@ -80,7 +83,13 @@ export default async function PlatformPage() {
                 </span>
               </div>
               <div className="mt-3">
-                <ToggleClinicForm action={setClinicActive.bind(null, clinic.id, !clinic.active)} active={clinic.active} name={clinic.name} />
+                {clinic.id === myClinic && clinic.active ? (
+                  <p className="text-xs text-slate-500" data-i18n="platform.ownClinicNote">
+                    Es tu clínica: no se puede desactivar desde aquí.
+                  </p>
+                ) : (
+                  <ToggleClinicForm action={setClinicActive.bind(null, clinic.id, !clinic.active)} active={clinic.active} name={clinic.name} />
+                )}
               </div>
             </li>
           ))}
