@@ -26,7 +26,7 @@ async function shot(page, path, name, full = false) {
   await page.goto(`${BASE}${path}`);
   await page.waitForLoadState("networkidle");
   await page.waitForTimeout(800);
-  await page.screenshot({ path: `${OUT}/${name}.png`, fullPage: full });
+  await page.screenshot({ path: `${OUT}/dentalflow-imagen-${name.slice(0, 2)}-de-12.png`, fullPage: full });
   console.log("ok", name);
 }
 
