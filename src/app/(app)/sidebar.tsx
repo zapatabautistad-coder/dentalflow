@@ -365,14 +365,16 @@ function Brand({ compact = false, clinicName, onNavigate }: { compact?: boolean;
         }`}
       >
         {/* Ícono: orbe de vidrio azul cielo con el molar facetado que oscila como joya en vitrina */}
-        <span className="molar-orb flex h-full w-full items-center justify-center">
+        <span className="molar-orb block h-full w-full">
+          <span aria-hidden="true" className="molar-base" />
+          <span aria-hidden="true" className="molar-contact" />
           <Image
             src="/dentalflow-molar-diamond.png"
             alt="DentalFlow"
             width={371}
             height={512}
             priority
-            className="molar-spin h-[84%] w-auto [filter:drop-shadow(0_6px_8px_rgba(7,55,90,0.35))]"
+            className="molar-spin [filter:drop-shadow(0_4px_5px_rgba(7,55,90,0.3))]"
           />
         </span>
 

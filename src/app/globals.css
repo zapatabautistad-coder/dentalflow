@@ -379,19 +379,58 @@ body {
   animation: molar-shine 6s ease-in-out infinite;
   pointer-events: none;
 }
+/* Pedestal: disco de cristal blanco con canto azul cielo (vitrina de joyería). */
+.molar-base {
+  position: absolute;
+  left: 50%;
+  bottom: 12%;
+  width: 66%;
+  height: 14%;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 30%, #ffffff 0%, #f0f9ff 48%, #bae6fd 100%);
+  box-shadow:
+    inset 0 1px 2px rgba(255, 255, 255, 1),
+    0 2px 0 0 rgba(149, 211, 250, 0.95),
+    0 4px 0 0 rgba(83, 182, 247, 0.6),
+    0 7px 9px rgba(7, 102, 181, 0.3);
+}
+/* Sombra de contacto del molar sobre el pedestal (se achica cuando flota). */
+.molar-contact {
+  position: absolute;
+  left: 50%;
+  bottom: 17.5%;
+  width: 34%;
+  height: 5%;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(7, 102, 181, 0.45), transparent 70%);
+  filter: blur(1px);
+  animation: molar-contact 6s ease-in-out infinite;
+}
 .molar-spin {
+  position: absolute;
+  left: 50%;
+  bottom: 19%;
+  height: 66%;
+  width: auto;
   transform-style: preserve-3d;
   animation: molar-sway 6s ease-in-out infinite;
   will-change: transform;
 }
 @keyframes molar-sway {
-  0%, 100% { transform: rotateY(-28deg) translateY(1.5%); }
-  50% { transform: rotateY(28deg) translateY(-3.5%); }
+  0%, 100% { transform: translateX(-50%) rotateY(-28deg) translateY(1%); }
+  50% { transform: translateX(-50%) rotateY(28deg) translateY(-5%); }
+}
+@keyframes molar-contact {
+  0%, 100% { transform: translateX(-50%) scale(1); opacity: 1; }
+  50% { transform: translateX(-50%) scale(0.75); opacity: 0.6; }
 }
 @keyframes molar-shine {
   0%, 55% { transform: translateX(-120%); }
   80%, 100% { transform: translateX(120%); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .molar-spin, .molar-orb::after { animation: none; }
+  .molar-spin, .molar-orb::after, .molar-contact { animation: none; }
+  .molar-spin { transform: translateX(-50%); }
 }
