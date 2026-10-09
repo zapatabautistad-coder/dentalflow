@@ -256,9 +256,22 @@ export default async function PatientChartPage({ params }: { params: Promise<{ i
         </section>
       )}
 
-      <header className="glass-card flex flex-col gap-4 p-5 sm:flex-row sm:items-start sm:justify-between sm:p-6">
+      <header className="glass-card flex flex-col gap-5 p-5 sm:p-6">
         <div className="min-w-0">
-          <h1 className="text-2xl font-bold tracking-tight text-[#0F172A] sm:text-3xl">{patient.full_name}</h1>
+          <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+            <h1 className="text-2xl font-bold tracking-tight text-[#0F172A] sm:text-3xl">{patient.full_name}</h1>
+            {canManagePatients(profile.role) && (
+              <Link
+                href={`/patients/${patient.id}/edit`}
+                className="inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 text-sm font-semibold text-[#0766B5] transition hover:bg-white/70"
+              >
+                <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8">
+                  <path d="M13.5 3.5l3 3L7 16H4v-3l9.5-9.5z" strokeLinejoin="round" />
+                </svg>
+                <span data-i18n="chart.editData">Editar datos</span>
+              </Link>
+            )}
+          </div>
           <p className="mt-1.5 text-[15px] text-slate-600">
             <span data-i18n="chart.recordNo">Expediente N.°</span> {String(patient.record_number).padStart(4, "0")}
             {patient.document_id && (
@@ -292,36 +305,31 @@ export default async function PatientChartPage({ params }: { params: Promise<{ i
           )}
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          <Link href={`/patients/${patient.id}/odontograma`} className="glass-button-light min-h-11 text-[15px]" data-i18n="odontogram.title">
+        <nav aria-label="Secciones del paciente" className="flex flex-wrap items-center gap-2">
+          <Link href={`/patients/${patient.id}/odontograma`} className="glass-button-light min-h-10 shrink-0 whitespace-nowrap rounded-full px-4 text-[15px]" data-i18n="odontogram.title">
             Odontograma
           </Link>
-          <Link href={`/patients/${patient.id}/plan-tratamiento`} className="glass-button-light min-h-11 text-[15px]" data-i18n="plan.title">
+          <Link href={`/patients/${patient.id}/plan-tratamiento`} className="glass-button-light min-h-10 shrink-0 whitespace-nowrap rounded-full px-4 text-[15px]" data-i18n="plan.title">
             Plan de tratamiento
           </Link>
-          <Link href={`/patients/${patient.id}/recetas`} className="glass-button-light min-h-11 text-[15px]" data-i18n="rx.title">
+          <Link href={`/patients/${patient.id}/recetas`} className="glass-button-light min-h-10 shrink-0 whitespace-nowrap rounded-full px-4 text-[15px]" data-i18n="rx.title">
             Recetas
           </Link>
           {canViewBilling(profile.role) && (
-            <Link href={`/patients/${patient.id}/facturacion`} className="glass-button-light min-h-11 text-[15px]" data-i18n="billing.title">
+            <Link href={`/patients/${patient.id}/facturacion`} className="glass-button-light min-h-10 shrink-0 whitespace-nowrap rounded-full px-4 text-[15px]" data-i18n="billing.title">
               Facturación
             </Link>
           )}
           {canManageAppointments(profile.role) && (
             <Link
               href={`/appointments/new?patient=${patient.id}`}
-              className="glass-button min-h-11 text-[15px]"
+              className="glass-button ml-auto min-h-10 shrink-0 whitespace-nowrap rounded-full px-5 text-[15px]"
               data-i18n="chart.newAppointment"
             >
               Nueva cita
             </Link>
           )}
-          {canManagePatients(profile.role) && (
-            <Link href={`/patients/${patient.id}/edit`} className="glass-button-light min-h-11 text-[15px]" data-i18n="chart.editData">
-              Editar datos
-            </Link>
-          )}
-        </div>
+        </nav>
       </header>
 
       {history && isHistoryMoreThan12MonthsOld(history.updated_at) && (

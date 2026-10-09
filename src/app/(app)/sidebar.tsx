@@ -364,15 +364,17 @@ function Brand({ compact = false, clinicName, onNavigate }: { compact?: boolean;
           compact ? "h-12 w-12" : "h-20 w-20"
         }`}
       >
-        {/* Ícono 3D: disco de vidrio con el diente, con sombra de profundidad y brillo aguamarina */}
-        <Image
-          src="/dentalflow-app-icon-sky.png"
-          alt="DentalFlow"
-          width={512}
-          height={512}
-          priority
-          className="h-full w-full [filter:drop-shadow(0_12px_14px_rgba(7,55,90,0.55))_drop-shadow(0_0_10px_rgba(149,211,250,0.6))]"
-        />
+        {/* Ícono: orbe de vidrio azul cielo con el molar de cristal girando lento */}
+        <span className="molar-orb flex h-full w-full items-center justify-center">
+          <Image
+            src="/dentalflow-mark-sky.png"
+            alt="DentalFlow"
+            width={389}
+            height={512}
+            priority
+            className="molar-spin h-[64%] w-auto [filter:drop-shadow(0_6px_8px_rgba(7,55,90,0.35))]"
+          />
+        </span>
 
         <span className={`absolute flex h-3 w-3 ${compact ? "right-0 top-0" : "right-1.5 top-1.5"}`}>
           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#95D3FA] opacity-75" />
