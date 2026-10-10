@@ -9,6 +9,7 @@ Sistema de gestión para clínicas dentales. Stack: Next.js (App Router, TypeScr
 ## Cómo trabajar
 - **Fundador: Darys Zapata.** Ambicioso, innovador, quiere convertir DentalFlow en algo más que un SaaS. Respuestas cortas y precisas; separar lo real hoy de la visión. Ahorrar tokens: una tarea por sesión, ver `pendientes/11-multi-tenant.md` (prioridad actual).
 - Responder siempre en **español**, breve y paso a paso.
+- **Reparto (decisión de Darys, 2026-10-10): Claude es el arquitecto y revisor; Copilot construye.** Flujo: (1) Claude diseña la tarea y escribe el prompt para Copilot (guardarlo en `pendientes/06-prompts-para-agentes.md`); (2) Darys se lo da a Copilot; (3) Copilot abre el PR; (4) Claude lo revisa (errores, seguridad, reglas de este archivo), corrige en el mismo PR lo pequeño y comenta lo grande para que Copilot lo rehaga. Claude no programa funciones ni pantallas nuevas por su cuenta, salvo que Darys lo pida directamente.
 - **Producto real** para clínicas **dentales** en República Dominicana (no es demo ni portafolio). Lo usan doctores, secretarias y asistentes dentales con pacientes reales. La medicina general irá en un proyecto aparte.
 - Nunca mostrar datos inventados: todo número, lista o estado en pantalla sale de Supabase. Si no hay datos, se muestra un estado vacío honesto.
 - Nunca inventar métricas, testimonios ni certificaciones (nada de "HIPAA compliant" ni similares).
