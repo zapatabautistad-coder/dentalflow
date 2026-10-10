@@ -10,6 +10,11 @@ updates:
       time: "07:00"
       timezone: America/Santo_Domingo
     open-pull-requests-limit: 5
+    ignore:
+      # ESLint 10 rompe `npm run lint`: el eslint-plugin-react de eslint-config-next
+      # aún no lo soporta (PR #32). Quitar cuando eslint-config-next sea compatible.
+      - dependency-name: eslint
+        update-types: [version-update:semver-major]
     groups:
       # Parches y menores juntos en un solo PR para no llenar la lista.
       menores:
