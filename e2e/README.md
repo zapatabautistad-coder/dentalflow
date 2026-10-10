@@ -18,3 +18,6 @@ Repetir el paso 1 antes de cada corrida: las pruebas cuentan con una base limpia
 
 `e2e/local/000_plataforma.sql` replica ajustes que Supabase tiene en producción y no están en
 las migraciones (RLS automático en tablas nuevas, sin exposición automática de tablas).
+
+El workflow `.github/workflows/pruebas.yml` corre lint, pruebas unitarias, build y estas E2E en cada PR hacia `main`
+y en cada push a `main`, contra una Supabase local en Docker (sin secretos ni producción).
