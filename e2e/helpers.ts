@@ -1,17 +1,39 @@
 import { expect, type Page } from "@playwright/test";
 import { validateCedula } from "../src/lib/cedula";
+import { readMfaSecret, totpCode } from "./mfa";
 
 export type E2ERole = "admin" | "recepcion" | "doctor" | "enfermeria";
 
 // Usuarios creados por e2e/setup-local.sh en la base local.
 export const PASSWORD = "Prueba-E2e-2026!";
 
-export async function login(page: Page, role: E2ERole) {
+export async function login(page: Page, role: E2ERole | `${E2ERole}-b`) {
   await page.goto("/login");
   await page.locator('input[name="email"]').fill(`${role}@e2e.test`);
   await page.locator('input[name="password"]').fill(PASSWORD);
   await page.getByRole("button", { name: "Iniciar sesión" }).click();
-  await expect(page).toHaveURL(/\/panel/);
+  await expect(page).toHaveURL(/\/(panel|login\/verificar)/);
+
+  // Admin y doctor tienen la app autenticadora activa: segundo paso con el código.
+  if (page.url().includes("/login/verificar")) {
+    const secret = readMfaSecret(role);
+    if (!secret) throw new Error(`Sin secreto TOTP para ${role}: revisa e2e/global-setup.ts`);
+    await page.locator('input[autocomplete="one-time-code"]').fill(totpCode(secret));
+    await page.getByRole("button", { name: "Verificar" }).click();
+    await expect(page).toHaveURL(/\/panel/);
+  }
+}
+
+// Primer ingreso de un admin o doctor sin app autenticadora: la app lo manda a
+// /seguridad; se activa como lo haría una persona (lee el secreto y escribe el código).
+export async function enrollMfaFromSecurityPage(page: Page) {
+  await expect(page).toHaveURL(/\/seguridad/);
+  await page.getByRole("button", { name: "Activar app autenticadora" }).click();
+  const secret = (await page.locator("code").first().textContent())?.trim();
+  if (!secret) throw new Error("No apareció el código secreto de la app autenticadora");
+  await page.locator('input[autocomplete="one-time-code"]').fill(totpCode(secret));
+  await page.getByRole("button", { name: "Verificar y activar" }).click();
+  await expect(page.getByText("Verificación en dos pasos activa")).toBeVisible();
 }
 
 // Texto único por corrida para no chocar con datos de corridas anteriores.

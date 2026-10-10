@@ -44,3 +44,6 @@ next-env.d.ts
 /.e2e-supabase/
 /test-results/
 /playwright-report/
+
+# secretos TOTP de las pruebas E2E (solo base local)
+/.e2e-mfa.json
