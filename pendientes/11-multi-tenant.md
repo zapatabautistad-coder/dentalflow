@@ -14,7 +14,9 @@ Reparto: **Claude** = base de datos y seguridad (1, 2, revisión de cada PR). **
 4. ✅ **[Claude base + Copilot pantalla] Alta de clínica nueva** — 030 aplicada y pantalla `/plataforma`.
 5. ✅ **[Copilot, revisa Claude] Pruebas E2E de aislamiento** — `e2e/11-aislamiento-clinicas.spec.ts` y `e2e/12-plataforma.spec.ts`.
 
-Falta: al desactivar una clínica, bloquear también el inicio de sesión de sus usuarios (Copilot, en la app; Claude revisa el PR).
+6. ✅ Al desactivar una clínica se bloquea el inicio de sesión de sus usuarios (`plataforma/actions.ts`, commit `efc9b4f`).
+
+Multi-tenant: **terminado**. Siguiente prioridad de seguridad: MFA (prompt C1 en `06-prompts-para-agentes.md`).
 
 ## Pendiente aparte
 - ✅ Respaldo diario (`supabase/RESPALDO.md`): activo desde el 2026-10-09 y verificado el 2026-10-10 (la llave privada abre el respaldo).
