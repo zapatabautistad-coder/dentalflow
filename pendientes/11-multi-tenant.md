@@ -17,7 +17,7 @@ Reparto: **Claude** = base de datos y seguridad (1, 2, revisión de cada PR). **
 Falta: al desactivar una clínica, bloquear también el inicio de sesión de sus usuarios (Copilot, en la app; Claude revisa el PR).
 
 ## Pendiente aparte
-- Respaldo diario (`supabase/RESPALDO.md`): nunca ha corrido. Falta crear la llave age y configurar `SUPABASE_DB_URL` y `BACKUP_AGE_RECIPIENT` en GitHub.
+- ✅ Respaldo diario (`supabase/RESPALDO.md`): activo desde el 2026-10-09 y verificado el 2026-10-10 (la llave privada abre el respaldo).
 ## IA nº 1 — Dictado por voz → odontograma (EN PAUSA desde 2026-10-09)
 - **En pausa por decisión del fundador:** se retoma cuando exista la primera clínica real, porque la
   API de Claude tiene costo aparte. No crear clave ni código que la llame hasta entonces.

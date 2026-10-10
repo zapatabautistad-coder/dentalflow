@@ -9,6 +9,9 @@ con `pg_dump`, la **cifra con age** y la guarda 30 días como artefacto de GitHu
   `auth` (usuarios; contraseñas solo como hash) y `supabase_migrations`.
 - No incluye archivos de Storage (hoy no se usa).
 
+**Estado:** activo desde el 2026-10-09; verificado el 2026-10-10 (se descargó un respaldo y la
+llave privada lo abrió). Llave privada guardada en USB y en papel.
+
 ## Activarlo (una sola vez)
 
 1. **Crear la llave** en tu computadora (no en un chat ni en una IA):
