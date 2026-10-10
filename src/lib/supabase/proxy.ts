@@ -1,9 +1,10 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { USER_EMAIL_HEADER, USER_ID_HEADER } from "@/lib/auth-headers";
+import { getMfaDecision } from "@/lib/mfa";
 
 // Rutas accesibles sin sesión.
-const PUBLIC_PATHS = ["/login"];
+const MFA_EXEMPT_PATHS = ["/seguridad", "/login/verificar"];
 
 // Refresca la sesión de Supabase (cookies) y aplica la protección de rutas.
 export async function updateSession(request: NextRequest) {
@@ -45,15 +46,12 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
-  const isPublic = PUBLIC_PATHS.some(
-    (p) => pathname === p || pathname.startsWith(`${p}/`)
-  );
 
-  if (!user && !isPublic) {
+  if (!user && pathname !== "/login") {
     return redirectKeepingCookies(request, response, "/login");
   }
 
-  if (user && isPublic) {
+  if (user && pathname === "/login") {
     return redirectKeepingCookies(request, response, "/panel");
   }
 
@@ -62,6 +60,42 @@ export async function updateSession(request: NextRequest) {
   if (user) {
     requestHeaders.set(USER_ID_HEADER, user.id);
     if (user.email) requestHeaders.set(USER_EMAIL_HEADER, user.email);
+  }
+
+  if (user && !MFA_EXEMPT_PATHS.includes(pathname)) {
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+
+    if (profileError || !profile) {
+      return redirectKeepingCookies(request, response, "/seguridad?error=check");
+    }
+
+    const [{ data: factors, error: factorsError }, { data: assurance, error: assuranceError }] =
+      await Promise.all([
+        supabase.auth.mfa.listFactors(),
+        supabase.auth.mfa.getAuthenticatorAssuranceLevel(),
+      ]);
+
+    if (factorsError || assuranceError) {
+      return redirectKeepingCookies(request, response, "/seguridad?error=check");
+    }
+
+    const decision = getMfaDecision(
+      profile.role,
+      factors.totp.some((factor) => factor.status === "verified"),
+      assurance.currentLevel
+    );
+
+    if (decision === "activar") {
+      return redirectKeepingCookies(request, response, "/seguridad?mfa=required");
+    }
+
+    if (decision === "verificar") {
+      return redirectKeepingCookies(request, response, "/login/verificar");
+    }
   }
 
   const finalResponse = NextResponse.next({
@@ -75,11 +109,9 @@ export async function updateSession(request: NextRequest) {
 function redirectKeepingCookies(
   request: NextRequest,
   response: NextResponse,
-  pathname: string
+  destination: string
 ) {
-  const url = request.nextUrl.clone();
-  url.pathname = pathname;
-  url.search = "";
+  const url = new URL(destination, request.url);
   const redirect = NextResponse.redirect(url);
   response.cookies.getAll().forEach((cookie) => redirect.cookies.set(cookie));
   return redirect;
