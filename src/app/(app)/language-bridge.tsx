@@ -13,6 +13,39 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     "sidebar.waitingRoom": "Sala de espera",
     "sidebar.analysis": "Análisis",
     "sidebar.accounts": "Cuentas",
+    "sidebar.security": "Seguridad",
+    "security.title": "Seguridad",
+    "security.subtitle": "Protege tu cuenta con una app autenticadora.",
+    "security.requiredNotice": "Para continuar usando DentalFlow, activa la verificación en dos pasos.",
+    "security.active": "Verificación en dos pasos activa",
+    "security.activeHint": "Tu cuenta está protegida con una app autenticadora.",
+    "security.confirmRemoval": "Confirma con un código de la app para quitarla.",
+    "security.remove": "Quitar verificación en dos pasos",
+    "security.pending": "Hay una configuración pendiente de la app autenticadora.",
+    "security.pendingRemove": "Eliminar configuración pendiente",
+    "security.setupTitle": "Configura tu app autenticadora",
+    "security.setupHint": "Escanea este código QR con una app autenticadora o introduce el código secreto.",
+    "security.secret": "Código secreto",
+    "security.code": "Código de 6 dígitos",
+    "security.verifyEnable": "Verificar y activar",
+    "security.setupPrompt": "Añade una segunda capa de seguridad con una app autenticadora TOTP.",
+    "security.enroll": "Activar app autenticadora",
+    "security.verifyTitle": "Verificación en dos pasos",
+    "security.verifyHint": "Escribe el código de tu app autenticadora para continuar.",
+    "security.verify": "Verificar",
+    "security.manage": "Gestionar verificación en dos pasos",
+    "security.loading": "Cargando la configuración de seguridad…",
+    "security.retry": "Reintentar",
+    "security.working": "Procesando…",
+    "security.errorCheck": "No se pudo comprobar la configuración de seguridad. Inténtalo de nuevo.",
+    "security.errorLoad": "No se pudo cargar la configuración de seguridad. Inténtalo de nuevo.",
+    "security.errorEnroll": "No se pudo iniciar la configuración. Inténtalo de nuevo.",
+    "security.errorCode": "Código incorrecto o vencido. Intenta de nuevo.",
+    "security.errorRemove": "No se pudo quitar la app autenticadora. Inténtalo de nuevo.",
+    "security.successEnabled": "Verificación en dos pasos activada.",
+    "security.successRemoved": "Verificación en dos pasos desactivada.",
+    "security.pendingRemoved": "Configuración pendiente eliminada.",
+    "security.qrAlt": "Código QR para configurar la app autenticadora",
     "billing.title": "Facturación",
     "billing.patientLoadError": "No se pudo cargar la información del paciente.",
     "billing.balanceLoadError": "No se pudo calcular el balance porque faltan datos de cargos o pagos.",
@@ -565,6 +598,39 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     "sidebar.waitingRoom": "Waiting room",
     "sidebar.analysis": "Analytics",
     "sidebar.accounts": "Accounts",
+    "sidebar.security": "Security",
+    "security.title": "Security",
+    "security.subtitle": "Protect your account with an authenticator app.",
+    "security.requiredNotice": "To continue using DentalFlow, turn on two-step verification.",
+    "security.active": "Two-step verification is active",
+    "security.activeHint": "Your account is protected with an authenticator app.",
+    "security.confirmRemoval": "Confirm with an app code to remove it.",
+    "security.remove": "Remove two-step verification",
+    "security.pending": "There is a pending authenticator app setup.",
+    "security.pendingRemove": "Remove pending setup",
+    "security.setupTitle": "Set up your authenticator app",
+    "security.setupHint": "Scan this QR code with an authenticator app or enter the secret code.",
+    "security.secret": "Secret code",
+    "security.code": "6-digit code",
+    "security.verifyEnable": "Verify and enable",
+    "security.setupPrompt": "Add another layer of security with a TOTP authenticator app.",
+    "security.enroll": "Enable authenticator app",
+    "security.verifyTitle": "Two-step verification",
+    "security.verifyHint": "Enter the code from your authenticator app to continue.",
+    "security.verify": "Verify",
+    "security.manage": "Manage two-step verification",
+    "security.loading": "Loading security settings…",
+    "security.retry": "Try again",
+    "security.working": "Processing…",
+    "security.errorCheck": "Could not check your security settings. Try again.",
+    "security.errorLoad": "Could not load your security settings. Try again.",
+    "security.errorEnroll": "Could not start setup. Try again.",
+    "security.errorCode": "Incorrect or expired code. Try again.",
+    "security.errorRemove": "Could not remove the authenticator app. Try again.",
+    "security.successEnabled": "Two-step verification enabled.",
+    "security.successRemoved": "Two-step verification disabled.",
+    "security.pendingRemoved": "Pending setup removed.",
+    "security.qrAlt": "QR code to set up the authenticator app",
     "billing.title": "Billing",
     "billing.patientLoadError": "Could not load the patient information.",
     "billing.balanceLoadError": "Could not calculate the balance because charges or payments are missing.",
@@ -1128,6 +1194,13 @@ function applyTranslations(lang: string) {
     setOwnText(node, value);
   });
 
+  const altNodes = document.querySelectorAll<HTMLImageElement>("[data-i18n-alt]");
+  altNodes.forEach((node) => {
+    const key = node.dataset.i18nAlt;
+    const value = key ? dictionary[key] : undefined;
+    if (value) node.alt = value;
+  });
+
   const placeholderNodes = document.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>("[data-i18n-placeholder]");
   placeholderNodes.forEach((node) => {
     const key = node.dataset.i18nPlaceholder;
@@ -1222,7 +1295,11 @@ export function LanguageBridge() {
         if (lang !== "es") applyTranslations(lang);
       });
     });
-    observer.observe(document.body, { childList: true, subtree: true });
+    observer.observe(document.body, {
+      childList: true,
+      characterData: true,
+      subtree: true,
+    });
 
     return () => {
       document.removeEventListener("dentalflow-language-change", handleLanguageChange);

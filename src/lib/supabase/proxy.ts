@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { USER_EMAIL_HEADER, USER_ID_HEADER } from "@/lib/auth-headers";
 import { getMfaDecision } from "@/lib/mfa";
 
-// Rutas accesibles sin sesión.
+// Rutas autenticadas que permiten completar o administrar la verificación.
 const MFA_EXEMPT_PATHS = ["/seguridad", "/login/verificar"];
 
 // Refresca la sesión de Supabase (cookies) y aplica la protección de rutas.
