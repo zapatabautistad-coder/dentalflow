@@ -37,9 +37,9 @@ Riesgo: todo push a `main` se publica solo en Vercel. Quien suba código a `main
 
 En el repo (lo puede hacer Claude en un PR pequeño, sin tocar la app):
 1. **CI en GitHub Actions**: en cada PR, `npm ci`, build, lint y `npm test`. Si falla, no se une.
-2. **Dependabot** (`.github/dependabot.yml`): alertas y PR de librerías con vulnerabilidades.
-3. **`CODEOWNERS`**: cambios en `supabase/migrations/`, `src/proxy.ts`, `src/lib/supabase/`,
-   `next.config.ts` y `.github/` requieren aprobación de Darys.
+2. ~~**Dependabot**~~ Hecho (2026-10-10): `.github/dependabot.yml`, npm semanal (menores agrupados) y Actions mensual.
+3. ~~**`CODEOWNERS`**~~ Hecho (2026-10-10): `.github/CODEOWNERS`; cambios en `supabase/migrations/`, `src/proxy.ts`, `src/lib/supabase/`,
+   `next.config.ts`, `.github/` y `package*.json` requieren aprobación de Darys. Solo se exige si en la protección de `main` se activa "Require review from Code Owners".
 
 Lo hace Darys en la configuración de las cuentas:
 - 2FA (app autenticadora) en GitHub, Vercel y Supabase.
@@ -68,5 +68,4 @@ Comprobado en el código, no solo en la lista:
   límite de tamaño y tipos MIME permitidos.
 - Rate limiting (11, 12): Supabase Auth ya limita intentos de login. Cloudflare/WAF solo
   cuando haya varias clínicas; no es prioridad.
-- Falta de verdad: respaldos verificados, MFA en la app, Dependabot + `CODEOWNERS`
-  (aún no existen en `.github/`), CSP completa (opcional).
+- Falta de verdad: respaldos verificados, MFA en la app, CSP completa (opcional).

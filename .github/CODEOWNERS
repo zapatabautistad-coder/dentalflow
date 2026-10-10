@@ -1,0 +1,20 @@
+# Cambios en estas rutas necesitan la aprobación de Darys antes de unirse a main
+# (se exige cuando la protección de main tiene "Require review from Code Owners").
+
+# Base de datos: permisos (RLS), triggers y auditoría.
+/supabase/migrations/   @zapatabautistad-coder
+/supabase/RESPALDO.md   @zapatabautistad-coder
+
+# Sesión, clientes de Supabase y clave de servicio.
+/src/proxy.ts           @zapatabautistad-coder
+/src/lib/supabase/      @zapatabautistad-coder
+
+# Cabeceras de seguridad.
+/next.config.ts         @zapatabautistad-coder
+
+# CI, respaldo, Dependabot y este archivo.
+/.github/               @zapatabautistad-coder
+
+# Dependencias.
+/package.json           @zapatabautistad-coder
+/package-lock.json      @zapatabautistad-coder

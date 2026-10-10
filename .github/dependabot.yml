@@ -1,0 +1,21 @@
+# Avisa y abre PR cuando una librería tiene una vulnerabilidad o una versión nueva.
+# Cada PR pasa por la CI (pruebas.yml) y lo revisa Darys antes de unirlo; nada se une solo.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "07:00"
+      timezone: America/Santo_Domingo
+    open-pull-requests-limit: 5
+    groups:
+      # Parches y menores juntos en un solo PR para no llenar la lista.
+      menores:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
