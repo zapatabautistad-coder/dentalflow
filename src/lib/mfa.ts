@@ -1,7 +1,7 @@
 import type { Role } from "@/lib/auth-roles";
 
 export type MfaDecision = "activar" | "verificar" | "ok";
-export type AssuranceLevel = "aal1" | "aal2" | null;
+export type AssuranceLevel = string | null;
 
 export function getMfaDecision(
   role: Role,

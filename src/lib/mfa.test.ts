@@ -6,6 +6,7 @@ describe("getMfaDecision", () => {
     ["admin sin factor", "admin", false, "aal1", "activar"],
     ["doctor sin factor", "doctor", false, "aal1", "activar"],
     ["admin con factor y aal1", "admin", true, "aal1", "verificar"],
+    ["factor con nivel desconocido", "admin", true, null, "verificar"],
     ["doctor con factor y aal1", "doctor", true, "aal1", "verificar"],
     ["recepción con factor y aal1", "recepcion", true, "aal1", "verificar"],
     ["asistente con factor y aal1", "enfermeria", true, "aal1", "verificar"],
