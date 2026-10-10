@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { logout } from "../../(app)/actions";
 
 type VerifiedFactor = { id: string };
 
@@ -133,9 +133,12 @@ export function VerifyMfaForm({
           <span data-i18n="security.retry">Reintentar</span>
         </button>
       ) : null}
-      <Link href="/seguridad" className="block text-center text-sm font-semibold text-[#0766B5] hover:underline" data-i18n="security.manage">
-        Gestionar verificación en dos pasos
-      </Link>
+      {/* Sin el segundo paso no se entra a la app (ni a /seguridad): la salida es cerrar sesión. */}
+      <form action={logout}>
+        <button type="submit" className="block w-full text-center text-sm font-semibold text-[#0766B5] hover:underline" data-i18n="sidebar.logout">
+          Cerrar sesión
+        </button>
+      </form>
     </div>
   );
 }

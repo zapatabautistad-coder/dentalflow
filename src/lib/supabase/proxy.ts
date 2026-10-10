@@ -3,8 +3,9 @@ import { NextResponse, type NextRequest } from "next/server";
 import { USER_EMAIL_HEADER, USER_ID_HEADER } from "@/lib/auth-headers";
 import { getMfaDecision } from "@/lib/mfa";
 
-// Rutas autenticadas que permiten completar o administrar la verificación.
-const MFA_EXEMPT_PATHS = ["/seguridad", "/login/verificar"];
+// Verificación en dos pasos (ver src/lib/mfa.ts).
+const VERIFY_PATH = "/login/verificar";
+const SECURITY_PATH = "/seguridad";
 
 // Refresca la sesión de Supabase (cookies) y aplica la protección de rutas.
 export async function updateSession(request: NextRequest) {
@@ -62,7 +63,11 @@ export async function updateSession(request: NextRequest) {
     if (user.email) requestHeaders.set(USER_EMAIL_HEADER, user.email);
   }
 
-  if (user && !MFA_EXEMPT_PATHS.includes(pathname)) {
+  // /login/verificar siempre pasa (ahí se completa el segundo paso). /seguridad solo
+  // pasa para quien debe ACTIVAR la app: con un factor ya activo y sesión aal1 (solo
+  // contraseña) no se muestra nada de la app, ni siquiera la barra lateral, que carga
+  // notificaciones con nombres de pacientes.
+  if (user && pathname !== VERIFY_PATH) {
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("role")
@@ -70,34 +75,39 @@ export async function updateSession(request: NextRequest) {
       .single();
 
     if (profileError || !profile) {
-      return redirectKeepingCookies(request, response, "/seguridad?error=check");
+      if (pathname === SECURITY_PATH) return finish(response, requestHeaders);
+      return redirectKeepingCookies(request, response, `${SECURITY_PATH}?error=check`);
     }
 
-    const [{ data: factors, error: factorsError }, { data: assurance, error: assuranceError }] =
-      await Promise.all([
-        supabase.auth.mfa.listFactors(),
-        supabase.auth.mfa.getAuthenticatorAssuranceLevel(),
-      ]);
+    // Los factores vienen en el usuario que ya validó getUser(): listFactors() volvería
+    // a llamar a getUser() (otra ida a Supabase en cada petición). El nivel aal sale de
+    // la sesión, sin red.
+    const { data: assurance, error: assuranceError } =
+      await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
 
-    if (factorsError || assuranceError) {
-      return redirectKeepingCookies(request, response, "/seguridad?error=check");
+    if (assuranceError) {
+      if (pathname === SECURITY_PATH) return finish(response, requestHeaders);
+      return redirectKeepingCookies(request, response, `${SECURITY_PATH}?error=check`);
     }
 
-    const decision = getMfaDecision(
-      profile.role,
-      factors.totp.some((factor) => factor.status === "verified"),
-      assurance.currentLevel
+    const hasVerifiedTotp = (user.factors ?? []).some(
+      (factor) => factor.factor_type === "totp" && factor.status === "verified"
     );
-
-    if (decision === "activar") {
-      return redirectKeepingCookies(request, response, "/seguridad?mfa=required");
-    }
+    const decision = getMfaDecision(profile.role, hasVerifiedTotp, assurance.currentLevel);
 
     if (decision === "verificar") {
-      return redirectKeepingCookies(request, response, "/login/verificar");
+      return redirectKeepingCookies(request, response, VERIFY_PATH);
+    }
+
+    if (decision === "activar" && pathname !== SECURITY_PATH) {
+      return redirectKeepingCookies(request, response, `${SECURITY_PATH}?mfa=required`);
     }
   }
 
+  return finish(response, requestHeaders);
+}
+
+function finish(response: NextResponse, requestHeaders: Headers) {
   const finalResponse = NextResponse.next({
     request: { headers: requestHeaders },
   });
