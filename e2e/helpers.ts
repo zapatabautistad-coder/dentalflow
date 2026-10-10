@@ -12,16 +12,20 @@ export async function login(page: Page, role: E2ERole | `${E2ERole}-b`) {
   await page.locator('input[name="email"]').fill(`${role}@e2e.test`);
   await page.locator('input[name="password"]').fill(PASSWORD);
   await page.getByRole("button", { name: "Iniciar sesión" }).click();
-  await expect(page).toHaveURL(/\/(panel|login\/verificar)/);
+  // Admin y doctor tienen la app autenticadora activa: tras la contraseña la app pasa
+  // por /panel y el proxy la manda a /login/verificar. Se espera a la pantalla final
+  // (menú de la app o campo del código), no a la URL, que cambia en el camino.
+  const codeInput = page.locator('input[autocomplete="one-time-code"]');
+  await expect(codeInput.or(page.locator("nav").first())).toBeVisible();
 
-  // Admin y doctor tienen la app autenticadora activa: segundo paso con el código.
-  if (page.url().includes("/login/verificar")) {
+  if (await codeInput.isVisible()) {
     const secret = readMfaSecret(role);
     if (!secret) throw new Error(`Sin secreto TOTP para ${role}: revisa e2e/global-setup.ts`);
-    await page.locator('input[autocomplete="one-time-code"]').fill(totpCode(secret));
+    await codeInput.fill(totpCode(secret));
     await page.getByRole("button", { name: "Verificar" }).click();
-    await expect(page).toHaveURL(/\/panel/);
   }
+  await expect(page).toHaveURL(/\/panel/);
+  await expect(page.locator("nav").first()).toBeVisible();
 }
 
 // Primer ingreso de un admin o doctor sin app autenticadora: la app lo manda a
