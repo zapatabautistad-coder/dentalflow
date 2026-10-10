@@ -54,3 +54,19 @@ Lo hace Darys en la configuración de las cuentas:
    Aplicar la 029 (ver `11-multi-tenant.md`) antes de sumar otra clínica.
 3. **MFA en la app**: Supabase Auth trae TOTP. Falta pantalla para activarlo (QR) y pedir el
    código al entrar; exigirlo (nivel `aal2`) al menos a admin y doctor.
+
+## Contraste con la lista "20 cosas antes de lanzar" (2026-10-10)
+Comprobado en el código, no solo en la lista:
+- Ya cubierto: RLS/roles/sin DELETE (4, 6, 7, 8), publishable key y service role solo en servidor
+  (1, 2, 3), contraseñas en Supabase Auth (10), consultas parametrizadas por PostgREST (13),
+  HTTPS/HSTS y cabeceras (18, 19), `npm audit` y CI en cada PR (20).
+- **No sanitizar texto clínico**: React escapa todo y no hay `dangerouslySetInnerHTML` ni
+  `innerHTML`. Sanitizar alteraría lo que escribe el doctor sin proteger más. Solo hará falta si
+  algún día se muestra HTML/Markdown (p. ej. respuestas del chatbot de IA): ahí sí, sanitizar.
+- Sin `select("*")` en `src/`: mantenerlo así (pedir solo las columnas que se usan).
+- Archivos (16): no hay Storage aún. Cuando se suban radiografías: bucket privado con RLS,
+  límite de tamaño y tipos MIME permitidos.
+- Rate limiting (11, 12): Supabase Auth ya limita intentos de login. Cloudflare/WAF solo
+  cuando haya varias clínicas; no es prioridad.
+- Falta de verdad: respaldos verificados, MFA en la app, Dependabot + `CODEOWNERS`
+  (aún no existen en `.github/`), CSP completa (opcional).
