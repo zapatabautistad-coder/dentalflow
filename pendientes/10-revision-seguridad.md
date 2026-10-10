@@ -37,7 +37,7 @@ Riesgo: todo push a `main` se publica solo en Vercel. Quien suba código a `main
 
 En el repo (lo puede hacer Claude en un PR pequeño, sin tocar la app):
 1. **CI en GitHub Actions**: en cada PR, `npm ci`, build, lint y `npm test`. Si falla, no se une.
-2. ~~**Dependabot**~~ Hecho (2026-10-10): `.github/dependabot.yml`, npm semanal (menores agrupados) y Actions mensual.
+2. ~~**Dependabot**~~ Hecho (2026-10-10): `.github/dependabot.yml` en modo **solo seguridad** (`open-pull-requests-limit: 0`): no abre PR de versiones (TypeScript 7 y ESLint 10 rompían el build). Avisos por *Dependabot alerts*.
 3. ~~**`CODEOWNERS`**~~ Hecho (2026-10-10): `.github/CODEOWNERS`; cambios en `supabase/migrations/`, `src/proxy.ts`, `src/lib/supabase/`,
    `next.config.ts`, `.github/` y `package*.json` requieren aprobación de Darys. Solo se exige si en la protección de `main` se activa "Require review from Code Owners".
 
