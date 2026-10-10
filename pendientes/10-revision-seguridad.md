@@ -48,8 +48,10 @@ Lo hace Darys en la configuración de las cuentas:
 - Rotar `SUPABASE_SERVICE_ROLE_KEY` si alguna vez se pegó fuera de Vercel/`.env.local`.
 
 ## Pendiente (2026-10-09): los 3 riesgos mayores
-1. **Respaldos**: no hay respaldo verificado. Plan Pro de Supabase (respaldos diarios) y probar
-   una restauración en el proyecto demo. PITR es un extra de pago.
+1. ~~**Respaldos**~~ **Activo y verificado (2026-10-10)**: `respaldo-base.yml` corre cada noche
+   (cifrado con age, 30 días en GitHub Actions). Se descargó el del 10-oct y la llave privada lo
+   abrió. Llave privada en USB (y en papel). Falta (opcional): restaurarlo completo en el proyecto
+   demo con `pg_restore` (`supabase/RESPALDO.md`). Plan Pro/PITR de Supabase sigue siendo un extra.
 2. **Multi-tenant**: con una segunda clínica en la base actual, se verían los datos entre sí.
    Aplicar la 029 (ver `11-multi-tenant.md`) antes de sumar otra clínica.
 3. **MFA en la app**: Supabase Auth trae TOTP. Falta pantalla para activarlo (QR) y pedir el
@@ -68,4 +70,4 @@ Comprobado en el código, no solo en la lista:
   límite de tamaño y tipos MIME permitidos.
 - Rate limiting (11, 12): Supabase Auth ya limita intentos de login. Cloudflare/WAF solo
   cuando haya varias clínicas; no es prioridad.
-- Falta de verdad: respaldos verificados, MFA en la app, CSP completa (opcional).
+- Falta de verdad: MFA en la app, CSP completa (opcional). Respaldo: activo y verificado (2026-10-10).
