@@ -71,3 +71,11 @@ Comprobado en el código, no solo en la lista:
 - Rate limiting (11, 12): Supabase Auth ya limita intentos de login. Cloudflare/WAF solo
   cuando haya varias clínicas; no es prioridad.
 - Falta de verdad: MFA en la app, CSP completa (opcional). Respaldo: activo y verificado (2026-10-10).
+
+## Pendiente (2026-10-10): proyecto `dentalflow-demo` en Supabase
+Supabase avisó que pausará `dentalflow-demo` (ID `otyshxghiqdtodzrwpjo`, solo pruebas, sin pacientes)
+por más de 7 días sin actividad. **Producción es `DENTALFLOW` (`ytoxbvfxjbomqjjshumd`) y no se afecta.**
+- Si se pausa: se reactiva desde el panel (*Restore project*) dentro de 90 días; después solo se
+  pueden descargar los datos.
+- Se necesita para: probar la restauración completa del respaldo y los cambios multi-tenant.
+- Decisión pendiente de Darys: dejar que se pause o reactivarlo antes de los 90 días.
