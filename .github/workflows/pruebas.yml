@@ -1,0 +1,75 @@
+name: Pruebas
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: pruebas-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  pruebas:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run lint
+
+      - run: npm test
+
+      # Supabase local en Docker (nunca producción); escribe .env.e2e.
+      - run: npm run test:e2e:setup
+
+      - name: Build con las variables de la base local
+        run: |
+          set -a; . ./.env.e2e; set +a
+          npm run build
+
+      - name: Arrancar la app
+        run: |
+          set -a; . ./.env.e2e; set +a
+          nohup npx next start -p 3100 > server.log 2>&1 &
+          for i in $(seq 1 60); do
+            if curl -sf -o /dev/null http://127.0.0.1:3100/login; then
+              echo "App lista tras ${i}s"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "La app no respondió en 60 s. Log del servidor:"
+          cat server.log
+          exit 1
+
+      - run: npx playwright install --with-deps chromium
+
+      - name: Pruebas E2E
+        run: |
+          set -a; . ./.env.e2e; set +a
+          npm run test:e2e
+
+      - name: Log del servidor (si falló)
+        if: failure()
+        run: cat server.log || true
+
+      - name: Subir resultados de las pruebas
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test-results/
+          retention-days: 7
+          if-no-files-found: ignore
