@@ -54,7 +54,7 @@ Lo hace Darys en la configuración de las cuentas:
    demo con `pg_restore` (`supabase/RESPALDO.md`). Plan Pro/PITR de Supabase sigue siendo un extra.
 2. **Multi-tenant**: con una segunda clínica en la base actual, se verían los datos entre sí.
    Aplicar la 029 (ver `11-multi-tenant.md`) antes de sumar otra clínica.
-3. ~~**MFA en la app**~~ Hecho: fase 1 (app, PR #41) y fase 2 (base, migración 031, falta aplicarla). Antes: Supabase Auth trae TOTP. Faltaba pantalla para activarlo (QR) y pedir el
+3. ~~**MFA en la app**~~ Hecho: fase 1 (app, PR #41) y fase 2 (base, migración 031, aplicada el 2026-10-11). Antes: Supabase Auth trae TOTP. Faltaba pantalla para activarlo (QR) y pedir el
    código al entrar; exigirlo (nivel `aal2`) al menos a admin y doctor.
 
 ## Contraste con la lista "20 cosas antes de lanzar" (2026-10-10)
@@ -70,7 +70,7 @@ Comprobado en el código, no solo en la lista:
   límite de tamaño y tipos MIME permitidos.
 - Rate limiting (11, 12): Supabase Auth ya limita intentos de login. Cloudflare/WAF solo
   cuando haya varias clínicas; no es prioridad.
-- Falta de verdad: aplicar la 031 (MFA en la base), CSP completa (opcional). Respaldo: activo y verificado (2026-10-10).
+- Falta de verdad: CSP completa (opcional). Respaldo: activo y verificado (2026-10-10).
 
 ## Pendiente (2026-10-10): proyecto `dentalflow-demo` en Supabase
 Supabase avisó que pausará `dentalflow-demo` (ID `otyshxghiqdtodzrwpjo`, solo pruebas, sin pacientes)
