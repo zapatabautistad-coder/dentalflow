@@ -66,3 +66,17 @@ consentimiento.
   texto v1 antes de usarlo con pacientes reales. **No se aplica hasta cerrar la arquitectura**
   (decisión del fundador, 2026-10-11): ver `pendientes/15-ia-ambiental-arquitectura.md`.
 - Paso 2 — dictado (Whisper + Claude): pendiente.
+
+## Visión biotecnológica (Darys, 2026-10-11)
+Meta: llevar ONYX a la biotecnología. Interpretación de Claude: DentalFlow como la plataforma
+que une datos clínicos + datos biológicos en el tiempo (4D) para una odontología de precisión.
+Escalera (cada peldaño necesita el anterior):
+1. **Hoy:** expediente estructurado, firmado e inmutable (ya existe).
+2. **ONYX clínico:** dictado, consejero y datos con código (en diseño).
+3. **Datos biológicos:** resultados de laboratorio (saliva, biopsias, glucemia) cargados con
+   alianzas con laboratorios; ONYX los cruza con el historial.
+4. **Investigación:** consentimiento de investigación aparte, datos sin identidad, comité de
+   ética (en RD, verificar CONABIOS) y alianza universitaria.
+5. **Biotecnología:** riesgo personalizado (por ejemplo periodontitis) con biomarcadores,
+   microbioma oral y respuesta a tratamientos; validado con estudios, nunca anunciado antes.
+Regla: ningún paso se anuncia ni se muestra en pantalla hasta que exista con datos reales.
