@@ -12,8 +12,9 @@ Contexto: `pendientes/15-ia-ambiental-arquitectura.md` (arquitectura) y `14-onyx
 
 1. **ONYX escribe, el doctor firma.** ONYX prepara el borrador completo; el doctor revisa,
    corrige y firma. Nada clínico queda guardado sin la firma del doctor.
-2. **ONYX no decide nada clínico.** No diagnostica por su cuenta, no elige tratamientos, no
-   sugiere medicamentos ni dosis. Solo estructura lo que el doctor dijo.
+2. **ONYX sugiere, el doctor decide.** (Cambio de Darys, 2026-10-11: ONYX da recomendaciones.)
+   ONYX puede anticiparse y sugerir (Parte K), pero nunca aplica una sugerencia por su cuenta,
+   nunca la escribe en el expediente como si la hubiera dicho el doctor y nunca inventa dosis.
 3. **Si no está en lo que dijo el doctor, no existe.** Todo dato lleva la cita exacta de la
    transcripción de donde salió. Sin cita verificable, no hay dato.
 4. **Ante la duda, pregunta.** Nunca adivina un diente, una superficie, un medicamento o una dosis.
@@ -36,6 +37,7 @@ un modelo de lenguaje para interpretar.
 | 3. **Guardián** | Revisa el borrador: citas, listas cerradas, permisos, alergias, consentimiento, contradicciones | Código de DentalFlow (sin IA) | **No: reglas fijas, con pruebas** |
 | 4. **Voz** | Le habla al doctor por el auricular (preguntas y confirmaciones cortas) | Voz sintética | Sí (texto a voz) |
 | 5. **Registro** | Guarda la sesión y, tras la firma, las entradas clínicas | Supabase (triggers y RLS) | No |
+| 6. **Consejero** | Sugerencias al doctor (Parte K) | Reglas de código + Claude con biblioteca clínica aprobada | Parcial |
 
 Por qué el Guardián es código y no otro agente: un segundo modelo "verificador" también puede
 equivocarse; una regla de código no. Las reglas críticas (cita exacta, diente válido, alergia)
@@ -161,6 +163,41 @@ El paciente no escucha nada: ONYX habla solo en el auricular del doctor.
 3. En uso real: porcentaje de campos que corrige el doctor y tiempo hasta firmar. Son métricas
    reales de `onyx_sessions`, nunca inventadas.
 4. Un cambio de prompt o de modelo no sale a producción si empeora cualquier métrica.
+
+## Parte K — Consejero: ONYX va un paso adelante
+
+ONYX sabe con qué paciente trabaja (DentalFlow lo sabe; a los proveedores no se les envía la
+identidad, H.7). Cuando el doctor menciona algo, ONYX revisa el expediente y se adelanta.
+Ejemplo: el doctor dice "voy a extraer el 36" → ONYX al oído: "Atención: toma anticoagulantes."
+
+### K.1 Tres niveles de sugerencia (de menor a mayor riesgo)
+| Nivel | Qué sugiere | De dónde sale | Cómo |
+|---|---|---|---|
+| **1. Seguridad** | Alergias, anticoagulantes o bifosfonatos antes de extraer, hipertensión y anestesia con vasoconstrictor, embarazo, signos vitales en crisis | Datos del paciente en Supabase + reglas de código (ya existen piezas: `medical-alerts.ts`, `vital-signs.ts`, `medication-allergy.ts`) | Siempre por voz y en rojo en pantalla |
+| **2. Completitud y tiempo (4D)** | "No dictaste la superficie", "falta la dosis", "el 26 tiene endodoncia pendiente desde marzo", "última radiografía hace 2 años" | Expediente y su historia | Pantalla; voz solo si el doctor pregunta |
+| **3. Clínica** | Opciones a considerar: "considerar radiografía periapical", "opciones descritas: endodoncia o extracción" | **Solo** una biblioteca de protocolos aprobada y firmada por un odontólogo; Claude busca en ella y cita | Pantalla, como "a considerar", con la fuente |
+
+### K.2 Reglas del Consejero
+1. **Toda sugerencia cita su fuente**: un dato del expediente (con fecha) o un protocolo de la
+   biblioteca aprobada. Sin fuente, no se muestra.
+2. **Nunca se aplica sola.** El doctor la acepta o la descarta; las dos cosas quedan registradas.
+3. **Nivel 3 sin biblioteca no existe.** Claude no sugiere desde su conocimiento general: solo
+   desde protocolos que la clínica o DentalFlow aprobaron con nombre de quien los revisó.
+4. **Medicamentos**: solo como alerta (alergia, interacción) o desde un protocolo aprobado;
+   nunca una dosis propuesta por la IA.
+5. **Pocas y relevantes**: máximo una sugerencia por voz a la vez; si se repiten sin uso, se
+   reducen (fatiga de alertas). El doctor puede silenciar el nivel 2 y 3, nunca el nivel 1.
+6. **Al oído o en pantalla, nunca frente al paciente.**
+7. **Se mide**: sugerencias aceptadas y descartadas, y **sugerencias dañinas: meta cero**,
+   revisadas por un odontólogo antes de cada versión.
+8. **Responsabilidad**: la decisión clínica es siempre del doctor; la pantalla lo dice.
+
+### K.3 Antes de construir el nivel 3
+- Revisar si en RD (Ministerio de Salud / DIGEMAPS) un sistema que sugiere decisiones clínicas
+  se regula como dispositivo médico **(verificar)**. En EE. UU. y Europa este tipo de software
+  puede estar regulado; importa para la meta HealthTech y para vender fuera.
+- Un odontólogo asesor que escriba y firme la biblioteca de protocolos.
+- Orden recomendado: nivel 1 primero (reglas fijas, alto valor, bajo riesgo), luego 2, luego 3.
 
 ## Parte J — Decisiones abiertas de Darys
 1. ¿Primero dictado (Nivel 1) y la consulta completa (Nivel 2) después?
