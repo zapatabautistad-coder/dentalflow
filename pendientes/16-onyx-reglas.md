@@ -197,6 +197,15 @@ Ejemplo: el doctor dice "voy a extraer el 36" → ONYX al oído: "Atención: tom
   se regula como dispositivo médico **(verificar)**. En EE. UU. y Europa este tipo de software
   puede estar regulado; importa para la meta HealthTech y para vender fuera.
 - Un odontólogo asesor que escriba y firme la biblioteca de protocolos.
+- **Fuentes de la biblioteca** (basadas en evidencia; revisar licencia de cada una antes de usarla):
+  guías de la ADA (Center for Evidence-Based Dentistry), revisiones de Cochrane Oral Health,
+  guías de SDCEP (Escocia) y NICE (Reino Unido), declaraciones de la FDI, guía de la AHA sobre
+  profilaxis antibiótica. No se copian textos: se escriben protocolos propios que las citan,
+  adaptados a RD (medicamentos disponibles, normas locales).
+- **Aval académico (propuesta):** alianza con una facultad de odontología dominicana (por
+  ejemplo UASD o UNPHU, verificar) para revisar y firmar la biblioteca. Da credibilidad
+  científica y fortalece la meta HealthTech. Aun así, cada protocolo lleva nombre y fecha de
+  quien lo aprobó.
 - Orden recomendado: nivel 1 primero (reglas fijas, alto valor, bajo riesgo), luego 2, luego 3.
 
 ## Parte J — Decisiones abiertas de Darys
