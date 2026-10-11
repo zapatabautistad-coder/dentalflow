@@ -43,3 +43,19 @@ consentimiento.
   - Son dos terceros (OpenAI y Anthropic): el consentimiento del paciente (paso 1) debe
     nombrarlos a ambos.
   - Opción futura: Whisper en un servidor propio, para que el audio no salga a un tercero.
+
+## Micrófono y ruido (decisión del fundador, 2026-10-11)
+- El doctor usa **auricular manos libres con micrófono muy cerca de la boca**.
+- Reglas contra el ruido:
+  - El navegador pide el micrófono con `noiseSuppression`, `echoCancellation` y `autoGainControl`.
+  - Solo se graba mientras el doctor activa ONYX, **nunca escucha continua**.
+  - Se cortan los silencios antes de enviar el audio a Whisper, porque ahí es donde inventa frases.
+  - Si el volumen es bajo o hay demasiado ruido, se avisa y no se envía.
+  - Se le pasa a Whisper una lista de vocabulario dental (FDI, superficies, condiciones) para
+    que entienda mejor la jerga.
+- Hardware: preferir auricular USB con cable o inalámbrico de 2,4 GHz. Bluetooth en modo
+  llamada baja la calidad del audio. Probar antes de recomendarlo a la clínica.
+- Con guantes: activar con **pedal USB** (actúa como una tecla). Una palabra de activación
+  ("ONYX") exige escuchar todo el tiempo: eso ya sería IA ambiental y necesita consentimiento.
+- Aunque el micrófono esté cerca, puede captar al paciente o su nombre: el consentimiento sigue
+  siendo necesario.
