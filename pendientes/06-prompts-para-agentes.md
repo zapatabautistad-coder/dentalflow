@@ -242,6 +242,15 @@ Usa la API de Supabase ya instalada (@supabase/supabase-js 2.117): supabase.auth
    el PR por qué y cómo se probó a mano en Mac/Windows/celular.
 5. Textos fijos en español e inglés con data-i18n. Diseño actual (vidrio claro, azul cielo); no cambies
    barra lateral, ícono ni paleta. Ícono de huella simple en línea con los demás.
+6. Al desactivar una cuenta (deactivateAccount en src/app/(app)/accounts/actions.ts), después del bloqueo
+   en Auth (ban_duration), borra TODOS sus factores de segundo paso (huellas y app autenticadora) con la
+   API de administración: admin.auth.admin.mfa.listFactors({ userId }) y deleteFactor({ id, userId }).
+   Así, si se reactiva, empieza de cero: admin y doctor tendrán que activar la app autenticadora otra vez
+   (getMfaDecision → "activar"). Orden: perfil inactivo → bloqueo → borrar factores. Si borrar falla, la
+   cuenta sigue desactivada y bloqueada; muestra "La cuenta quedó desactivada y bloqueada, pero no se
+   pudieron quitar sus métodos de verificación. Inténtalo de nuevo." Reactivar no restaura nada.
+   Agrega a e2e/13-huella.spec.ts (o a la prueba de cuentas que ya exista): desactivar un usuario con
+   huella → no tiene factores; reactivarlo → al entrar, si es doctor, va a /seguridad.
 
 Reglas:
 - No guardes credenciales, claves públicas ni datos biométricos en tablas propias ni en logs: la huella
