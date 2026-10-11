@@ -1,11 +1,11 @@
 import { expect, test } from "@playwright/test";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { PASSWORD, testCedula, unique } from "./helpers";
+import { testCedula, unique, signInApi } from "./helpers";
 
 // Signos vitales (026), a nivel de base: quién registra, inmutabilidad y validaciones.
 async function as(role: string): Promise<SupabaseClient> {
   const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!);
-  await supabase.auth.signInWithPassword({ email: `${role}@e2e.test`, password: PASSWORD });
+  await signInApi(supabase, `${role}@e2e.test`);
   return supabase;
 }
 

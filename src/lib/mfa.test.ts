@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getMfaDecision } from "./mfa";
+import { getMfaDecision, totpFactors } from "./mfa";
 
 describe("getMfaDecision", () => {
   it.each([
@@ -15,5 +15,20 @@ describe("getMfaDecision", () => {
     ["asistente sin factor", "enfermeria", false, "aal1", "ok"],
   ] as const)("%s → %s", (_label, role, hasFactor, level, expected) => {
     expect(getMfaDecision(role, hasFactor, level)).toBe(expected);
+  });
+});
+
+describe("totpFactors", () => {
+  it("incluye los pendientes y descarta otros tipos", () => {
+    expect(
+      totpFactors([
+        { id: "a", factor_type: "totp", status: "verified" },
+        { id: "b", factor_type: "totp", status: "unverified" },
+        { id: "c", factor_type: "phone", status: "verified" },
+      ])
+    ).toEqual([
+      { id: "a", status: "verified" },
+      { id: "b", status: "unverified" },
+    ]);
   });
 });

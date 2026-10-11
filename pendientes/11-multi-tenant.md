@@ -16,7 +16,7 @@ Reparto: **Claude** = base de datos y seguridad (1, 2, revisión de cada PR). **
 
 6. ✅ Al desactivar una clínica se bloquea el inicio de sesión de sus usuarios (`plataforma/actions.ts`, commit `efc9b4f`).
 
-Multi-tenant: **terminado**. Siguiente prioridad de seguridad: MFA (prompt C1 en `06-prompts-para-agentes.md`).
+Multi-tenant: **terminado**. MFA: fase 1 (app) unida en el PR #41; fase 2 (base) en la migración 031, aplicada el 2026-10-11.
 
 ## Pendiente aparte
 - ✅ Respaldo diario (`supabase/RESPALDO.md`): activo desde el 2026-10-09 y verificado el 2026-10-10 (la llave privada abre el respaldo).

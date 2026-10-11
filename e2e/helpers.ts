@@ -1,4 +1,5 @@
 import { expect, type Page } from "@playwright/test";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { validateCedula } from "../src/lib/cedula";
 import { readMfaSecret, totpCode } from "./mfa";
 
@@ -38,6 +39,23 @@ export async function enrollMfaFromSecurityPage(page: Page) {
   await page.locator('input[autocomplete="one-time-code"]').fill(totpCode(secret));
   await page.getByRole("button", { name: "Verificar y activar" }).click();
   await expect(page.getByText("Verificación en dos pasos activa")).toBeVisible();
+}
+
+// Entrar directo a la base (sin pantalla). La base exige el segundo paso (031) a quien
+// tiene app autenticadora: con solo la contraseña no tendría rol y no vería nada.
+export async function signInApi(client: SupabaseClient, email: string) {
+  const { error } = await client.auth.signInWithPassword({ email, password: PASSWORD });
+  if (error) return { error };
+  const secret = readMfaSecret(email.split("@")[0]);
+  if (!secret) return { error: null };
+  const { data: factors, error: factorsError } = await client.auth.mfa.listFactors();
+  const factor = factors?.totp[0];
+  if (factorsError || !factor) return { error: factorsError ?? new Error(`Sin factor TOTP para ${email}`) };
+  const { error: verifyError } = await client.auth.mfa.challengeAndVerify({
+    factorId: factor.id,
+    code: totpCode(secret),
+  });
+  return { error: verifyError };
 }
 
 // Texto único por corrida para no chocar con datos de corridas anteriores.
