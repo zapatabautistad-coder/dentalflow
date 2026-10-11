@@ -211,7 +211,13 @@ Ejemplo: el doctor dice "voy a extraer el 36" → ONYX al oído: "Atención: tom
 ## Parte J — Decisiones abiertas de Darys
 1. ✅ Primero el dictado (Nivel 1); la grabación de la consulta (Nivel 2) después (decidido 2026-10-11).
 2. ✅ Guardar la transcripción: sí (decidido 2026-10-11).
-3. ¿ONYX como actualización pagada por clínica?
+3. ✅ ONYX se cobra aparte (decidido 2026-10-11). Propuesta de precio (por validar):
+   - **Por doctor al mes**, con un tope de minutos de dictado incluidos (uso justo).
+   - **Piloto gratis 30–60 días** en la primera clínica para medir el tiempo real ahorrado con
+     `onyx_sessions` (tiempo hasta firmar, campos corregidos).
+   - Precio = una fracción (10–20 %) del valor del tiempo ahorrado medido, y siempre por encima
+     del costo real por doctor (voz a texto + Claude + servidor; precios de API por verificar).
+   - Nunca anunciar "ahorra X horas" hasta medirlo en el piloto.
 4. ¿Dicta solo el doctor o también el asistente dental (notas)?
 5. ¿Cuándo se aplican las migraciones en producción?
 6. Voz de ONYX: recomendada la **voz de catálogo** (Parte F.7). Pendiente de confirmar.
