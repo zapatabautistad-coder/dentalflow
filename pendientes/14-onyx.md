@@ -59,3 +59,9 @@ consentimiento.
   ("ONYX") exige escuchar todo el tiempo: eso ya sería IA ambiental y necesita consentimiento.
 - Aunque el micrófono esté cerca, puede captar al paciente o su nombre: el consentimiento sigue
   siendo necesario.
+
+## Avance
+- **Paso 1 — consentimiento del paciente: hecho en código (2026-10-11)**, migración 031 y sección
+  en la ficha. Falta: aplicar 031 en producción (lo decide el fundador) y que un abogado revise el
+  texto v1 antes de usarlo con pacientes reales.
+- Paso 2 — dictado (Whisper + Claude): pendiente.

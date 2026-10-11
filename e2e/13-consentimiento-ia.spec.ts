@@ -21,6 +21,14 @@ test.beforeAll(async () => {
     .single();
   expect(error).toBeNull();
   patientId = data!.id;
+
+  // El doctor solo ve (y registra en) pacientes con cita suya. Lunes 10:00, dentro
+  // del horario de 03-recepcion-horarios y sin chocar con 05, 09 y 10.
+  const { data: doctor } = await recepcion.from("profiles").select("id").eq("role", "doctor").single();
+  const { error: apptError } = await recepcion
+    .from("appointments")
+    .insert({ patient_id: patientId, doctor_id: doctor!.id, starts_at: "2027-01-04T10:00:00-04:00", duration_minutes: 15 });
+  expect(apptError).toBeNull();
 });
 
 test("todos los roles registran; la base pone quién, rol y clínica", async () => {
