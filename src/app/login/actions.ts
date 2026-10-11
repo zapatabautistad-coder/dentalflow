@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { getMfaDecision } from "@/lib/mfa";
+import { getMfaDecision, hasVerifiedSecondFactor } from "@/lib/mfa";
 import { createClient } from "@/lib/supabase/server";
 
 export type LoginState = { error: string } | undefined;
@@ -41,10 +41,11 @@ export async function login(
   ]);
   if (!profile || !assurance) redirect("/seguridad?error=check");
 
-  const hasVerifiedTotp = (data.user.factors ?? []).some(
-    (factor) => factor.factor_type === "totp" && factor.status === "verified"
+  const decision = getMfaDecision(
+    profile.role,
+    hasVerifiedSecondFactor(data.user.factors ?? []),
+    assurance.currentLevel
   );
-  const decision = getMfaDecision(profile.role, hasVerifiedTotp, assurance.currentLevel);
   if (decision === "verificar") redirect("/login/verificar");
   if (decision === "activar") redirect("/seguridad?mfa=required");
   redirect("/panel");

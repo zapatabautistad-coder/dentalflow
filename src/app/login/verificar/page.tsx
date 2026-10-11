@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { hasVerifiedSecondFactor } from "@/lib/mfa";
 import { createClient } from "@/lib/supabase/server";
 import { LanguageBridge } from "../../(app)/language-bridge";
 import { VerifyMfaForm } from "./verify-mfa-form";
@@ -13,9 +14,17 @@ export default async function VerifyMfaPage() {
       supabase.auth.mfa.listFactors(),
       supabase.auth.mfa.getAuthenticatorAssuranceLevel(),
     ]);
-  const verifiedFactor = factors?.totp.find((factor) => factor.status === "verified");
+  const allFactors = factors?.all ?? [];
+  const verifiedTotp = factors?.totp.find((factor) => factor.status === "verified");
+  const verifiedWebauthn = allFactors.find(
+    (factor) => factor.factor_type === "webauthn" && factor.status === "verified"
+  );
 
-  if (!factorError && !assuranceError && (!verifiedFactor || assurance.currentLevel === "aal2")) {
+  if (
+    !factorError &&
+    !assuranceError &&
+    (!hasVerifiedSecondFactor(allFactors) || assurance.currentLevel === "aal2")
+  ) {
     redirect("/panel");
   }
 
@@ -32,7 +41,8 @@ export default async function VerifyMfaPage() {
           </p>
         </div>
         <VerifyMfaForm
-          initialFactorId={verifiedFactor?.id ?? null}
+          initialTotpFactorId={verifiedTotp?.id ?? null}
+          initialWebauthnFactorId={verifiedWebauthn?.id ?? null}
           initialLoadError={Boolean(factorError || assuranceError)}
         />
       </section>

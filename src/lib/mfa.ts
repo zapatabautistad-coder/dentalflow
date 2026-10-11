@@ -2,6 +2,21 @@ import type { Role } from "@/lib/auth-roles";
 
 export type MfaDecision = "activar" | "verificar" | "ok";
 export type AssuranceLevel = string | null;
+export type MfaFactor = {
+  id: string;
+  factor_type: string;
+  status: string;
+  friendly_name?: string;
+  created_at?: string;
+};
+
+export function hasVerifiedSecondFactor(factors: MfaFactor[]): boolean {
+  return factors.some(
+    (factor) =>
+      (factor.factor_type === "totp" || factor.factor_type === "webauthn") &&
+      factor.status === "verified"
+  );
+}
 
 export function getMfaDecision(
   role: Role,
@@ -20,9 +35,13 @@ export type TotpFactor = { id: string; status: "verified" | "unverified" };
 // listFactors().totp trae solo los verificados; los pendientes (un intento sin
 // confirmar) están en .all y hay que verlos para poder borrarlos.
 export function totpFactors(
-  all: { id: string; factor_type: string; status: string }[]
+  all: MfaFactor[]
 ): TotpFactor[] {
   return all
     .filter((factor) => factor.factor_type === "totp")
     .map(({ id, status }) => ({ id, status: status === "verified" ? "verified" : "unverified" }));
+}
+
+export function webauthnFactors(all: MfaFactor[]): MfaFactor[] {
+  return all.filter((factor) => factor.factor_type === "webauthn");
 }

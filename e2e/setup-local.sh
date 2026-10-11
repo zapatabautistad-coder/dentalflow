@@ -17,6 +17,28 @@ if grep -A3 '^\[auth\.mfa\.totp\]' supabase/config.toml | grep -q 'enabled = fal
   npx -y supabase@latest stop >/dev/null 2>&1 || true
 fi
 
+if grep -q '^\[auth\.mfa\.web_authn\]' supabase/config.toml; then
+  sed -i '/^\[auth\.mfa\.web_authn\]/,/^\[/{s/^enroll_enabled = false/enroll_enabled = true/;s/^verify_enabled = false/verify_enabled = true/}' supabase/config.toml
+else
+  cat >> supabase/config.toml <<'TOML'
+
+[auth.mfa.web_authn]
+enroll_enabled = true
+verify_enabled = true
+TOML
+fi
+
+if grep -q '^\[auth\.webauthn\]' supabase/config.toml; then
+  sed -i '/^\[auth\.webauthn\]/,/^\[/{s/^rp_id =.*/rp_id = "localhost"/;s/^rp_origins =.*/rp_origins = ["http:\/\/localhost:3100"]/}' supabase/config.toml
+else
+  cat >> supabase/config.toml <<'TOML'
+
+[auth.webauthn]
+rp_id = "localhost"
+rp_origins = ["http://localhost:3100"]
+TOML
+fi
+
 # Migraciones de producción en orden; 005 y 006 nunca se ejecutan.
 rm -f supabase/migrations/*.sql
 cp "$ROOT/e2e/local/000_plataforma.sql" supabase/migrations/20260101000000_plataforma.sql

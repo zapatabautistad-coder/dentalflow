@@ -156,6 +156,29 @@ export async function deactivateAccount(
         "La cuenta quedó desactivada y ya no ve ningún dato, pero no se pudo bloquear su inicio de sesión. Inténtalo de nuevo.",
     };
   }
+
+  const { data: factors, error: factorsError } = await admin.auth.admin.mfa.listFactors({
+    userId,
+  });
+  if (factorsError) {
+    return {
+        error:
+          "La cuenta quedó desactivada y bloqueada, pero no se pudieron quitar sus métodos de verificación. Inténtalo de nuevo.",
+    };
+  }
+
+  for (const factor of factors.factors) {
+    const { error: deleteError } = await admin.auth.admin.mfa.deleteFactor({
+        id: factor.id,
+        userId,
+    });
+    if (deleteError) {
+        return {
+          error:
+            "La cuenta quedó desactivada y bloqueada, pero no se pudieron quitar sus métodos de verificación. Inténtalo de nuevo.",
+        };
+    }
+  }
   return undefined;
 }
 

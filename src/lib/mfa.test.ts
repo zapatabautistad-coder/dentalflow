@@ -1,5 +1,23 @@
 import { describe, expect, it } from "vitest";
-import { getMfaDecision, totpFactors } from "./mfa";
+import { getMfaDecision, hasVerifiedSecondFactor, totpFactors } from "./mfa";
+
+describe("hasVerifiedSecondFactor", () => {
+  it("considera un TOTP verificado", () => {
+    expect(hasVerifiedSecondFactor([{ id: "totp", factor_type: "totp", status: "verified" }])).toBe(true);
+  });
+
+  it("considera una huella verificada", () => {
+    expect(hasVerifiedSecondFactor([{ id: "webauthn", factor_type: "webauthn", status: "verified" }])).toBe(true);
+  });
+
+  it("ignora factores no verificados", () => {
+    expect(hasVerifiedSecondFactor([{ id: "pending", factor_type: "webauthn", status: "unverified" }])).toBe(false);
+  });
+
+  it("devuelve false cuando no hay factores", () => {
+    expect(hasVerifiedSecondFactor([])).toBe(false);
+  });
+});
 
 describe("getMfaDecision", () => {
   it.each([

@@ -1,29 +1,60 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { logout } from "../../(app)/actions";
 
 type VerifiedFactor = { id: string };
 
 export function VerifyMfaForm({
-  initialFactorId,
+  initialTotpFactorId,
+  initialWebauthnFactorId,
   initialLoadError,
 }: {
-  initialFactorId: string | null;
+  initialTotpFactorId: string | null;
+  initialWebauthnFactorId: string | null;
   initialLoadError: boolean;
 }) {
   const router = useRouter();
   const [factor, setFactor] = useState<VerifiedFactor | null>(
-    initialFactorId ? { id: initialFactorId } : null
+    initialTotpFactorId ? { id: initialTotpFactorId } : null
   );
+  const [webauthnFactor, setWebauthnFactor] = useState<VerifiedFactor | null>(
+    initialWebauthnFactorId ? { id: initialWebauthnFactorId } : null
+  );
+  const [platformAvailable, setPlatformAvailable] = useState(false);
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(
     initialLoadError ? "security.errorLoad" : null
   );
+
+  useEffect(() => {
+    let cancelled = false;
+    const checkSupport = async () => {
+      if (
+        typeof window === "undefined" ||
+        !window.PublicKeyCredential ||
+        typeof window.PublicKeyCredential
+          .isUserVerifyingPlatformAuthenticatorAvailable !== "function"
+      ) {
+        return;
+      }
+      try {
+        const available =
+          await window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+        if (!cancelled) setPlatformAvailable(available);
+      } catch {
+        if (!cancelled) setPlatformAvailable(false);
+      }
+    };
+    void checkSupport();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const findFactor = async () => {
     setLoading(true);
@@ -42,11 +73,35 @@ export function VerifyMfaForm({
     }
 
     const verified = factors.totp.find((item) => item.status === "verified");
-    if (!verified || assurance.currentLevel === "aal2") {
+    const verifiedWebauthn = factors.all.find(
+      (item) => item.factor_type === "webauthn" && item.status === "verified"
+    );
+    if (assurance.currentLevel === "aal2") {
       router.replace("/panel");
       return;
     }
-    setFactor({ id: verified.id });
+    setFactor(verified ? { id: verified.id } : null);
+    setWebauthnFactor(verifiedWebauthn ? { id: verifiedWebauthn.id } : null);
+  };
+
+  const verifyWithFingerprint = async () => {
+    if (!webauthnFactor) return;
+    setBusy(true);
+    setError(null);
+    const { error: verifyError } = await createClient().auth.mfa.webauthn.authenticate({
+      factorId: webauthnFactor.id,
+      webauthn: {
+        rpId: window.location.hostname,
+        rpOrigins: [window.location.origin],
+      },
+    });
+    setBusy(false);
+    if (verifyError) {
+      setError("security.errorFingerprintVerify");
+      return;
+    }
+    router.replace("/panel");
+    router.refresh();
   };
 
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -92,6 +147,8 @@ export function VerifyMfaForm({
         >
           {error === "security.errorCode"
             ? "Código incorrecto o vencido. Intenta de nuevo."
+            : error === "security.errorFingerprintVerify"
+              ? "No se pudo verificar la huella o la operación fue cancelada. Usa el código de tu app autenticadora."
             : "No se pudo cargar la configuración de seguridad. Inténtalo de nuevo."}
         </p>
       )}
@@ -99,8 +156,27 @@ export function VerifyMfaForm({
         <p className="text-sm text-slate-600" data-i18n="security.loading">
           Cargando la configuración de seguridad…
         </p>
-      ) : factor ? (
-        <form onSubmit={submit} className="space-y-4">
+      ) : factor || webauthnFactor ? (
+        <div className="space-y-4">
+          {platformAvailable && webauthnFactor && (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => void verifyWithFingerprint()}
+              className="glass-button flex min-h-11 w-full items-center justify-center gap-2 text-sm font-semibold"
+            >
+              <FingerprintIcon />
+              <span data-i18n="security.useFingerprint">Usar huella</span>
+            </button>
+          )}
+          {factor && (
+            <>
+              <div className="flex items-center gap-3 text-xs text-slate-500" aria-hidden="true">
+                <span className="h-px flex-1 bg-[#0E9BF3]/20" />
+                <span data-i18n="security.orCode">o usa el código</span>
+                <span className="h-px flex-1 bg-[#0E9BF3]/20" />
+              </div>
+              <form onSubmit={submit} className="space-y-4">
           <label className="flex flex-col gap-1.5 text-sm font-medium text-slate-700">
             <span data-i18n="security.code">Código de 6 dígitos</span>
             <input
@@ -123,7 +199,10 @@ export function VerifyMfaForm({
               {busy ? "Verificando…" : "Verificar"}
             </span>
           </button>
-        </form>
+              </form>
+            </>
+          )}
+        </div>
       ) : error ? (
         <button
           type="button"
@@ -140,5 +219,13 @@ export function VerifyMfaForm({
         </button>
       </form>
     </div>
+  );
+}
+
+function FingerprintIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.7">
+      <path strokeLinecap="round" d="M12 3a7 7 0 0 0-7 7m14 0a7 7 0 0 0-7-7m-4 7a4 4 0 0 1 8 0c0 5-1 8-4 11m-4-11a4 4 0 0 1 8 0c0 3-.4 5.3-1.4 7.2M8 10a4 4 0 0 1 8 0c0 4.8-1.3 8-4 10.5M12 10c1.1 0 2 .9 2 2 0 2.6-.4 4.8-1.2 6.5" />
+    </svg>
   );
 }
