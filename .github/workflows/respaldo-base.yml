@@ -21,9 +21,9 @@ jobs:
   respaldo:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
-    # El secreto de la base vive en el Environment "respaldo", que solo acepta la rama main:
+    # El secreto de la base vive en el Environment "SUPABASE_DB_URL", que solo acepta la rama main:
     # ningún otro workflow ni rama puede leerlo.
-    environment: respaldo
+    environment: SUPABASE_DB_URL
     env:
       SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
       BACKUP_AGE_RECIPIENT: ${{ vars.BACKUP_AGE_RECIPIENT }}
