@@ -181,3 +181,21 @@ consentimiento de WhatsApp, y separar "dictado" de "durante la consulta" (alcanc
 Las reglas completas y vigentes de ONYX están en `pendientes/16-onyx-reglas.md` (manda sobre
 este archivo si hay diferencia). Novedad: ONYX habla al doctor por el auricular; si la voz es de
 un proveedor externo, el consentimiento (031) debe nombrarlo antes de aplicar la migración.
+
+## 13. Mejoras de base propuestas por Gemini (revisadas por Claude, 2026-10-11)
+1. **Sello contra alteraciones (cadena de hashes)** — futuro, buena idea con ajuste: un hash por
+   fila no detiene a quien controla la base (puede recalcularlo). Lo correcto es una **cadena**
+   (cada fila incluye el hash de la anterior) en tablas clínicas y `audit_log`, y guardar cada
+   día el último hash **fuera de la base** (respaldo cifrado u otro servicio). Así cualquier
+   alteración se detecta.
+2. **Biomarcadores** — futuro (peldaño 3 de la visión): tabla `lab_results` estructurada
+   (prueba con código LOINC, valor, unidad, rango de referencia, laboratorio, fecha, documento
+   de origen), solo INSERT, auditada. JSON libre solo para el archivo crudo del laboratorio, no
+   como sustituto de columnas.
+3. **Forma del consentimiento en 031** — **antes de aplicar 031**: columna `method`
+   (`leido_verbal` / `papel_firmado` / `firma_digital`) y `document_ref` opcional (escaneo o
+   firma guardada en almacenamiento privado, con su hash). Evitar "trazo biométrico": es dato
+   biométrico, más sensible. Pendiente de aprobación de Darys.
+Correcciones al análisis: HIPAA no aplica en RD y nunca se afirma cumplimiento; el RGPD exige
+borrar datos en ciertos casos (choca con la inmutabilidad, hay excepciones para historia
+clínica); "listo para 10.000 clínicas" no está probado (sin pruebas de carga).
