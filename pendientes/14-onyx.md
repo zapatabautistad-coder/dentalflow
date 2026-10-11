@@ -1,5 +1,8 @@
 # ONYX — identidad de la IA de DentalFlow (propuesta de Gemini, 2026-10-11)
 
+**Estado: propuesta a futuro** (lo aclaró el fundador el 2026-10-11). No cambia la prioridad actual
+ni se implementa nada hasta que él lo pida.
+
 ONYX es el nombre y la cara de toda la IA de DentalFlow. Es la visión de largo plazo y el
 diferenciador de marca. **No existe en el código todavía**: el diseño está fuera del repositorio.
 
@@ -11,7 +14,7 @@ diferenciador de marca. **No existe en el código todavía**: el diseño está f
 - La recepcionista telefónica (ElevenLabs v4 Turbo) es una mejora para después.
 - Primero la facturación **e-CF** (con NCF, Ley 32-23; plazo del 15-nov-2026).
 
-## Pendiente de decisión del fundador (choca con reglas de CLAUDE.md)
+## A decidir cuando se retome (choca con reglas de CLAUDE.md)
 1. **Ícono de ónice negro:** el diseño está congelado ("sonrisa limpia y brillante", sin azul
    oscuro pesado; el teal es solo para la IA). Hace falta una orden explícita para cambiarlo y
    decidir cómo encaja con la paleta.
