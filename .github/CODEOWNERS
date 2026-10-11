@@ -18,3 +18,8 @@
 # Dependencias.
 /package.json           @zapatabautistad-coder
 /package-lock.json      @zapatabautistad-coder
+
+# Plan de incidentes y reglas de los agentes revisores.
+/INCIDENTES.md          @zapatabautistad-coder
+/AGENTS.md              @zapatabautistad-coder
+/.gemini/               @zapatabautistad-coder
