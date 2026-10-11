@@ -5,36 +5,41 @@
 @font-face{font-family:Inter;src:url(file:///usr/share/fonts/opentype/inter/Inter-ExtraBold.otf);font-weight:800}
 html,body{margin:0;width:1920px;height:1080px;overflow:hidden;font-family:Inter;background:linear-gradient(180deg,#F7FCFF 0%,#EAF6FF 55%,#DCEFFD 100%)}
 .a{position:absolute}
+/* teléfono: 276×580, marco de titanio claro, bisel negro fino y pantalla a ras */
+.ph{position:absolute;width:276px;height:580px}
+.ph .btn{position:absolute;width:4px;border-radius:2px;background:linear-gradient(90deg,#8193a6,#e6edf4 45%,#a7b6c6)}
+.ph .body{position:absolute;inset:0;border-radius:46px;background:linear-gradient(90deg,#7f91a5 0%,#eef3f8 3%,#c2cedb 9%,#dde6ee 30%,#e8eef4 50%,#d3dde7 72%,#c2cedb 91%,#f2f6fa 97%,#7f91a5 100%);box-shadow:inset 0 1px 1px rgba(255,255,255,.9),inset 0 -1px 2px rgba(6,47,85,.35)}
+.ph .bezel{position:absolute;inset:4px;border-radius:42px;background:#04070b;box-shadow:inset 0 0 0 1px #26313d}
+.ph .screen{position:absolute;inset:7px;border-radius:35px;overflow:hidden;background:#F7FBFF}
+.ph .sb{height:30px;position:relative;background:#F7FBFF}
+.ph .sb .t{position:absolute;left:26px;top:9px;font-size:12px;font-weight:700;color:#062F55;letter-spacing:-.2px}
+.ph .sb svg{position:absolute;right:20px;top:11px}
+.ph .island{position:absolute;left:94px;top:8px;width:74px;height:21px;border-radius:11px;background:#000}
+.ph .shot{display:block;width:248px;height:535px}
+.ph .home{position:absolute;left:79px;bottom:6px;width:90px;height:4px;border-radius:2px;background:rgba(6,20,35,.75)}
+.ph .glare{position:absolute;inset:7px;border-radius:35px;background:linear-gradient(118deg,rgba(255,255,255,.22) 0%,rgba(255,255,255,.06) 32%,rgba(255,255,255,0) 33%)}
 </style></head><body>
 <!-- brillos -->
 <div class="a" style="left:-200px;top:-300px;width:1100px;height:900px;border-radius:50%;background:radial-gradient(closest-side,rgba(149,211,250,.5),transparent)"></div>
 <div class="a" style="left:1150px;top:-250px;width:950px;height:850px;border-radius:50%;background:radial-gradient(closest-side,rgba(83,182,247,.28),transparent)"></div>
 <div class="a" style="left:1380px;top:440px;width:520px;height:520px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,255,255,.95),transparent)"></div>
-<!-- piso bajo la mesa -->
-<div class="a" style="left:0;top:884px;width:1920px;height:196px;background:linear-gradient(180deg,#D3EAFB,#C4E2F8)"></div>
+<!-- mesa de cristal con profundidad: borde trasero en y=850; laptop apoyada en 884, diente en ~905, teléfono delante en 1010 -->
+<div class="a" style="left:0;top:850px;width:1920px;height:230px;background:linear-gradient(180deg,#D5EBFC 0%,#E1F1FD 30%,#EDF7FF 100%)"></div>
+<div class="a" style="left:0;top:849px;width:1920px;height:2px;background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.95) 20%,rgba(255,255,255,.95) 80%,rgba(255,255,255,0));box-shadow:0 0 14px rgba(255,255,255,.9)"></div>
 <!-- reflejos en el vidrio -->
-<div class="a" style="left:120px;top:888px;width:1040px;height:190px;overflow:hidden;opacity:.22;-webkit-mask-image:linear-gradient(180deg,#000,transparent 85%)"><img src="hero_desktop.png" style="width:1040px;height:650px;transform:scaleY(-1);transform-origin:top;margin-top:-650px;display:block"></div>
-<div class="a" style="left:1020px;top:888px;width:236px;height:150px;overflow:hidden;opacity:.25;-webkit-mask-image:linear-gradient(180deg,#000,transparent 80%)"><img src="hero_mobile.png" style="width:236px;height:511px;transform:scaleY(-1);transform-origin:top;margin-top:-511px;display:block"></div>
-<!-- mesa de cristal -->
-<div class="a" style="left:0;top:884px;width:1920px;height:196px;background:linear-gradient(180deg,rgba(255,255,255,.18),rgba(224,242,254,.55) 45%,rgba(240,249,255,.85))"></div>
-<div class="a" style="left:0;top:884px;width:1920px;height:3px;background:linear-gradient(90deg,rgba(255,255,255,.4),#fff 30%,#fff 70%,rgba(255,255,255,.4));box-shadow:0 0 18px rgba(255,255,255,.9)"></div>
-<div class="a" style="left:0;top:887px;width:1920px;height:16px;background:linear-gradient(180deg,rgba(14,155,243,.22),transparent)"></div>
-<div class="a" style="left:-100px;top:924px;width:900px;height:120px;transform:skewX(-35deg);background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent)"></div>
+<div class="a" style="left:120px;top:888px;width:1040px;height:190px;overflow:hidden;opacity:.2;-webkit-mask-image:linear-gradient(180deg,#000,transparent 80%)"><img src="hero_desktop.png" style="width:1040px;height:650px;transform:scaleY(-1);transform-origin:top;margin-top:-650px;display:block"></div>
+<div class="a" style="left:-100px;top:960px;width:900px;height:120px;transform:skewX(-35deg);background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent)"></div>
 <svg class="a" style="left:0;top:0" width="1920" height="1080">
  <defs>
   <linearGradient id="lid" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1d2a38"/><stop offset="1" stop-color="#0f1823"/></linearGradient>
   <linearGradient id="base" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eef3f8"/><stop offset=".45" stop-color="#cfd9e3"/><stop offset="1" stop-color="#9eacba"/></linearGradient>
-  <linearGradient id="frame" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#9fb2c4"/><stop offset=".08" stop-color="#e9f1f8"/><stop offset=".5" stop-color="#c7d5e2"/><stop offset=".92" stop-color="#eef4fa"/><stop offset="1" stop-color="#8ea2b6"/></linearGradient>
   <linearGradient id="ped" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="rgba(255,255,255,.55)"/><stop offset=".25" stop-color="rgba(255,255,255,.95)"/><stop offset=".6" stop-color="rgba(224,242,254,.85)"/><stop offset="1" stop-color="rgba(149,211,250,.75)"/></linearGradient>
   <radialGradient id="pedtop" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff"/><stop offset=".7" stop-color="#E0F2FE"/><stop offset="1" stop-color="#95D3FA"/></radialGradient>
-  <linearGradient id="plinth" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(255,255,255,.95)"/><stop offset="1" stop-color="rgba(149,211,250,.6)"/></linearGradient>
   <filter id="sh" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="14"/></filter>
-  <filter id="sh2" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="22"/></filter>
  </defs>
- <!-- sombras -->
- <ellipse cx="640" cy="890" rx="620" ry="16" fill="rgba(6,47,85,.28)" filter="url(#sh)"/>
- <ellipse cx="1138" cy="890" rx="170" ry="13" fill="rgba(6,47,85,.32)" filter="url(#sh)"/>
- <ellipse cx="1640" cy="890" rx="190" ry="14" fill="rgba(6,47,85,.22)" filter="url(#sh)"/>
+ <!-- sombras de contacto -->
+ <ellipse cx="640" cy="888" rx="620" ry="14" fill="rgba(6,47,85,.28)" filter="url(#sh)"/>
+ <ellipse cx="1640" cy="902" rx="185" ry="12" fill="rgba(6,47,85,.2)" filter="url(#sh)"/>
  <!-- laptop: pantalla 120,190 1040x650 -->
  <rect x="100" y="170" width="1080" height="690" rx="22" fill="url(#lid)"/>
  <rect x="101" y="171" width="1078" height="688" rx="21" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="2"/>
@@ -43,37 +48,46 @@ html,body{margin:0;width:1920px;height:1080px;overflow:hidden;font-family:Inter;
  <rect x="30" y="858" width="1220" height="3" fill="rgba(255,255,255,.95)"/>
  <path d="M550 858 H730 Q728 868 714 868 H566 Q552 868 550 858Z" fill="rgba(110,128,146,.55)"/>
  <rect x="100" y="854" width="1080" height="5" fill="#0b131c"/>
- <!-- sombra del teléfono sobre la laptop -->
- <rect x="1000" y="330" width="276" height="560" rx="50" fill="rgba(6,47,85,.25)" filter="url(#sh2)"/>
- <!-- teléfono: cuerpo 1010,318 256x560 -->
- <rect x="1010" y="318" width="256" height="560" rx="44" fill="url(#frame)"/>
- <rect x="1015" y="323" width="246" height="550" rx="40" fill="#0b131c"/>
- <rect x="1006" y="430" width="5" height="38" rx="2.5" fill="#a9bacb"/><rect x="1006" y="478" width="5" height="38" rx="2.5" fill="#a9bacb"/><rect x="1265" y="450" width="5" height="62" rx="2.5" fill="#a9bacb"/>
- <path d="M1030 872 H1246 L1256 884 H1020 Z" fill="url(#plinth)" stroke="rgba(255,255,255,.9)" stroke-width="1"/>
  <!-- pedestal -->
  <path d="M1470 790 V878 Q1640 906 1810 878 V790 Z" fill="url(#ped)" stroke="rgba(255,255,255,.9)" stroke-width="1.5"/>
  <ellipse cx="1640" cy="790" rx="170" ry="26" fill="url(#pedtop)" stroke="#fff" stroke-width="2"/>
  <ellipse cx="1640" cy="790" rx="120" ry="15" fill="rgba(14,155,243,.12)"/>
  <rect x="1480" y="805" width="6" height="64" rx="3" fill="rgba(255,255,255,.9)"/>
 </svg>
-<!-- pantallas -->
+<!-- pantalla de la laptop -->
 <img class="a" src="hero_desktop.png" style="left:120px;top:190px;width:1040px;height:650px">
-<div class="a" style="left:1023px;top:331px;width:230px;height:534px;border-radius:33px;overflow:hidden;background:#F2FAFF">
-  <div style="height:24px;position:relative"><span style="position:absolute;left:20px;top:6px;font-size:10.5px;font-weight:700;color:#062F55">9:41</span>
-   <svg style="position:absolute;right:16px;top:8px" width="44" height="10" viewBox="0 0 64 14"><rect x="0" y="9" width="3" height="4" rx="1" fill="#062F55"/><rect x="5" y="6" width="3" height="7" rx="1" fill="#062F55"/><rect x="10" y="3" width="3" height="10" rx="1" fill="#062F55"/><rect x="15" y="0" width="3" height="13" rx="1" fill="#062F55"/><path d="M24 5 Q31 -1 38 5 L36 7 Q31 2.5 26 7Z M27 8 Q31 4.5 35 8 L31 12Z" fill="#062F55"/><rect x="42" y="1.5" width="19" height="10" rx="3" fill="none" stroke="#062F55" stroke-width="1.3"/><rect x="44" y="3.5" width="14" height="6" rx="1.5" fill="#062F55"/></svg>
-   <div style="position:absolute;left:87px;top:5px;width:56px;height:16px;border-radius:8px;background:#05080c"></div></div>
-  <img src="hero_mobile.png" style="width:230px;height:498px;display:block">
+<!-- teléfono delante de la laptop, apoyado en la mesa (base en y=1010) -->
+<div class="a" style="left:1047px;top:996px;width:262px;height:30px;border-radius:50%;background:radial-gradient(closest-side,rgba(6,47,85,.32),transparent)"></div>
+<div class="a" style="left:1073px;top:1004px;width:210px;height:10px;border-radius:50%;background:radial-gradient(closest-side,rgba(6,30,55,.55),transparent)"></div>
+<div id="phone" class="ph" style="left:1040px;top:430px;filter:drop-shadow(-14px 22px 26px rgba(6,47,85,.22))">
+ <div class="btn" style="left:-3px;top:112px;height:24px"></div><div class="btn" style="left:-3px;top:150px;height:46px"></div><div class="btn" style="left:-3px;top:204px;height:46px"></div><div class="btn" style="right:-3px;top:168px;height:72px"></div>
+ <div class="body"></div>
+ <div class="bezel"></div>
+ <div class="screen">
+  <div class="sb"><span class="t">9:41</span>
+   <svg width="50" height="11" viewBox="0 0 64 14"><rect x="0" y="9" width="3" height="4" rx="1" fill="#062F55"/><rect x="5" y="6" width="3" height="7" rx="1" fill="#062F55"/><rect x="10" y="3" width="3" height="10" rx="1" fill="#062F55"/><rect x="15" y="0" width="3" height="13" rx="1" fill="#062F55"/><path d="M24 5 Q31 -1 38 5 L36 7 Q31 2.5 26 7Z M27 8 Q31 4.5 35 8 L31 12Z" fill="#062F55"/><rect x="42" y="1.5" width="19" height="10" rx="3" fill="none" stroke="#062F55" stroke-width="1.3"/><rect x="44" y="3.5" width="14" height="6" rx="1.5" fill="#062F55"/></svg>
+   <div class="island"></div></div>
+  <img class="shot" src="hero_mobile.png">
+  <div class="home"></div>
+ </div>
+ <div class="glare"></div>
 </div>
-<div class="a" style="left:1023px;top:331px;width:230px;height:534px;border-radius:33px;background:linear-gradient(125deg,rgba(255,255,255,.14) 0%,rgba(255,255,255,0) 30%)"></div>
 <!-- diente (tamaño nativo) -->
 <div class="a" style="left:1564px;top:774px;width:152px;height:22px;border-radius:50%;background:radial-gradient(closest-side,rgba(14,155,243,.35),transparent)"></div>
 <img class="a" src="../../../public/dentalflow-mark-sky.png" style="left:1543px;top:500px;width:194px;height:255px;filter:drop-shadow(0 16px 22px rgba(14,155,243,.28))">
 <div class="a" style="left:1470px;top:820px;width:340px;text-align:center;font-weight:800;font-size:34px;letter-spacing:.5px;color:#0766B5;text-shadow:0 1px 0 rgba(255,255,255,.9),0 -1px 0 rgba(6,47,85,.25)">DentalFlow</div>
 <!-- texto -->
-<div class="a" style="left:1330px;top:150px;width:540px">
+<div class="a" style="left:1330px;top:120px;width:540px">
  <div style="font-size:17px;font-weight:700;letter-spacing:3.5px;color:#0D7FD8">SOFTWARE PARA CLÍNICAS DENTALES</div>
  <div style="margin-top:14px;font-size:52px;line-height:1.06;font-weight:800;color:#062F55;letter-spacing:-.5px">Su clínica completa, en un solo lugar.</div>
  <div style="margin-top:18px;font-size:22px;line-height:1.4;color:#2b5576">Agenda, sala de espera, odontograma, planes de tratamiento y facturación. En computadora y celular.</div>
 </div>
 <div class="a" style="left:40px;top:1030px;padding:6px 14px;border-radius:999px;background:rgba(255,255,255,.7);border:1px solid rgba(14,155,243,.3);color:#0766B5;font-weight:600;font-size:13px">● Pantallas con datos de demostración</div>
+<script>
+// reflejo del teléfono en el vidrio: copia invertida bajo su base, desvanecida
+const ph = document.getElementById("phone"), box = document.createElement("div"), r = ph.cloneNode(true);
+r.removeAttribute("id"); r.style.cssText = "left:0;top:-580px;transform:scaleY(-1);transform-origin:bottom";
+box.className = "a"; box.style.cssText = "left:1040px;top:1010px;width:276px;height:70px;overflow:hidden;opacity:.22;-webkit-mask-image:linear-gradient(180deg,#000,transparent 85%)";
+box.appendChild(r); ph.parentNode.insertBefore(box, ph);
+</script>
 </body></html>
