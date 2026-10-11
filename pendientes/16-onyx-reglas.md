@@ -122,6 +122,28 @@ El paciente no escucha nada: ONYX habla solo en el auricular del doctor.
    Alternativas descartadas por ahora: proveedor externo en vivo (recibe texto clínico) y voz
    propia en un servidor con modelos abiertos (privada, pero hay que mantener un servidor).
 
+### F.8 Diseño de la voz de catálogo
+- **El Cerebro no produce frases habladas, sino códigos de frase** (por ejemplo
+  `pregunta_diente` con opciones [16,17,18]). El Guardián valida que el código exista en el
+  catálogo y la Voz lo reproduce. Así ONYX nunca puede decir al oído algo que no fue aprobado.
+- **Piezas del catálogo (español; luego inglés):**
+  - Dientes: 32 permanentes (11–48) y 20 temporales (51–85), dichos como se dicen en clínica
+    ("treinta y seis"), cada uno en **dos entonaciones**: afirmación y pregunta.
+  - Condiciones del odontograma (10), superficies (5), números para signos vitales.
+  - Frases tipo: confirmaciones ("Anotado"), preguntas ("¿Qué superficie?"), alertas
+    ("Atención: alergia a penicilina", "toma anticoagulantes", "presión en crisis"),
+    estado ("No te escuché bien, repite", "Revisa la pantalla", "Listo para firmar").
+  - Estimado: 200–300 audios cortos, pocos megabytes.
+- **Naturalidad:** se graban frases completas siempre que se pueda; al unir piezas se usan
+  variantes por entonación y una transición suave entre audios. Se prueba con doctores reales.
+- **Quién pone la voz (decidir):** (a) voz sintética generada una vez (revisar licencia de uso
+  comercial del proveedor), o (b) **locutor profesional dominicano**: voz propia de ONYX, única,
+  con derechos completos por contrato. La (b) es la identidad de marca más fuerte.
+- **Entrega:** los audios se descargan una vez y quedan en el equipo (funciona sin internet).
+  El catálogo tiene versión; cambiar una frase es publicar una versión nueva, con pruebas.
+- **Reproducción:** nunca mientras el pedal está pisado; las alertas interrumpen a las frases
+  normales; volumen ajustable por doctor.
+
 ## Parte G — Revisión y firma (la pantalla)
 
 1. **Izquierda**: odontograma con los cambios propuestos marcados y la diferencia contra la
@@ -236,5 +258,5 @@ La recepcionista usa ONYX con manos libres para tareas de recepción, nunca clí
 4. ✅ Por etapas (recomendación de Claude aceptada, 2026-10-11): **v1** solo el doctor (piloto);
    **v2** asistente dental: notas clínicas y signos vitales dictados (nunca odontograma ni
    recetas, igual que sus permisos actuales); **v3** ONYX Recepción (Parte L).
-5. ¿Cuándo se aplican las migraciones en producción?
+5. ✅ Las migraciones de ONYX (031 y siguientes) se aplican en producción **cuando Darys esté satisfecho con ONYX** (decidido 2026-10-11). Hasta entonces, la rama no pasa a `main`.
 6. Voz de ONYX: recomendada la **voz de catálogo** (Parte F.7). Pendiente de confirmar.
