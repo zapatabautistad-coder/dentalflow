@@ -208,6 +208,21 @@ Ejemplo: el doctor dice "voy a extraer el 36" → ONYX al oído: "Atención: tom
   quien lo aprobó.
 - Orden recomendado: nivel 1 primero (reglas fijas, alto valor, bajo riesgo), luego 2, luego 3.
 
+## Parte L — ONYX Recepción (v3, idea de Darys 2026-10-11)
+La recepcionista usa ONYX con manos libres para tareas de recepción, nunca clínicas.
+1. **Qué hace:** consultas ("¿qué citas tiene el doctor mañana?", "¿qué balance tiene este
+   paciente?", "¿hay hueco el martes en la mañana?") y **propuestas** de acciones (agendar,
+   mover o cancelar una cita, poner en sala de espera).
+2. **Es el único lugar donde ONYX usa herramientas** (un agente con herramientas cerradas):
+   - Solo lectura para consultas, con los mismos permisos (RLS) de la recepcionista.
+   - Acciones solo como propuesta: la recepcionista confirma en pantalla. Nunca borra.
+   - Nada clínico: no lee notas clínicas, recetas ni odontograma.
+3. **Privacidad:** aquí la voz sí lleva nombres de pacientes (no se puede evitar), así que la
+   identidad llega al proveedor de voz a texto. Decidir con el abogado la base legal (contrato
+   de tratamiento con el proveedor y aviso a los pacientes), o esperar a Whisper en servidor
+   propio (H.8). La respuesta al oído no dice datos de salud.
+4. **Precio:** por usuario al mes, como el de los doctores.
+
 ## Parte J — Decisiones abiertas de Darys
 1. ✅ Primero el dictado (Nivel 1); la grabación de la consulta (Nivel 2) después (decidido 2026-10-11).
 2. ✅ Guardar la transcripción: sí (decidido 2026-10-11).
@@ -218,6 +233,8 @@ Ejemplo: el doctor dice "voy a extraer el 36" → ONYX al oído: "Atención: tom
    - Precio = una fracción (10–20 %) del valor del tiempo ahorrado medido, y siempre por encima
      del costo real por doctor (voz a texto + Claude + servidor; precios de API por verificar).
    - Nunca anunciar "ahorra X horas" hasta medirlo en el piloto.
-4. ¿Dicta solo el doctor o también el asistente dental (notas)?
+4. ✅ Por etapas (recomendación de Claude aceptada, 2026-10-11): **v1** solo el doctor (piloto);
+   **v2** asistente dental: notas clínicas y signos vitales dictados (nunca odontograma ni
+   recetas, igual que sus permisos actuales); **v3** ONYX Recepción (Parte L).
 5. ¿Cuándo se aplican las migraciones en producción?
 6. Voz de ONYX: recomendada la **voz de catálogo** (Parte F.7). Pendiente de confirmar.
