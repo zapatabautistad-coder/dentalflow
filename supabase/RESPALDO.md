@@ -11,6 +11,11 @@ con `pg_dump`, la **cifra con age** y la guarda 30 días como artefacto de GitHu
 
 **Estado:** activo desde el 2026-10-09; verificado el 2026-10-10 (se descargó un respaldo y la
 llave privada lo abrió). Llave privada guardada en USB y en papel.
+**Restauración completa probada el 2026-10-11** en `dentalflow-demo` (respaldo del 11-oct, desde
+Windows): usuarios, pacientes, citas, registro clínico, auditoría, clínicas, migraciones, triggers,
+funciones y permisos coinciden con producción. Faltaron dos cosas, ya corregidas en la guía:
+la extensión `btree_gist` (no viaja en el respaldo; sin ella no se crea `appointments_no_overlap`)
+y la política `profiles: ver el mío` (031), que no se creó; crearla a mano tras restaurar.
 
 ## Activarlo (una sola vez)
 

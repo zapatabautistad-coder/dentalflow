@@ -61,16 +61,30 @@ Primero se vacían los usuarios y el historial de migraciones de demo (solo hay 
 prueba), para que no choquen con los del respaldo. **Borra para siempre los datos de demo.**
 ```powershell
 psql $DEMO -c "truncate auth.users cascade; truncate supabase_migrations.schema_migrations;"
+psql $DEMO -c "create extension if not exists btree_gist with schema extensions;"
 
 pg_restore -d $DEMO --data-only --disable-triggers --schema=auth respaldo.dump
 pg_restore -d $DEMO --clean --if-exists --no-owner --schema=public respaldo.dump
 pg_restore -d $DEMO --data-only --schema=supabase_migrations respaldo.dump
 ```
-Errores esperados que se pueden ignorar: `duplicate key` en `auth.schema_migrations` (las
-versiones internas de Supabase Auth ya existen en demo). Cualquier otro error: copiarlo y
-anotarlo aquí.
+La extensión `btree_gist` vive fuera de `public` y no viene en el respaldo: sin ella no se crea
+`appointments_no_overlap` (citas que se cruzan). Por eso se crea antes.
+
+Errores esperados que se pueden ignorar (prueba del 2026-10-11, 30 errores en el paso de
+`public`): `must be owner` al desactivar triggers de `auth`, `permission denied to change
+default privileges`, `already exists` en funciones ligadas a `auth.users`, y `duplicate key`
+en `auth.schema_migrations`. Cualquier otro error: copiarlo y anotarlo aquí.
+
+Después, en el **SQL Editor de demo**, crear la política que en la prueba del 2026-10-11 no se
+restauró (031):
+```sql
+create policy "profiles: ver el mío" on public.profiles
+  for select to authenticated using (id = (select auth.uid()));
+```
 
 ## 7. Comprobar
+Además de los datos, comparar en los dos proyectos el número de políticas, triggers,
+funciones y restricciones de `public` (`pg_policies`, `pg_trigger`, `pg_proc`, `pg_constraint`).
 Correr esta consulta en el **SQL Editor** de producción y en el de demo. Los números deben
 coincidir (o casi, si hubo movimiento después de la hora del respaldo):
 ```sql
