@@ -63,8 +63,9 @@ Criterio para pasar de fase: lo fija Darys con datos reales (sin cifras inventad
   privado sin romper nada hace falta **GitHub Pro**: en el plan gratis, un repo privado pierde los
   Environments (el respaldo nocturno fallaría), la protección de `main` y tendría 2.000 minutos de
   Actions al mes (hoy se gastan más). CodeQL y el escaneo de secretos se pierden igual **[CONFIRMAR]**.
-- **Vercel**: la cuenta no tiene equipos, casi seguro plan Hobby (uso no comercial). Pasar a Pro antes
-  de la primera clínica que pague **[CONFIRMAR]**.
+- **Vercel**: el proyecto está en el equipo `zapatabautistad-6020`; falta confirmar en el panel si el
+  plan es Hobby (solo uso no comercial). Si lo es, pasar a Pro antes de la primera clínica que pague
+  **[CONFIRMAR]**.
 - `dentalflow-demo` contiene una copia de datos reales desde la prueba de restauración (2026-10-11).
 
 ## Decisiones pendientes de Darys
