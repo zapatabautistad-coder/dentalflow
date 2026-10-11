@@ -117,3 +117,18 @@ Para saber qué hizo la IA en cada caso (trazabilidad clínica y control de cost
 3. ¿ONYX se vende como actualización pagada por clínica (`onyx_enabled`)?
 4. ¿Quién dicta: solo el doctor, o también el asistente dental para notas?
 5. ¿Cuándo se aplica en producción: con la primera clínica o antes?
+
+## 10. Meta del fundador: DentalFlow como HealthTech (2026-10-11)
+Darys quiere llevar DentalFlow de software de gestión a **HealthTech**. Para que ONYX y el
+resto del producto sumen a esa meta, cada decisión se mide con estos pilares:
+
+| Pilar | Qué significa | Hoy (real) | Falta |
+|---|---|---|---|
+| Datos clínicos estructurados | Que una máquina entienda el expediente | Odontograma FDI, signos vitales, recetas | Diagnósticos con código (CIE-10) y procedimientos con código |
+| Interoperabilidad | Hablar con ARS, laboratorios y otros sistemas | Nada | Estándar HL7 FHIR para exportar e importar |
+| Seguridad demostrable | Que la clínica pueda confiar con pruebas | RLS, auditoría, respaldo cifrado, MFA | Auditoría externa; certificaciones (ISO 27001, SOC 2) solo cuando se obtengan, nunca antes |
+| IA clínica responsable | IA que propone, médico que decide, todo medido | Validación de la propuesta del dictado | Medición de aciertos, registro de cada sesión, consentimiento |
+| Cumplimiento local | Leyes dominicanas | Consentimiento (031, sin aplicar) | e-CF (DGII), Ley 172-13 revisada por abogado, Ley General de Salud 42-01 |
+
+Regla para ONYX: todo lo que la IA produzca sale **estructurado y con código** (no solo texto
+libre), para que los datos sirvan después para interoperar y para medir resultados.
