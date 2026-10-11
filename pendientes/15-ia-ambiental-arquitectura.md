@@ -176,3 +176,8 @@ Objetivo: eliminar el trabajo a mano del doctor, con las reglas de seguridad má
 
 Faltantes de la propuesta original: catálogo de procedimientos, plantillas postoperatorias,
 consentimiento de WhatsApp, y separar "dictado" de "durante la consulta" (alcance `ambiental`).
+
+## 12. Reglas maestras
+Las reglas completas y vigentes de ONYX están en `pendientes/16-onyx-reglas.md` (manda sobre
+este archivo si hay diferencia). Novedad: ONYX habla al doctor por el auricular; si la voz es de
+un proveedor externo, el consentimiento (031) debe nombrarlo antes de aplicar la migración.
