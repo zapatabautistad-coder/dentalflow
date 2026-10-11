@@ -109,9 +109,16 @@ El paciente no escucha nada: ONYX habla solo en el auricular del doctor.
    transcribe, queda como evidencia y se ve en pantalla. Responder por voz no es firmar.
 6. **Comandos de voz fijos y cortos**: "ONYX, repite", "ONYX, cancela", "ONYX, siguiente".
    No hay comandos que firmen, envíen o borren.
-7. **Proveedor de voz**: si se usa uno externo (por ejemplo ElevenLabs), es un **tercer
-   proveedor** que recibe texto clínico: debe estar en el consentimiento y con contrato de
-   retención cero. Alternativa: voz del propio navegador (no sale del equipo, suena menos natural).
+7. **Voz de catálogo (recomendada):** ONYX solo dice frases de una lista cerrada (números de
+   diente, condiciones, alertas, preguntas tipo). Cada frase o pieza se graba **una sola vez**,
+   antes de usar el sistema, con la mejor voz disponible, y se guarda como archivo de audio de
+   DentalFlow. En la consulta, el equipo arma la frase uniendo piezas.
+   - Ningún dato del paciente sale a un proveedor de voz: los audios se crearon sin pacientes.
+   - Calidad de estudio, respuesta instantánea, sin costo por uso, funciona sin internet.
+   - Lo que no esté en el catálogo **no se dice**: se muestra en pantalla ("Revisa la pantalla").
+   - No hace falta nombrar un proveedor de voz en el consentimiento.
+   Alternativas descartadas por ahora: proveedor externo en vivo (recibe texto clínico) y voz
+   propia en un servidor con modelos abiertos (privada, pero hay que mantener un servidor).
 
 ## Parte G — Revisión y firma (la pantalla)
 
@@ -153,6 +160,4 @@ El paciente no escucha nada: ONYX habla solo en el auricular del doctor.
 3. ¿ONYX como actualización pagada por clínica?
 4. ¿Dicta solo el doctor o también el asistente dental (notas)?
 5. ¿Cuándo se aplican las migraciones en producción?
-6. **Nueva:** voz de ONYX con proveedor externo (más natural, tercer proveedor) o voz del
-   navegador (privada, menos natural). Si es externo, el texto v1 del consentimiento (031)
-   debe nombrarlo antes de aplicar la migración.
+6. Voz de ONYX: recomendada la **voz de catálogo** (Parte F.7). Pendiente de confirmar.
