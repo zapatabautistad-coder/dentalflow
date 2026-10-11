@@ -33,6 +33,8 @@ llave privada lo abrió). Llave privada guardada en USB y en papel.
 
 ## Abrir y restaurar (probarlo una vez en local, nunca en producción)
 
+Guía paso a paso en Windows, restaurando en `dentalflow-demo`: `PRUEBA-RESTAURACION-WINDOWS.md`.
+
 ```bash
 # 1. Descargar el artefacto (zip) desde la ejecución en GitHub Actions y descomprimir.
 age --decrypt -i llave-respaldo.txt -o respaldo.dump dentalflow-AAAA-MM-DD.dump.age
