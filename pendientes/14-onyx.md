@@ -31,3 +31,15 @@ diferenciador de marca. **No existe en el código todavía**: el diseño está f
 1. e-CF → 2. primera clínica piloto (sin ONYX) → 3. ONYX en WhatsApp: agendar y captar pacientes,
 con recepción aprobando → 4. dictado → 5. recepcionista telefónica → 6. IA ambiental con
 consentimiento.
+
+## Arquitectura propuesta para el dictado (Gemini, 2026-10-11)
+- **Whisper (OpenAI) = oídos:** audio → texto. **Claude = cerebro:** texto → propuesta estructurada.
+- Reglas al construirlo:
+  - Claude **propone**, nunca escribe en la base. La propuesta pasa por `validateDictation`
+    y el doctor confirma y firma con el flujo normal (registro clínico y odontograma).
+  - Whisper puede **inventar frases** en silencios o ruido. El texto transcrito se le muestra
+    al doctor antes de procesarlo, y hay que probarlo con dictados reales en español dominicano.
+  - El audio va del navegador al servidor y de ahí a la API; **no se guarda**.
+  - Son dos terceros (OpenAI y Anthropic): el consentimiento del paciente (paso 1) debe
+    nombrarlos a ambos.
+  - Opción futura: Whisper en un servidor propio, para que el audio no salga a un tercero.
