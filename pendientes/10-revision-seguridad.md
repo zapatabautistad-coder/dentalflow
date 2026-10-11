@@ -36,12 +36,12 @@ Cada hallazgo se comprobó contra Supabase **local** (nunca producción).
 Riesgo: todo push a `main` se publica solo en Vercel. Quien suba código a `main` controla la app.
 
 En el repo (lo puede hacer Claude en un PR pequeño, sin tocar la app):
-1. **CI en GitHub Actions**: en cada PR, `npm ci`, build, lint y `npm test`. Si falla, no se une.
+1. ~~**CI en GitHub Actions**~~ Hecho: `.github/workflows/pruebas.yml` corre en cada PR (lint, `npm test` y E2E contra Supabase local).
 2. ~~**Dependabot**~~ Hecho (2026-10-10): `.github/dependabot.yml` en modo **solo seguridad** (`open-pull-requests-limit: 0`): no abre PR de versiones (TypeScript 7 y ESLint 10 rompían el build). Avisos por *Dependabot alerts*.
 3. ~~**`CODEOWNERS`**~~ Hecho (2026-10-10): `.github/CODEOWNERS`; cambios en `supabase/migrations/`, `src/proxy.ts`, `src/lib/supabase/`,
    `next.config.ts`, `.github/` y `package*.json` requieren aprobación de Darys. Solo se exige si en la protección de `main` se activa "Require review from Code Owners".
 
-Lo hace Darys en la configuración de las cuentas:
+~~Lo hace Darys en la configuración de las cuentas:~~ **Hecho (2026-10-11, confirmado por Darys):**
 - 2FA (app autenticadora) en GitHub, Vercel y Supabase.
 - Proteger `main`: solo por PR, CI obligatoria, sin force-push ni borrado.
 - Revisar colaboradores y apps con acceso; activar secret scanning y push protection.
@@ -52,8 +52,8 @@ Lo hace Darys en la configuración de las cuentas:
    (cifrado con age, 30 días en GitHub Actions). Se descargó el del 10-oct y la llave privada lo
    abrió. Llave privada en USB (y en papel). Falta (opcional): restaurarlo completo en el proyecto
    demo con `pg_restore` (`supabase/RESPALDO.md`). Plan Pro/PITR de Supabase sigue siendo un extra.
-2. **Multi-tenant**: con una segunda clínica en la base actual, se verían los datos entre sí.
-   Aplicar la 029 (ver `11-multi-tenant.md`) antes de sumar otra clínica.
+2. **Multi-tenant**: 029 y 030 aplicadas en producción (2026-10-09). Antes de sumar otra clínica,
+   completar lo que falta en `11-multi-tenant.md`.
 3. ~~**MFA en la app**~~ Hecho: fase 1 (app, PR #41) y fase 2 (base, migración 031, aplicada el 2026-10-11). Antes: Supabase Auth trae TOTP. Faltaba pantalla para activarlo (QR) y pedir el
    código al entrar; exigirlo (nivel `aal2`) al menos a admin y doctor.
 
