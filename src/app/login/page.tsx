@@ -9,26 +9,31 @@ export default function LoginPage() {
     <main className="flex flex-1 items-center justify-center px-4 py-12">
       <div className="glass-card w-full max-w-sm p-5 sm:p-8">
         <div className="mb-8 text-center">
-          <div className="relative mx-auto mb-4 flex h-[240px] w-[240px] items-center justify-center">
+          <div className="relative mx-auto mb-6 flex h-[200px] w-[200px] items-center justify-center">
             <div
               aria-hidden="true"
-              className="absolute inset-0 rounded-full blur-xl"
+              className="absolute -inset-6 rounded-full blur-xl"
               style={{
                 background:
                   "radial-gradient(circle, rgba(149,211,250,0.6) 0%, rgba(149,211,250,0) 70%)",
               }}
             />
-            <Image
-              src="/dentalflow-app-icon-3d-sky.png"
-              alt="DentalFlow"
-              width={640}
-              height={640}
-              priority
-              className="relative h-[240px] w-[240px] drop-shadow-[0_18px_22px_rgba(7,102,181,0.22)]"
-            />
+            {/* Mismo ícono que la barra lateral: diente de cristal sobre orbe de cristal blanco. */}
+            <span className="crystal-orb flex h-full w-full items-center justify-center">
+              <Image
+                src="/dentalflow-mark-sky.png"
+                alt="DentalFlow"
+                width={389}
+                height={512}
+                priority
+                unoptimized
+                className="relative h-[80%] w-auto drop-shadow-[0_8px_12px_rgba(7,102,181,0.28)]"
+              />
+            </span>
           </div>
           <h1 className="text-3xl font-black tracking-tight text-[#0766B5]">DentalFlow</h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1.5 text-[11px] font-semibold tracking-[0.34em] text-[#0766B5]">CLINICAL OS</p>
+          <p className="mt-3 text-sm text-slate-500">
             Inicia sesión para continuar
           </p>
           <p className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-[#95D3FA]/60 bg-[#95D3FA]/15 px-3 py-1 text-xs font-semibold text-[#0766B5]">
