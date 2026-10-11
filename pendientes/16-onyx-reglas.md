@@ -262,6 +262,23 @@ La recepcionista usa ONYX con manos libres para tareas de recepción, nunca clí
    propio (H.8). La respuesta al oído no dice datos de salud.
 4. **Precio:** por usuario al mes, como el de los doctores.
 
+## Parte M — Interfaz de ONYX (revisión de propuestas de diseño de Gemini, 2026-10-11)
+1. ✅ **Indicador de escucha que reacciona a la voz** mientras ONYX graba (confirma que oye).
+   Como el doctor mira la boca del paciente y no la pantalla, la confirmación principal es un
+   **tono corto en el auricular** al empezar y al terminar; el indicador visual es secundario.
+2. ✅ **Efecto delta:** todo lo que escribió ONYX se distingue de lo que escribió el doctor, en
+   **teal** (color reservado para IA). Al tocarlo, se ve su cita de la transcripción.
+3. ❌ **Alertas solo con color, sin texto: rechazado.** Una alerta de seguridad nunca depende solo
+   de un color (daltonismo, luz del consultorio, el doctor no está mirando). Se mantiene F.4:
+   voz en el auricular + texto en pantalla + bloqueo de la firma. El color puede acompañar.
+4. ⏸ **Fondo oscuro y piedra de ónice negra:** choca con el diseño congelado ("sonrisa limpia y
+   brillante"). Solo con orden explícita de Darys y probando legibilidad con la luz del consultorio.
+5. ⚠ **Logo de una universidad junto a sugerencias:** solo con **acuerdo escrito** que autorice
+   usar su nombre y logo. Sin acuerdo, sería atribuir un aval que no existe. Se muestra la fuente
+   del protocolo y quién lo aprobó; la decisión sigue siendo del doctor.
+6. Sin promesas en la interfaz ni en ventas ("auditar en 4 segundos", "sin competencia") hasta
+   medirlo.
+
 ## Parte J — Decisiones abiertas de Darys
 1. ✅ Primero el dictado (Nivel 1); la grabación de la consulta (Nivel 2) después (decidido 2026-10-11).
 2. ✅ Guardar la transcripción: sí (decidido 2026-10-11).
