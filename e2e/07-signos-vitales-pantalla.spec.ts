@@ -1,13 +1,13 @@
 import { expect, test } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
-import { PASSWORD, login, open, testCedula, unique } from "./helpers";
+import { login, open, testCedula, unique, signInApi } from "./helpers";
 
 // Pantalla de signos vitales en la ficha: registro, alerta, aviso por antecedentes y permisos.
 let patientId = "";
 
 test.beforeAll(async () => {
   const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!);
-  await supabase.auth.signInWithPassword({ email: "recepcion@e2e.test", password: PASSWORD });
+  await signInApi(supabase, "recepcion@e2e.test");
   const { data } = await supabase
     .from("patients")
     .insert({ full_name: unique("Vitales Pantalla"), phone: "8095551234", document_id: testCedula() })

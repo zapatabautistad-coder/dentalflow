@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
-import { PASSWORD, login, open, testCedula, unique } from "./helpers";
+import { login, open, testCedula, unique, signInApi } from "./helpers";
 
 // Sala de espera: llegada desde Citas (recepción) y "Llamar siguiente" (doctor).
 // Corre antes de 03 porque la cita de hoy debe crearse sin horario cargado.
@@ -10,7 +10,7 @@ const patientName = unique("Sala E2E");
 
 test.beforeAll(async () => {
   const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!);
-  await supabase.auth.signInWithPassword({ email: "recepcion@e2e.test", password: PASSWORD });
+  await signInApi(supabase, "recepcion@e2e.test");
   const { data: patient } = await supabase
     .from("patients")
     .insert({ full_name: patientName, phone: "8095551234", document_id: testCedula() })

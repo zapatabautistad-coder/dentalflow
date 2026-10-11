@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
-import { PASSWORD, login, nextMondayKey, open, testCedula, unique } from "./helpers";
+import { login, nextMondayKey, open, testCedula, unique, signInApi } from "./helpers";
 
 // Flujo de recepción: paciente nuevo → cita → horario del doctor (migración 022).
 test.describe.configure({ mode: "serial" });
@@ -40,7 +40,7 @@ test("recepción agenda una cita sin horario configurado", async ({ page }) => {
 test("con horario, la base rechaza citas fuera de turno", async ({ page }) => {
   // Recepción carga el horario del doctor: lunes 08:00–12:00.
   const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!);
-  await supabase.auth.signInWithPassword({ email: "recepcion@e2e.test", password: PASSWORD });
+  await signInApi(supabase, "recepcion@e2e.test");
   const { data: doctor } = await supabase.from("profiles").select("id").eq("role", "doctor").single();
   const { error } = await supabase
     .from("doctor_schedules")
@@ -65,7 +65,7 @@ test("con horario, la base rechaza citas fuera de turno", async ({ page }) => {
 
 test("el doctor no puede cargar horario de otro doctor ni borrar citas", async () => {
   const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!);
-  await supabase.auth.signInWithPassword({ email: "doctor@e2e.test", password: PASSWORD });
+  await signInApi(supabase, "doctor@e2e.test");
   const { data: admin } = await supabase.from("profiles").select("id").eq("role", "admin").single();
   const { error } = await supabase
     .from("doctor_schedules")

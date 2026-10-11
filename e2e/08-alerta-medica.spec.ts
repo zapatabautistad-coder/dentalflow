@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
-import { PASSWORD, login, open, testCedula, unique } from "./helpers";
+import { login, open, testCedula, unique, signInApi } from "./helpers";
 
 // Chip de alerta médica en Pacientes: aparece con antecedentes de riesgo, no sin ellos.
 const withAlert = unique("Alerta E2E");
@@ -8,7 +8,7 @@ const withoutAlert = unique("Sano E2E");
 
 test.beforeAll(async () => {
   const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!);
-  await supabase.auth.signInWithPassword({ email: "recepcion@e2e.test", password: PASSWORD });
+  await signInApi(supabase, "recepcion@e2e.test");
   for (const name of [withAlert, withoutAlert]) {
     const { data } = await supabase
       .from("patients")
