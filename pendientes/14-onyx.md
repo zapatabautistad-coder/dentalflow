@@ -63,5 +63,6 @@ consentimiento.
 ## Avance
 - **Paso 1 — consentimiento del paciente: hecho en código (2026-10-11)**, migración 031 y sección
   en la ficha. Falta: aplicar 031 en producción (lo decide el fundador) y que un abogado revise el
-  texto v1 antes de usarlo con pacientes reales.
+  texto v1 antes de usarlo con pacientes reales. **No se aplica hasta cerrar la arquitectura**
+  (decisión del fundador, 2026-10-11): ver `pendientes/15-ia-ambiental-arquitectura.md`.
 - Paso 2 — dictado (Whisper + Claude): pendiente.
