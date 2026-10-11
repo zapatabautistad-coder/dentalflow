@@ -74,6 +74,11 @@ const TITLES: Record<string, Record<AuditRow["action"], string>> = {
     UPDATE: "Plan de tratamiento actualizado",
     DELETE: "Procedimiento del plan eliminado",
   },
+  ai_consents: {
+    INSERT: "Consentimiento para IA registrado",
+    UPDATE: "Consentimiento para IA modificado",
+    DELETE: "Consentimiento para IA eliminado",
+  },
   odontogram_entries: {
     INSERT: "Hallazgo del odontograma registrado",
     UPDATE: "Hallazgo del odontograma modificado",

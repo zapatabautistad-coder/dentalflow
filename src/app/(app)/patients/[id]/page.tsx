@@ -13,12 +13,13 @@ import {
   todayDateKey,
 } from "@/lib/timezone";
 import { StatusChip } from "../../appointments/status-chip";
-import { addClinicalEntry, addVitalSigns, archivePatient, restorePatient, saveMedicalHistory } from "../actions";
+import { addAiConsent, addClinicalEntry, addVitalSigns, archivePatient, restorePatient, saveMedicalHistory } from "../actions";
 import { ArchiveForm } from "./archive-form";
 import { ChangeLog, type AuditRow } from "./change-log";
 import { ClinicalRecord, type ClinicalEntry } from "./clinical-record";
 import { MedicalHistoryForm, type MedicalHistoryValues } from "./medical-history-form";
 import { VitalSignsRecord, type PatientVitalSignsEntry } from "./vital-signs-record";
+import { AiConsentRecord, type PatientAiConsentEntry } from "./ai-consent-record";
 import { arsName } from "@/lib/insurance";
 import { vitalSignsReasons } from "@/lib/vital-signs";
 
@@ -177,7 +178,7 @@ export default async function PatientChartPage({ params }: { params: Promise<{ i
   if (!patient) notFound();
 
   const nowIso = new Date().toISOString();
-  const [historyResult, upcomingResult, pastResult, auditResult, entriesResult, vitalSignsResult] = await Promise.all([
+  const [historyResult, upcomingResult, pastResult, auditResult, entriesResult, vitalSignsResult, aiConsentResult] = await Promise.all([
     supabase
       .from("patient_medical_history")
       .select(
@@ -218,6 +219,13 @@ export default async function PatientChartPage({ params }: { params: Promise<{ i
       .limit(100)
       .returns<ClinicalEntry[]>(),
     loadVitalSigns(supabase, id),
+    supabase
+      .from("ai_consents")
+      .select("id, scope, granted, note, consent_version, created_at, recorded_role, profiles(full_name)")
+      .eq("patient_id", id)
+      .order("created_at", { ascending: false })
+      .limit(100)
+      .returns<PatientAiConsentEntry[]>(),
   ]);
 
   const history = historyResult.data;
@@ -230,6 +238,7 @@ export default async function PatientChartPage({ params }: { params: Promise<{ i
   const auditRows = auditResult.data ?? [];
   const addEntry = addClinicalEntry.bind(null, patient.id);
   const addVital = addVitalSigns.bind(null, patient.id);
+  const addConsent = addAiConsent.bind(null, patient.id);
   const vitalReasons = history && !historyFailed ? vitalSignsReasons(history) : [];
 
 
@@ -445,6 +454,20 @@ export default async function PatientChartPage({ params }: { params: Promise<{ i
             canWrite={canWriteClinicalEntries(profile.role) && !patient.archived_at}
             action={addVital}
           />
+        )}
+      </section>
+
+      <section className="glass-card p-5 sm:p-6">
+        <h2 className="text-lg font-bold text-[#0F172A]" data-i18n="aiConsent.title">Consentimiento para IA</h2>
+        <p className="mb-4 mt-1 text-sm text-slate-600" data-i18n="aiConsent.hint">
+          Léale el texto al paciente y registre su decisión. No se edita: si cambia de opinión, se registra una nueva decisión.
+        </p>
+        {aiConsentResult.error ? (
+          <p role="alert" className="text-[15px] text-rose-700" data-i18n="aiConsent.loadError">
+            No se pudo cargar el consentimiento. Recarga la página.
+          </p>
+        ) : (
+          <AiConsentRecord entries={aiConsentResult.data ?? []} canWrite={!patient.archived_at} action={addConsent} />
         )}
       </section>
 

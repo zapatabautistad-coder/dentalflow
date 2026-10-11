@@ -9,6 +9,7 @@ import { combineDateTime, isValidDateKey } from "@/lib/timezone";
 import { cleanDocumentIdDigits, cleanPhoneDigits } from "@/lib/phone";
 import { matchingMedicationAllergy, type MedicationAllergyHistory } from "@/lib/medication-allergy";
 import { parseVitalSignsInput, type VitalSignsInput } from "@/lib/vital-signs";
+import { CURRENT_AI_CONSENT_VERSION, parseAiConsentInput } from "@/lib/ai-consent";
 
 export type PatientFormState = { error: string } | undefined;
 
@@ -517,6 +518,44 @@ export async function addVitalSigns(
   });
 
   if (error) return { errorKey: "vitalSigns.error.database" };
+
+  revalidatePath(`/patients/${patientId}`);
+  return { saved: true, at: Date.now() };
+}
+
+export type AiConsentFormState = { errorKey: string } | { saved: true; at: number } | undefined;
+
+// Consentimiento para IA (031): lo registran todos los roles de la clínica.
+// No se edita; un retiro es otra entrada con granted = false.
+export async function addAiConsent(
+  patientId: string,
+  _prev: AiConsentFormState,
+  formData: FormData
+): Promise<AiConsentFormState> {
+  await requireProfile();
+
+  const parsed = parseAiConsentInput({
+    scope: field(formData, "scope"),
+    granted: field(formData, "granted"),
+    note: String(formData.get("note") ?? ""),
+  });
+  if (!parsed.ok) return { errorKey: parsed.errorKey };
+
+  const supabase = await createClient();
+  const { data: patient, error: patientError } = await supabase
+    .from("patients")
+    .select("archived_at")
+    .eq("id", patientId)
+    .maybeSingle<{ archived_at: string | null }>();
+  if (patientError || !patient) return { errorKey: "aiConsent.error.database" };
+  if (patient.archived_at) return { errorKey: "aiConsent.error.archived" };
+
+  const { error } = await supabase.from("ai_consents").insert({
+    patient_id: patientId,
+    ...parsed.values,
+    consent_version: CURRENT_AI_CONSENT_VERSION,
+  });
+  if (error) return { errorKey: "aiConsent.error.database" };
 
   revalidatePath(`/patients/${patientId}`);
   return { saved: true, at: Date.now() };
