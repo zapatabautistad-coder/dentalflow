@@ -40,6 +40,13 @@ async function main() {
     if (secrets[u]) { const { data } = await c.auth.mfa.listFactors(); check(await c.auth.mfa.challengeAndVerify({ factorId: data.totp[0].id, code: totp(secrets[u]) }), "mfa"); }
     return c;
   }
+  // Nombres de demostración que salen en las capturas (clínica A y su personal).
+  for (const [u, full_name] of [["admin", "Carlos Rosario"], ["doctor", "Dra. Laura Méndez"], ["recepcion", "Paola Jiménez"]]) {
+    const id = list.users.find((x) => x.email === `${u}@e2e.test`).id;
+    check(await svc.from("profiles").update({ full_name }).eq("id", id), "nombre " + u);
+  }
+  const clinicId = check(await svc.from("profiles").select("clinic_id").eq("id", list.users.find((x) => x.email === "admin@e2e.test").id).single(), "clínica").clinic_id;
+  check(await svc.from("clinics").update({ name: "Clínica Dental Sonrisa Clara" }).eq("id", clinicId), "nombre clínica");
   const admin = await as("admin"), recep = await as("recepcion"), doc = await as("doctor");
   const doctorId = check(await admin.from("profiles").select("id").eq("role", "doctor").single(), "doc").id;
   for (let wd = 0; wd <= 6; wd++) check(await admin.from("doctor_schedules").insert({ doctor_id: doctorId, weekday: wd, start_time: "07:00", end_time: "20:00" }), "horario");
@@ -65,14 +72,14 @@ async function main() {
   const reasons = ["Limpieza y control", "Dolor en molar inferior", "Evaluación de ortodoncia", "Endodoncia (2.ª sesión)", "Colocación de corona", "Extracción de cordal", "Blanqueamiento", "Control post-operatorio", "Primera consulta"];
   const appts = [];
   for (let i = 0; i < ids.length; i++)
-    appts.push(check(await recep.from("appointments").insert({ patient_id: ids[i], doctor_id: doctorId, starts_at: `${today}T${times[i]}:00-04:00`, duration_minutes: 45, reason: reasons[i], status: i < 4 ? "confirmada" : "programada" }).select("id").single(), "cita").id);
+    appts.push(check(await recep.from("appointments").insert({ patient_id: ids[i], doctor_id: doctorId, starts_at: `${today}T${times[i]}:00-04:00`, duration_minutes: 45, reason: reasons[i], status: i < 2 ? "completada" : i < 5 ? "confirmada" : "programada" }).select("id").single(), "cita").id);
   // Citas de días siguientes.
   for (let d = 1; d <= 4; d++) {
     const day = new Date(Date.parse(today) + d * 86400e3).toISOString().slice(0, 10);
     for (let k = 0; k < 3; k++) check(await recep.from("appointments").insert({ patient_id: ids[(d + k * 2) % ids.length], doctor_id: doctorId, starts_at: `${day}T${["09:00","11:00","15:30"][k]}:00-04:00`, duration_minutes: 45, reason: reasons[(d + k) % reasons.length] }), "cita futura");
   }
-  // Sala de espera: tres pacientes llegaron.
-  for (let i = 0; i < 3; i++) check(await recep.from("queue").insert({ patient_id: ids[i], appointment_id: appts[i], doctor_id: doctorId }), "turno");
+  // Mitad de la jornada: dos citas ya completadas y tres pacientes en la sala de espera.
+  for (let i = 2; i < 5; i++) check(await recep.from("queue").insert({ patient_id: ids[i], appointment_id: appts[i], doctor_id: doctorId }), "turno");
   const p = ids[0];
   const odo = [
     { tooth: 16, condition: "obturacion", surfaces: ["O", "M"] }, { tooth: 26, condition: "corona" },

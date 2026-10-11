@@ -384,17 +384,17 @@ function Brand({ compact = false, clinicName, onNavigate }: { compact?: boolean;
           compact ? "h-12 w-12" : "h-20 w-20"
         }`}
       >
-        {/* Ícono: orbe de vidrio azul profundo con el molar de cristal (quieto).
+        {/* Ícono: diente azul de cristal sobre orbe de cristal blanco (quieto).
             unoptimized: se sirve el PNG original, sin recompresión, para no perder nitidez. */}
-        <span className="molar-orb flex h-full w-full items-center justify-center">
+        <span className="crystal-orb flex h-full w-full items-center justify-center">
           <Image
-            src="/dentalflow-molar-crystal.png"
+            src="/dentalflow-mark-sky.png"
             alt="DentalFlow"
-            width={279}
-            height={398}
+            width={389}
+            height={512}
             priority
             unoptimized
-            className="h-[84%] w-auto [filter:drop-shadow(0_4px_6px_rgba(6,47,85,0.45))]"
+            className="relative h-[80%] w-auto [filter:drop-shadow(0_3px_4px_rgba(7,102,181,0.28))]"
           />
         </span>
 
@@ -408,6 +408,11 @@ function Brand({ compact = false, clinicName, onNavigate }: { compact?: boolean;
         <span className="text-[20px] font-semibold leading-none tracking-[-0.03em] text-[#062F55] drop-shadow-sm">
           DentalFlow
         </span>
+        {!compact && (
+          <span className="mt-1.5 text-[9.5px] font-semibold leading-none tracking-[0.34em] text-[#0766B5]">
+            CLINICAL OS
+          </span>
+        )}
         {clinicName && (
           <>
             <span aria-hidden="true" className="my-2 block h-px w-7 bg-gradient-to-r from-[#95D3FA] to-transparent" />

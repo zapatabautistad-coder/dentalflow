@@ -1,8 +1,10 @@
 # Imagen principal de DentalFlow (hero)
 
-`DentalFlow-hero-4K.png` (3840×2160): laptop con el Panel, teléfono con el odontograma móvil y
+`DentalFlow-hero-4K.png` (3840×2160): laptop con el Panel, teléfono delante con el odontograma móvil y
 el diente de cristal (`public/dentalflow-mark-sky.png`, a su tamaño nativo para que no pierda nitidez)
-sobre una mesa de cristal. Las pantallas tienen **datos de demostración** de Supabase local
+sobre una base de cristal transparente con "DentalFlow · Clinical OS" grabado, todo sobre una mesa de vidrio.
+Los tres avisos de seguridad (registro firmado y auditado, verificación en dos pasos, respaldo cifrado
+cada noche) son funciones reales; no agregar certificaciones ni métricas. Las pantallas tienen **datos de demostración** de Supabase local
 (nunca de producción); por eso la imagen lleva el aviso "Pantallas con datos de demostración".
 No decir "hecho para República Dominicana" (objetivo global, ver CLAUDE.md).
 
@@ -14,6 +16,9 @@ No decir "hecho para República Dominicana" (objetivo global, ver CLAUDE.md).
 ## Rehacer las capturas de la app (solo Supabase local)
 1. `npm run test:e2e:setup`, luego `set -a; . ./.env.e2e; set +a`.
 2. Datos de demostración: `NODE_PATH=$PWD/node_modules node docs/marketing/hero/seed.cjs docs/marketing/hero/mfa.json docs/marketing/hero/ids.json`
-   (crea pacientes, citas, odontograma, plan y cobros ficticios; activa TOTP de admin y doctor).
+   (pone los nombres de demostración —Carlos Rosario, Dra. Laura Méndez, Clínica Dental Sonrisa Clara—, crea
+   pacientes, citas con dos ya completadas, sala de espera, odontograma, plan y cobros ficticios; activa TOTP de admin y doctor).
+   Si Docker Hub responde 429 al descargar las imágenes de Supabase, bajarlas de `mirror.gcr.io` y etiquetarlas
+   con el nombre original (p. ej. `docker pull mirror.gcr.io/library/kong:2.8.1 && docker tag mirror.gcr.io/library/kong:2.8.1 kong:2.8.1`).
 3. `npm run build && npx next start -p 3100`.
 4. `NODE_PATH=$PWD/node_modules node docs/marketing/hero/hero_shots.cjs` → `hero_desktop.png` (2880×1800) y `hero_mobile.png` (1290×2796).

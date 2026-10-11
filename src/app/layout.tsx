@@ -8,7 +8,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "DentalFlow",
+  title: "DentalFlow Clinical OS",
   description: "Sistema de gestión para clínicas dentales",
 };
 
