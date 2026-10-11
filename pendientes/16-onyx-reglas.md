@@ -144,6 +144,14 @@ El paciente no escucha nada: ONYX habla solo en el auricular del doctor.
 5. Cada clínica ve solo sus sesiones (RLS); todo auditado; sin DELETE.
 6. Consentimiento por paciente y alcance, revocable; texto revisado por abogado (Ley 172-13).
 
+7. **Sin identidad hacia los proveedores:** a Whisper y a Claude nunca se les envía nombre,
+   cédula, teléfono ni dirección del paciente; solo el dictado y el contexto clínico (dientes,
+   alergias, antecedentes) bajo un identificador interno de la sesión.
+8. **Opción futura de máxima privacidad (evaluar):** Whisper de código abierto en un servidor
+   propio de DentalFlow, para que el audio nunca salga a un tercero; a Claude solo llega texto
+   sin identidad. Un equipo dentro de cada clínica se descarta por ahora (costo, mantenimiento,
+   apagones, robo, respaldos) y porque la base de DentalFlow ya está en la nube (Supabase).
+
 ## Parte I — Calidad (cómo se mide "funciona a la perfección")
 
 1. Juego de prueba: mínimo 30 dictados reales en español dominicano (sin datos de pacientes
