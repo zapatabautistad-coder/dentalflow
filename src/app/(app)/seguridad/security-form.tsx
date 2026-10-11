@@ -2,7 +2,13 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { totpFactors, type MfaFactor, type TotpFactor, webauthnFactors } from "@/lib/mfa";
+import {
+  totpFactors,
+  type MfaFactor,
+  type TotpFactor,
+  WEBAUTHN_CREATE_OPTIONS,
+  webauthnFactors,
+} from "@/lib/mfa";
 import { createClient } from "@/lib/supabase/client";
 
 type Enrollment = { factorId: string; qrCode: string; secret: string };
@@ -172,7 +178,7 @@ export function SecurityForm({
   const removeActiveFactor = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!activeFactor) return;
-    if (webauthn.length > 0) {
+    if (activeWebauthn.length > 0) {
       setError("security.removeTotpFirst");
       return;
     }
@@ -216,7 +222,7 @@ export function SecurityForm({
         rpId: window.location.hostname,
         rpOrigins: [window.location.origin],
       },
-    });
+    }, WEBAUTHN_CREATE_OPTIONS);
     setBusy(false);
     if (enrollError) {
       setError("security.errorFingerprint");

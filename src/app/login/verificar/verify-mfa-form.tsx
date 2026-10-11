@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { WEBAUTHN_REQUEST_OPTIONS } from "@/lib/mfa";
 import { createClient } from "@/lib/supabase/client";
 import { logout } from "../../(app)/actions";
 
@@ -94,7 +95,7 @@ export function VerifyMfaForm({
         rpId: window.location.hostname,
         rpOrigins: [window.location.origin],
       },
-    });
+    }, WEBAUTHN_REQUEST_OPTIONS);
     setBusy(false);
     if (verifyError) {
       setError("security.errorFingerprintVerify");

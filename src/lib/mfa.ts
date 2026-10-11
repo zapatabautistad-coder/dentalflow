@@ -1,3 +1,4 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Role } from "@/lib/auth-roles";
 
 export type MfaDecision = "activar" | "verificar" | "ok";
@@ -45,3 +46,24 @@ export function totpFactors(
 export function webauthnFactors(all: MfaFactor[]): MfaFactor[] {
   return all.filter((factor) => factor.factor_type === "webauthn");
 }
+
+// Supabase pide por defecto una llave de seguridad USB (cross-platform). Para usar la
+// huella o el desbloqueo del propio equipo (Touch ID, Windows Hello, celular) se pide
+// el autenticador del dispositivo y verificación obligatoria (huella, rostro o PIN).
+type WebauthnApi = SupabaseClient["auth"]["mfa"]["webauthn"];
+
+export const WEBAUTHN_CREATE_OPTIONS: Parameters<WebauthnApi["register"]>[1] = {
+  hints: ["client-device"],
+  authenticatorSelection: {
+    authenticatorAttachment: "platform",
+    userVerification: "required",
+    residentKey: "discouraged",
+    requireResidentKey: false,
+  },
+};
+
+// El tipo de Supabase pide `challenge`, pero solo se mezcla con las opciones del servidor.
+export const WEBAUTHN_REQUEST_OPTIONS = {
+  hints: ["client-device"],
+  userVerification: "required",
+} as Parameters<WebauthnApi["authenticate"]>[1];

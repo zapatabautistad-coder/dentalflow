@@ -1,6 +1,9 @@
 import { expect, test, type Page } from "@playwright/test";
 import { login, PASSWORD } from "./helpers";
 
+// WebAuthn no acepta una IP como dominio (rp_id): esta prueba entra por localhost.
+test.use({ baseURL: "http://localhost:3100" });
+
 async function enableVirtualAuthenticator(page: Page) {
   const cdp = await page.context().newCDPSession(page);
   await cdp.send("WebAuthn.enable");
@@ -59,11 +62,11 @@ test("al desactivar una cuenta se eliminan sus factores y al reactivarla debe co
   await doctorRow.getByText("Desactivar cuenta").click();
   await doctorRow.locator('textarea[name="deactivated_reason"]').fill("Prueba de desactivación");
   await doctorRow.getByRole("button", { name: "Confirmar desactivación" }).click();
-  await expect(doctorRow.getByText("Desactivada")).toBeVisible();
+  await expect(doctorRow.getByText("Desactivada", { exact: true })).toBeVisible();
 
   await userContext.close();
   await adminPage.locator("li").filter({ hasText: "doctor@e2e.test" }).getByRole("button", { name: "Reactivar cuenta" }).click();
-  await expect(adminPage.locator("li").filter({ hasText: "doctor@e2e.test" }).getByText("Activa")).toBeVisible();
+  await expect(adminPage.locator("li").filter({ hasText: "doctor@e2e.test" }).getByText("Activa", { exact: true })).toBeVisible();
 
   const reactivatedContext = await browser.newContext();
   const reactivatedPage = await reactivatedContext.newPage();
