@@ -132,3 +132,47 @@ resto del producto sumen a esa meta, cada decisión se mide con estos pilares:
 
 Regla para ONYX: todo lo que la IA produzca sale **estructurado y con código** (no solo texto
 libre), para que los datos sirvan después para interoperar y para medir resultados.
+
+## 11. Leyes de ONYX v2 (revisión de la propuesta "J.A.R.V.I.S." de Gemini, 2026-10-11)
+Decisión del fundador: **ONYX escribe el borrador completo; el doctor corrige y firma.**
+Objetivo: eliminar el trabajo a mano del doctor, con las reglas de seguridad más estrictas.
+
+1. **Evidencia obligatoria.** Cada dato del JSON trae la cita literal de la transcripción de
+   donde salió (`evidencia`). El servidor comprueba que la cita exista tal cual en el texto;
+   si no existe, el dato se descarta y se vuelve pregunta. Esto bloquea los inventos del modelo.
+2. **Ambigüedad = pregunta con opciones, nunca una suposición.** "Muela de atrás arriba a la
+   derecha" puede ser 16, 17 o 18: ONYX propone las opciones y el doctor elige. Si no se dictó
+   la superficie, no se inventa "oclusal".
+3. **Confianza de Whisper.** Se pide la transcripción por segmentos con su nivel de confianza
+   **(verificar el formato exacto de la API)**. Segmentos dudosos se marcan y no se usan sin
+   confirmación. Las alucinaciones de Whisper suelen ser frases fluidas y creíbles, no absurdas:
+   por eso la regla 1 es la defensa principal, no "detectar sinsentidos".
+4. **Contexto del paciente.** ONYX recibe el odontograma actual, alergias y antecedentes, y avisa
+   contradicciones ("dictó extracción del 36, pero el 36 ya figura ausente"; "amoxicilina y
+   alergia a penicilina"). Este es el primer uso real de la dimensión tiempo (4D).
+5. **Acciones en cadena = borradores, nunca acciones.** Si se dicta una extracción, ONYX prepara
+   el odontograma, la nota, las indicaciones y el cargo como **propuestas separadas**:
+   - Odontograma y nota: borrador que el doctor firma.
+   - Indicaciones postoperatorias: **plantillas aprobadas por la clínica**; ONYX solo elige cuál.
+     Nada sale por WhatsApp sin consentimiento del paciente y clic humano.
+   - Cargo: se elige de un **catálogo de procedimientos con código y precio** de la clínica
+     (hay que crearlo); ONYX nunca inventa códigos ni precios.
+6. **Recetas: lo más estricto.** ONYX solo llena medicamentos, dosis y duración que el doctor
+   dictó explícitamente; nunca sugiere un medicamento ni una dosis por su cuenta. Pasa por
+   `validatePrescription`, el aviso de alergias y `create_prescription` (exequátur), firmada solo
+   por el doctor.
+7. **Firma sin piloto automático.** "Aprobar y firmar" solo se activa cuando no quedan preguntas
+   abiertas. Medicamentos, extracciones y cargos se confirman uno por uno. Se muestra la
+   diferencia contra el odontograma anterior. Se mide cuántos campos corrige el doctor.
+8. **La transcripción es dato, no órdenes.** Va dentro de un bloque delimitado en el prompt;
+   nada de lo que diga (aunque suene a instrucción) cambia reglas, permisos ni acciones.
+9. **Salida estructurada con esquema fijo** (herramienta con esquema estricto de la API) +
+   validación en el servidor. Condiciones, superficies y dientes solo de listas cerradas;
+   diagnósticos con código cuando exista el catálogo (meta HealthTech).
+10. **Se guarda todo para medir** (decisión 2 = sí): transcripción, propuesta, versión del prompt
+    y lo que firmó el doctor, en `onyx_sessions`. El audio no se guarda.
+11. **El prompt es código.** Versionado, con un juego de 30+ dictados de prueba que debe pasar
+    antes de cada cambio; sin personalidad teatral: instrucciones clínicas precisas.
+
+Faltantes de la propuesta original: catálogo de procedimientos, plantillas postoperatorias,
+consentimiento de WhatsApp, y separar "dictado" de "durante la consulta" (alcance `ambiental`).
