@@ -18,6 +18,6 @@ exports.login = async function (page, user, secrets, slow = false) {
   const code = page.locator('input[autocomplete="one-time-code"]');
   await code.waitFor({ timeout: 20000 });
   if (slow) { await code.click(); await page.keyboard.type(exports.totp(secrets[user]), { delay: 90 }); } else await code.fill(exports.totp(secrets[user]));
-  await page.getByRole("button", { name: "Verificar" }).click();
+  await page.getByRole("button", { name: /^(Verificar|Verify)$/ }).click();
   await page.waitForURL(/\/panel/, { timeout: 20000 });
 };

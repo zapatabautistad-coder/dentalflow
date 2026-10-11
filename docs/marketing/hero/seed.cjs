@@ -5,6 +5,10 @@ const fs = require("node:fs");
 const URL = process.env.NEXT_PUBLIC_SUPABASE_URL, ANON = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, SRV = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (!URL.includes("127.0.0.1") && !URL.includes("localhost")) throw new Error("Solo base local");
 const PASS = "Prueba-E2e-2026!";
+// HERO_LANG=en: datos de demostración en inglés para la imagen en inglés (los nombres de personas no cambian).
+const EN = process.env.HERO_LANG === "en";
+const T = (es, en) => (EN ? en : es);
+const INS = T("ARS Demo", "Demo Insurance");
 function totp(secret, now = Date.now()) {
   const a = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567"; let bits = "";
   for (const c of secret.replace(/=+$/, "").toUpperCase()) { const v = a.indexOf(c); if (v >= 0) bits += v.toString(2).padStart(5, "0"); }
@@ -41,25 +45,25 @@ async function main() {
     return c;
   }
   // Nombres de demostración que salen en las capturas (clínica A y su personal).
-  for (const [u, full_name] of [["admin", "Carlos Rosario"], ["doctor", "Dra. Laura Méndez"], ["recepcion", "Paola Jiménez"]]) {
+  for (const [u, full_name] of [["admin", "Carlos Rosario"], ["doctor", T("Dra. Laura Méndez", "Dr. Laura Méndez")], ["recepcion", "Paola Jiménez"]]) {
     const id = list.users.find((x) => x.email === `${u}@e2e.test`).id;
     check(await svc.from("profiles").update({ full_name }).eq("id", id), "nombre " + u);
   }
   const clinicId = check(await svc.from("profiles").select("clinic_id").eq("id", list.users.find((x) => x.email === "admin@e2e.test").id).single(), "clínica").clinic_id;
-  check(await svc.from("clinics").update({ name: "Clínica Dental Sonrisa Clara" }).eq("id", clinicId), "nombre clínica");
+  check(await svc.from("clinics").update({ name: T("Clínica Dental Sonrisa Clara", "Bright Smile Dental") }).eq("id", clinicId), "nombre clínica");
   const admin = await as("admin"), recep = await as("recepcion"), doc = await as("doctor");
   const doctorId = check(await admin.from("profiles").select("id").eq("role", "doctor").single(), "doc").id;
   for (let wd = 0; wd <= 6; wd++) check(await admin.from("doctor_schedules").insert({ doctor_id: doctorId, weekday: wd, start_time: "07:00", end_time: "20:00" }), "horario");
   const people = [
-    ["María Fernanda Rodríguez", "ars", "ARS Demo", "1985-03-14", "Paciente con hipertensión controlada."],
+    ["María Fernanda Rodríguez", "ars", INS, "1985-03-14", T("Paciente con hipertensión controlada.", "Controlled hypertension.")],
     ["José Miguel Peña", "privado", null, "1979-07-02", null],
-    ["Carmen Altagracia Núñez", "ars", "ARS Demo", "1992-11-21", null],
-    ["Luis Alberto Castillo", "ars", "ARS Demo", "1968-01-30", "Diabético tipo 2."],
+    ["Carmen Altagracia Núñez", "ars", INS, "1992-11-21", null],
+    ["Luis Alberto Castillo", "ars", INS, "1968-01-30", T("Diabético tipo 2.", "Type 2 diabetes.")],
     ["Ana Lucía Batista", "privado", null, "2001-05-09", null],
-    ["Rafael Antonio Guzmán", "ars", "ARS Demo", "1974-09-17", null],
-    ["Yesenia Marte Polanco", "ars", "ARS Demo", "1988-12-03", null],
+    ["Rafael Antonio Guzmán", "ars", INS, "1974-09-17", null],
+    ["Yesenia Marte Polanco", "ars", INS, "1988-12-03", null],
     ["Pedro Julio Almonte", "privado", null, "1995-04-26", null],
-    ["Rosa Elena Tavárez", "ars", "ARS Demo", "1960-08-11", null],
+    ["Rosa Elena Tavárez", "ars", INS, "1960-08-11", null],
   ];
   const ids = [];
   for (const [full_name, insurance_type, insurance_provider, birth_date, notes] of people) {
@@ -69,7 +73,9 @@ async function main() {
   }
   const today = new Date(Date.now() - 4 * 3600e3).toISOString().slice(0, 10);
   const times = ["08:00", "08:45", "09:30", "10:15", "11:00", "14:00", "15:00", "16:00", "17:00"];
-  const reasons = ["Limpieza y control", "Dolor en molar inferior", "Evaluación de ortodoncia", "Endodoncia (2.ª sesión)", "Colocación de corona", "Extracción de cordal", "Blanqueamiento", "Control post-operatorio", "Primera consulta"];
+  const reasons = EN
+    ? ["Cleaning and checkup", "Lower molar pain", "Orthodontic evaluation", "Root canal (2nd visit)", "Crown placement", "Wisdom tooth extraction", "Teeth whitening", "Post-op follow-up", "New patient visit"]
+    : ["Limpieza y control", "Dolor en molar inferior", "Evaluación de ortodoncia", "Endodoncia (2.ª sesión)", "Colocación de corona", "Extracción de cordal", "Blanqueamiento", "Control post-operatorio", "Primera consulta"];
   const appts = [];
   for (let i = 0; i < ids.length; i++)
     appts.push(check(await recep.from("appointments").insert({ patient_id: ids[i], doctor_id: doctorId, starts_at: `${today}T${times[i]}:00-04:00`, duration_minutes: 45, reason: reasons[i], status: i < 2 ? "completada" : i < 5 ? "confirmada" : "programada" }).select("id").single(), "cita").id);
@@ -85,25 +91,25 @@ async function main() {
     { tooth: 16, condition: "obturacion", surfaces: ["O", "M"] }, { tooth: 26, condition: "corona" },
     { tooth: 36, condition: "endodoncia" }, { tooth: 46, condition: "caries", surfaces: ["O"] },
     { tooth: 47, condition: "caries", surfaces: ["O", "D"] }, { tooth: 18, condition: "ausente" },
-    { tooth: 38, condition: "extraccion_indicada", note: "Cordal semi-incluido" }, { tooth: 11, condition: "sellante", surfaces: ["V"] },
-    { tooth: 24, condition: "implante" }, { tooth: 35, condition: "fractura", note: "Fractura de cúspide vestibular" },
+    { tooth: 38, condition: "extraccion_indicada", note: T("Cordal semi-incluido", "Partially impacted wisdom tooth") }, { tooth: 11, condition: "sellante", surfaces: ["V"] },
+    { tooth: 24, condition: "implante" }, { tooth: 35, condition: "fractura", note: T("Fractura de cúspide vestibular", "Fractured buccal cusp") },
   ];
   for (const e of odo) check(await doc.from("odontogram_entries").insert({ patient_id: p, ...e }), "odontograma");
   const plan = [
-    { tooth: 46, surfaces: ["O"], procedure: "Resina compuesta", estimated_cost: 3500 },
-    { tooth: 47, surfaces: ["O", "D"], procedure: "Resina compuesta", estimated_cost: 4000 },
-    { tooth: 38, procedure: "Extracción de cordal", estimated_cost: 6500 },
-    { tooth: 35, procedure: "Corona de porcelana", estimated_cost: 18000 },
-    { procedure: "Profilaxis y fluorización", estimated_cost: 2500 },
+    { tooth: 46, surfaces: ["O"], procedure: T("Resina compuesta", "Composite filling"), estimated_cost: 3500 },
+    { tooth: 47, surfaces: ["O", "D"], procedure: T("Resina compuesta", "Composite filling"), estimated_cost: 4000 },
+    { tooth: 38, procedure: T("Extracción de cordal", "Wisdom tooth extraction"), estimated_cost: 6500 },
+    { tooth: 35, procedure: T("Corona de porcelana", "Porcelain crown"), estimated_cost: 18000 },
+    { procedure: T("Profilaxis y fluorización", "Cleaning and fluoride"), estimated_cost: 2500 },
   ];
   const planIds = [];
   for (const it of plan) planIds.push(check(await doc.from("treatment_plan_items").insert({ patient_id: p, ...it }).select("id").single(), "plan").id);
   check(await doc.from("treatment_plan_items").update({ status: "en_proceso" }).eq("id", planIds[0]), "plan estado");
   check(await doc.from("treatment_plan_items").update({ status: "en_proceso" }).eq("id", planIds[4]), "plan estado");
   check(await doc.from("treatment_plan_items").update({ status: "completado" }).eq("id", planIds[4]), "plan estado");
-  check(await doc.from("clinical_entries").insert({ patient_id: p, kind: "nota", body: "Paciente refiere sensibilidad al frío en el cuadrante 4. Se indica radiografía periapical y resinas en 46 y 47." }), "nota");
+  check(await doc.from("clinical_entries").insert({ patient_id: p, kind: "nota", body: T("Paciente refiere sensibilidad al frío en el cuadrante 4. Se indica radiografía periapical y resinas en 46 y 47.", "Patient reports cold sensitivity in quadrant 4. Periapical X-ray and fillings on 46 and 47 indicated.") }), "nota");
   check(await doc.from("vital_signs").insert({ patient_id: p, systolic: 128, diastolic: 82, heart_rate: 74 }), "vitales");
-  check(await recep.from("billing_charges").insert({ patient_id: p, treatment_plan_item_id: planIds[4], description: "Profilaxis y fluorización", amount: 2500, ars_coverage: 1500, ars_name: "ARS Demo", ars_status: "pendiente" }), "cargo");
+  check(await recep.from("billing_charges").insert({ patient_id: p, treatment_plan_item_id: planIds[4], description: T("Profilaxis y fluorización", "Cleaning and fluoride"), amount: 2500, ars_coverage: 1500, ars_name: INS, ars_status: "pendiente" }), "cargo");
   check(await recep.from("billing_payments").insert({ patient_id: p, amount: 1000, method: "tarjeta" }), "pago");
   fs.writeFileSync(process.argv[3], JSON.stringify({ patient: p }));
   console.log("ok", p);
