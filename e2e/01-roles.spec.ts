@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
-import { PASSWORD, login, type E2ERole } from "./helpers";
+import { login, type E2ERole, signInApi } from "./helpers";
 
 const MENU: Record<E2ERole, { visible: string[]; hidden: string[] }> = {
   admin: { visible: ["Pacientes", "Citas", "Sala de espera", "Análisis", "Cuentas"], hidden: [] },
@@ -35,7 +35,7 @@ test("recepción no entra a Cuentas", async ({ page }) => {
 
 test("una cabecera de usuario falsificada no da permisos de admin", async ({ page }) => {
   const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!);
-  await supabase.auth.signInWithPassword({ email: "enfermeria@e2e.test", password: PASSWORD });
+  await signInApi(supabase, "enfermeria@e2e.test");
   const { data: admin } = await supabase.from("profiles").select("id").eq("role", "admin").single();
   await login(page, "enfermeria");
   // El proxy debe correr también en rutas que terminan en .png y borrar la cabecera.

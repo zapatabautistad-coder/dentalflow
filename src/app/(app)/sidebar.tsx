@@ -596,6 +596,14 @@ function ProfileCard({ fullName, roleLabel, role, clinicName }: ProfileProps) {
         </div>
       </div>
 
+      <Link
+        href="/seguridad"
+        className="mt-3 block rounded-xl px-2 py-1.5 text-sm font-medium text-[#062F55]/90 transition hover:bg-white/55 hover:text-[#062F55]"
+        data-i18n="sidebar.security"
+      >
+        Seguridad
+      </Link>
+
       <form action={logout} className="mt-3 border-t border-[#0E9BF3]/25 pt-2">
         <button
           type="submit"

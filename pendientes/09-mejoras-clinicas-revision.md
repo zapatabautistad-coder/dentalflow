@@ -26,5 +26,7 @@ Claude revisa el PR de Copilot antes del merge.
 ## Descartado por ahora
 - Multi-país (tabla `clinics`, `country_code`, renombrar ARS a "insurance"): cambio enorme antes
   de la primera clínica; el producto es solo para República Dominicana.
+  **Actualizado 2026-10-11:** el objetivo de DentalFlow es global (ver `CLAUDE.md`); multi-país sigue
+  sin fecha, pero ya no se descarta por ser "solo República Dominicana".
 - Varias clínicas: por ahora un proyecto de Supabase por clínica. Decidir una base compartida
   cuando haya varias clínicas.

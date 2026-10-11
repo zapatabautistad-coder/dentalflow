@@ -1,9 +1,11 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { USER_EMAIL_HEADER, USER_ID_HEADER } from "@/lib/auth-headers";
+import { getMfaDecision } from "@/lib/mfa";
 
-// Rutas accesibles sin sesión.
-const PUBLIC_PATHS = ["/login"];
+// Verificación en dos pasos (ver src/lib/mfa.ts).
+const VERIFY_PATH = "/login/verificar";
+const SECURITY_PATH = "/seguridad";
 
 // Refresca la sesión de Supabase (cookies) y aplica la protección de rutas.
 export async function updateSession(request: NextRequest) {
@@ -45,15 +47,12 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
-  const isPublic = PUBLIC_PATHS.some(
-    (p) => pathname === p || pathname.startsWith(`${p}/`)
-  );
 
-  if (!user && !isPublic) {
+  if (!user && pathname !== "/login") {
     return redirectKeepingCookies(request, response, "/login");
   }
 
-  if (user && isPublic) {
+  if (user && pathname === "/login") {
     return redirectKeepingCookies(request, response, "/panel");
   }
 
@@ -64,6 +63,51 @@ export async function updateSession(request: NextRequest) {
     if (user.email) requestHeaders.set(USER_EMAIL_HEADER, user.email);
   }
 
+  // /login/verificar siempre pasa (ahí se completa el segundo paso). /seguridad solo
+  // pasa para quien debe ACTIVAR la app: con un factor ya activo y sesión aal1 (solo
+  // contraseña) no se muestra nada de la app, ni siquiera la barra lateral, que carga
+  // notificaciones con nombres de pacientes.
+  if (user && pathname !== VERIFY_PATH) {
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+
+    if (profileError || !profile) {
+      if (pathname === SECURITY_PATH) return finish(response, requestHeaders);
+      return redirectKeepingCookies(request, response, `${SECURITY_PATH}?error=check`);
+    }
+
+    // Los factores vienen en el usuario que ya validó getUser(): listFactors() volvería
+    // a llamar a getUser() (otra ida a Supabase en cada petición). El nivel aal sale de
+    // la sesión, sin red.
+    const { data: assurance, error: assuranceError } =
+      await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+
+    if (assuranceError) {
+      if (pathname === SECURITY_PATH) return finish(response, requestHeaders);
+      return redirectKeepingCookies(request, response, `${SECURITY_PATH}?error=check`);
+    }
+
+    const hasVerifiedTotp = (user.factors ?? []).some(
+      (factor) => factor.factor_type === "totp" && factor.status === "verified"
+    );
+    const decision = getMfaDecision(profile.role, hasVerifiedTotp, assurance.currentLevel);
+
+    if (decision === "verificar") {
+      return redirectKeepingCookies(request, response, VERIFY_PATH);
+    }
+
+    if (decision === "activar" && pathname !== SECURITY_PATH) {
+      return redirectKeepingCookies(request, response, `${SECURITY_PATH}?mfa=required`);
+    }
+  }
+
+  return finish(response, requestHeaders);
+}
+
+function finish(response: NextResponse, requestHeaders: Headers) {
   const finalResponse = NextResponse.next({
     request: { headers: requestHeaders },
   });
@@ -75,11 +119,9 @@ export async function updateSession(request: NextRequest) {
 function redirectKeepingCookies(
   request: NextRequest,
   response: NextResponse,
-  pathname: string
+  destination: string
 ) {
-  const url = request.nextUrl.clone();
-  url.pathname = pathname;
-  url.search = "";
+  const url = new URL(destination, request.url);
   const redirect = NextResponse.redirect(url);
   response.cookies.getAll().forEach((cookie) => redirect.cookies.set(cookie));
   return redirect;

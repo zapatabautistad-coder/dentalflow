@@ -4,6 +4,8 @@ import { defineConfig } from "@playwright/test";
 // (ver e2e/README.md): crean pacientes, citas y cobros que la base no deja borrar.
 export default defineConfig({
   testDir: "e2e",
+  // Activa la verificación en dos pasos de admin y doctor de prueba (ver e2e/mfa.ts).
+  globalSetup: "./e2e/global-setup.ts",
   fullyParallel: false,
   workers: 1,
   retries: 0,

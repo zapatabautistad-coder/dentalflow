@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { PASSWORD, testCedula, unique } from "./helpers";
+import { PASSWORD, testCedula, unique, signInApi } from "./helpers";
 
 // Aislamiento entre clínicas (migración 029). Solo contra la base local: la clínica B y sus
 // usuarios (*-b@e2e.test) los crea e2e/setup-local.sh. Cuenta con una base recién reiniciada.
@@ -12,7 +12,7 @@ const SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 async function signIn(email: string): Promise<SupabaseClient> {
   const client = createClient(URL, ANON);
-  const { error } = await client.auth.signInWithPassword({ email, password: PASSWORD });
+  const { error } = await signInApi(client, email);
   expect(error).toBeNull();
   return client;
 }
@@ -131,7 +131,7 @@ test("un usuario nuevo sin clínica no tiene perfil ni acceso cuando hay dos cl�
   expect(profile).toBeNull();
 
   const user = createClient(URL, ANON);
-  const { error: loginError } = await user.auth.signInWithPassword({ email, password: PASSWORD });
+  const { error: loginError } = await signInApi(user, email);
   expect(loginError).toBeNull();
   const { data: seen } = await user.from("patients").select("id").limit(1);
   expect(seen ?? []).toHaveLength(0);

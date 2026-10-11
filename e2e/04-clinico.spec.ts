@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
-import { PASSWORD, login, nextMondayKey, open, testCedula, unique } from "./helpers";
+import { login, nextMondayKey, open, testCedula, unique, signInApi } from "./helpers";
 
 // Flujo clínico: odontograma y plan (doctor), cobro (recepción), límites de la asistente.
 test.describe.configure({ mode: "serial" });
@@ -9,7 +9,7 @@ let patientId = "";
 
 test.beforeAll(async () => {
   const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!);
-  await supabase.auth.signInWithPassword({ email: "recepcion@e2e.test", password: PASSWORD });
+  await signInApi(supabase, "recepcion@e2e.test");
   const { data, error } = await supabase
     .from("patients")
     .insert({ full_name: unique("Clínico E2E"), phone: "8095551234", document_id: testCedula() })
@@ -69,14 +69,14 @@ test("asistente dental: sin facturación ni odontograma editable", async ({ page
 
 test("doctor no puede cobrar (solo la base, sin pantalla)", async () => {
   const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!);
-  await supabase.auth.signInWithPassword({ email: "doctor@e2e.test", password: PASSWORD });
+  await signInApi(supabase, "doctor@e2e.test");
   const { error } = await supabase.from("billing_charges").insert({ patient_id: patientId, description: "No permitido", amount: 100 });
   expect(error).not.toBeNull();
 });
 
 test("asistente dental no ve cobros ni a través de la auditoría (025)", async () => {
   const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!);
-  await supabase.auth.signInWithPassword({ email: "enfermeria@e2e.test", password: PASSWORD });
+  await signInApi(supabase, "enfermeria@e2e.test");
   const { data } = await supabase
     .from("audit_log")
     .select("id")

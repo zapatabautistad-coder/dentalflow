@@ -21,4 +21,8 @@ Responde siempre en español.
 2. Haz solo lo que pide la tarea; no rediseñes ni refactorices otras partes.
 3. Al terminar: `npm run build` y `npm run lint` sin errores (corrige y repite hasta que pasen).
 4. Muestra `git status` y confirma que no aparecen `.env.local` ni archivos con claves.
-5. Commit con mensaje en español y `git push origin main`.
+5. Commit con mensaje en español en una **rama nueva** y abre un Pull Request. **Nunca** `git push origin main`: `main` se publica solo en producción.
+6. **Nunca unas un PR** ni actives auto-merge: solo Darys ordena unir (ver `CLAUDE.md`).
+
+## Al revisar un Pull Request
+Sigue `.gemini/styleguide.md`. Comenta en español, solo lo que sea un problema real.

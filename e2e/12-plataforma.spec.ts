@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
-import { login, open, PASSWORD } from "./helpers";
+import { enrollMfaFromSecurityPage, login, open, PASSWORD, signInApi } from "./helpers";
 
 // admin@e2e.test es también administrador de plataforma (ver setup-local.sh).
 test.describe.configure({ mode: "serial" });
@@ -26,6 +26,9 @@ test("la plataforma da de alta una clínica y su primer admin entra", async ({ p
   await page.locator('input[name="email"]').fill(email);
   await page.locator('input[name="password"]').fill(PASSWORD);
   await page.getByRole("button", { name: "Iniciar sesión" }).click();
+  // Un admin nuevo debe activar la verificación en dos pasos antes de usar la app.
+  await enrollMfaFromSecurityPage(page);
+  await open(page, "/panel");
   await expect(page).toHaveURL(/\/panel/);
   await expect(page.getByText(clinicName).filter({ visible: true }).first()).toBeVisible();
 
@@ -44,7 +47,7 @@ test.describe("activar y desactivar clínicas", () => {
 
   async function canSignIn(email: string): Promise<boolean> {
     const client = createClient(URL, ANON);
-    const { error } = await client.auth.signInWithPassword({ email, password: PASSWORD });
+    const { error } = await signInApi(client, email);
     return !error;
   }
 
@@ -70,7 +73,7 @@ test.describe("activar y desactivar clínicas", () => {
     expect(error).toBeNull();
 
     const adminB = createClient(URL, ANON);
-    await adminB.auth.signInWithPassword({ email: "admin-b@e2e.test", password: PASSWORD });
+    await signInApi(adminB, "admin-b@e2e.test");
     const { data: updated, error: updateError } = await adminB
       .from("profiles")
       .update({ active: false, deactivated_reason: "Prueba E2E de plataforma" })

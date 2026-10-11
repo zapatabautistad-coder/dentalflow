@@ -9,6 +9,14 @@ mkdir -p "$WORK/supabase/migrations"
 cd "$WORK"
 [ -f supabase/config.toml ] || npx -y supabase@latest init --force >/dev/null
 
+# Verificación en dos pasos (TOTP): admin y doctor deben usarla (src/lib/mfa.ts) y
+# e2e/global-setup.ts la activa. En Supabase local viene apagada; en la nube, encendida.
+if grep -A3 '^\[auth\.mfa\.totp\]' supabase/config.toml | grep -q 'enabled = false'; then
+  sed -i '/^\[auth\.mfa\.totp\]/,/^\[/{s/^enroll_enabled = false/enroll_enabled = true/;s/^verify_enabled = false/verify_enabled = true/}' supabase/config.toml
+  # Si ya estaba corriendo, hay que reiniciar para que tome la configuración.
+  npx -y supabase@latest stop >/dev/null 2>&1 || true
+fi
+
 # Migraciones de producción en orden; 005 y 006 nunca se ejecutan.
 rm -f supabase/migrations/*.sql
 cp "$ROOT/e2e/local/000_plataforma.sql" supabase/migrations/20260101000000_plataforma.sql

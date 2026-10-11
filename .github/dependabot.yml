@@ -1,0 +1,18 @@
+# Solo seguridad: Dependabot NO abre PR por versiones nuevas (open-pull-requests-limit: 0).
+# Las vulnerabilidades llegan como "Dependabot alerts" (y PR de seguridad si se activan
+# "Dependabot security updates" en Settings → Code security). Decisión de Darys, 2026-10-10:
+# las actualizaciones mayores (TypeScript 7, ESLint 10) rompían el build y solo hacían ruido.
+# Para volver a recibir PR de versiones, subir el límite (p. ej. 2) en cada bloque.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 0
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 0
