@@ -2,13 +2,8 @@
 
 import Image from "next/image";
 import { useState } from "react";
+import { totpFactors, type TotpFactor } from "@/lib/mfa";
 import { createClient } from "@/lib/supabase/client";
-
-type TotpFactor = {
-  id: string;
-  status: "verified" | "unverified";
-  friendly_name?: string;
-};
 
 type Enrollment = { factorId: string; qrCode: string; secret: string };
 
@@ -49,7 +44,7 @@ export function SecurityForm({
       return false;
     }
 
-    setFactors(data.totp);
+    setFactors(totpFactors(data.all));
     setLoaded(true);
     setError(null);
     return true;
@@ -62,7 +57,25 @@ export function SecurityForm({
     setBusy(true);
     setError(null);
     setSuccess(null);
-    const { data, error: enrollError } = await createClient().auth.mfa.enroll({
+    const supabase = createClient();
+    // Un intento anterior que no se confirmó (código equivocado, página recargada)
+    // queda como factor sin verificar y bloquea uno nuevo con el mismo nombre: se borra.
+    const { data: current, error: listError } = await supabase.auth.mfa.listFactors();
+    if (listError) {
+      setBusy(false);
+      setError("security.errorEnroll");
+      return;
+    }
+    for (const factor of totpFactors(current.all)) {
+      if (factor.status !== "unverified") continue;
+      const { error: unenrollError } = await supabase.auth.mfa.unenroll({ factorId: factor.id });
+      if (unenrollError) {
+        setBusy(false);
+        setError("security.errorEnroll");
+        return;
+      }
+    }
+    const { data, error: enrollError } = await supabase.auth.mfa.enroll({
       factorType: "totp",
       friendlyName: "DentalFlow",
     });

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { requireProfile } from "@/lib/auth";
+import { totpFactors } from "@/lib/mfa";
 import { createClient } from "@/lib/supabase/server";
 import { SecurityForm } from "./security-form";
 
@@ -32,10 +33,7 @@ export default async function SecurityPage({
         required={required}
         initialRequiredNotice={params.mfa === "required"}
         initialCheckError={params.error === "check"}
-        initialFactors={(factorResult.data?.totp ?? []).map(({ id, status }) => ({
-          id,
-          status,
-        }))}
+        initialFactors={totpFactors(factorResult.data?.all ?? [])}
         initialLoadError={Boolean(factorResult.error)}
       />
     </section>
