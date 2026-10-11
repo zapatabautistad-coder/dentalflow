@@ -2,7 +2,7 @@
 
 DentalFlow tiene pacientes reales. Ante cualquier incidente: **primero detener el daño, después
 entender, al final arreglar.** No borrar nada (ni filas, ni ramas, ni registros): todo sirve de
-evidencia. Anotar cada paso con hora en la sección *Bitácora* al final.
+evidencia. Anotar cada paso con hora en la bitácora privada (ver *Bitácora* al final).
 
 Datos clave:
 - Producción: Vercel `dentalflow-navy.vercel.app`, se publica sola con cada push a `main`.
@@ -38,7 +38,7 @@ Señales: la pegaste en un chat, en un issue, en un commit, o GitHub avisa por *
 
 | Clave | Dónde se cambia | Después |
 |---|---|---|
-| `SUPABASE_SERVICE_ROLE_KEY` (salta RLS, **la más grave**) | Supabase → Project Settings → API Keys: crear una clave secreta nueva y revocar la vieja | Vercel → Settings → Environment Variables → actualizar → **Redeploy** |
+| `SUPABASE_SERVICE_ROLE_KEY` (salta RLS, **la más grave**) | Supabase → Project Settings → API Keys. Si es una clave nueva (`sb_secret_…`): crear otra y revocar la vieja. Si es la antigua `service_role` (empieza por `eyJ`): hay que rotar el *JWT secret*, y eso cambia también la clave pública (anon) y cierra todas las sesiones | Vercel → Settings → Environment Variables → actualizar la(s) clave(s) → **Redeploy** |
 | Contraseña de la base (`postgres`) | Supabase → Project Settings → Database → *Reset database password* | GitHub → Settings → Environments → `SUPABASE_DB_URL` → actualizar el secreto |
 | `IDENTITY_API_KEY` | Panel del proveedor | Vercel → actualizar → Redeploy |
 | Llave privada del respaldo (age) | Crear llave nueva (`supabase/RESPALDO.md`, paso 1) | Cambiar `BACKUP_AGE_RECIPIENT`. Los respaldos viejos los abre la llave vieja: borrar esos artefactos en Actions |
@@ -110,8 +110,10 @@ Lo hace Darys (ver `pendientes/10-revision-seguridad.md`): 2FA en GitHub, Vercel
 proteger `main` (solo por PR, CI obligatoria, "Require review from Code Owners").
 
 ## Bitácora
-Anotar aquí cada incidente: fecha y hora, qué pasó, qué se hizo, qué se cambió para que no se repita.
+**El repo es público:** la bitácora detallada (horas, cuentas, pacientes afectados, qué clave se
+filtró) se lleva **fuera del repo**, en un documento privado de Darys. Aquí solo entra, ya
+resuelto, qué regla o prevención se agregó, sin datos de pacientes ni secretos.
 
-| Fecha | Qué pasó | Qué se hizo | Prevención |
-|---|---|---|---|
-| — | — | — | — |
+| Fecha | Tipo de incidente | Prevención agregada |
+|---|---|---|
+| — | — | — |

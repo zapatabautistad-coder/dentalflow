@@ -18,7 +18,7 @@ Al revisar un PR, comenta en español y solo problemas reales. Marca como grave 
 - Datos de pacientes visibles para quien no debe (RLS, roles, otra clínica), o consultas con `select("*")`.
 - `SUPABASE_SERVICE_ROLE_KEY` o `src/lib/supabase/admin.ts` usados desde el navegador o sin comprobar admin antes.
 - Secretos, claves o `.env.local` en el diff.
-- Algo que borre datos clínicos (DELETE, botones de borrar) o que haga UPDATE/DELETE en `clinical_entries`, `odontogram_entries`, `vital_signs` o recetas.
+- Algo que borre datos clínicos (DELETE, botones de borrar) o que haga UPDATE/DELETE en `clinical_entries`, `odontogram_entries`, `vital_signs`, `prescriptions` o `prescription_items` (la receta solo se anula con motivo).
 - Tabla clínica nueva sin trigger `audit_row`, sin RLS o sin GRANT a `authenticated`; o con permiso DELETE.
 - Autor o fecha de un registro puestos por la app en vez de por la base.
 - Migración que edita una ya existente en `supabase/migrations/` (siempre va una nueva).
