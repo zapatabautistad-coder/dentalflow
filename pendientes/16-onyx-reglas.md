@@ -63,6 +63,23 @@ Agentes que **sí** tienen sentido, fuera de la consulta:
    Segmentos de baja confianza se marcan y no se usan sin confirmación.
 8. El audio no se guarda en ningún lado, ni en DentalFlow ni (por contrato) en el proveedor.
 
+### C.9 Dictado durante el tratamiento (visión de Darys, 2026-10-11)
+El doctor da órdenes a ONYX **mientras trata** al paciente, sin parar ni tocar nada.
+- **Sesión continua:** al empezar la cita, ONYX abre una sesión del paciente. Cada orden
+  ("nuevo hallazgo: caries entre 36 y 37") se agrega al borrador; ONYX confirma al oído
+  ("Anotado: caries distal de 36 y mesial de 37, ¿ambas?"). **Una sola revisión y firma al
+  final** de la cita, no después de cada orden. Ahí está el ahorro de tiempo.
+- **Activación, dos formas (se prueban en el piloto):**
+  1. **Pedal propio de ONYX** en el otro pie (el doctor ya usa un pedal para la pieza de mano;
+     deben ser distintos y en lados distintos para no confundirlos). Lo más fiable.
+  2. **Palabra "ONYX" detectada dentro del equipo:** un detector pequeño escucha solo esa
+     palabra **localmente**; nada se graba ni se envía hasta oírla, y graba solo la orden que
+     sigue. Más natural, pero hay que probar falsos disparos con el ruido de la turbina y avisar
+     de esta escucha en el consentimiento. Revisar licencia del detector (verificar).
+- **Meta de negocio, medida y no prometida:** minutos ahorrados por paciente (tiempo hasta
+  firmar) y **pacientes atendidos por día antes y después de ONYX** (sale de las citas reales en
+  DentalFlow). No se anuncia "10–15 minutos" hasta medirlo.
+
 ## Parte D — Cerebro (las reglas del prompt de Claude)
 
 1. **Salida solo en JSON con esquema fijo** (herramienta con esquema estricto). Sin texto fuera.
