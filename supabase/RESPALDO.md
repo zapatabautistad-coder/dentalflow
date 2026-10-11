@@ -9,6 +9,9 @@ con `pg_dump`, la **cifra con age** y la guarda 30 días como artefacto de GitHu
   `auth` (usuarios; contraseñas solo como hash) y `supabase_migrations`.
 - No incluye archivos de Storage (hoy no se usa).
 
+**Estado:** activo desde el 2026-10-09; verificado el 2026-10-10 (se descargó un respaldo y la
+llave privada lo abrió). Llave privada guardada en USB y en papel.
+
 ## Activarlo (una sola vez)
 
 1. **Crear la llave** en tu computadora (no en un chat ni en una IA):
@@ -22,7 +25,9 @@ con `pg_dump`, la **cifra con age** y la guarda 30 días como artefacto de GitHu
    GitHub no tienen IPv6, la conexión directa no sirve). Copia la cadena y cambia
    `[YOUR-PASSWORD]` por la contraseña de la base. Si no la sabes: Project Settings →
    Database → *Reset database password* (la app no la usa; usa las claves de la API).
-   En GitHub → pestaña *Secrets* → *New repository secret*: `SUPABASE_DB_URL` = la cadena.
+   En GitHub → Settings → **Environments** → *New environment* `SUPABASE_DB_URL` → *Deployment branches*:
+   solo `main` → *Environment secrets*: `SUPABASE_DB_URL` = la cadena. No lo guardes como secreto
+   del repo: así solo el respaldo, desde `main`, puede leerlo.
 4. **Probar**: GitHub → Actions → *Respaldo de la base* → *Run workflow*. Debe quedar en verde
    y con un artefacto `respaldo-base`.
 
