@@ -25,6 +25,7 @@ Sistema de gestión para clínicas (dentales y, más adelante, multiespecialidad
 
 ## Cómo entregar
 - **Trabaja siempre en una rama y abre un Pull Request. Nunca hagas push directo a `main`.** `main` se publica solo en producción (Vercel).
+- **Nunca unas un PR** ni actives auto-merge, aunque la CI esté verde: solo Darys ordena unir.
 - Un PR pequeño por tarea. Describe qué cambiaste y cómo lo probaste.
 - Antes de decir que terminaste, ejecuta `npm run lint`, `npm test` y `npm run build`, corrige todo hasta que pasen sin errores. Luego haz commit.
 - No cambies código que no tenga que ver con la tarea.
