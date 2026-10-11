@@ -293,4 +293,4 @@ La recepcionista usa ONYX con manos libres para tareas de recepción, nunca clí
    **v2** asistente dental: notas clínicas y signos vitales dictados (nunca odontograma ni
    recetas, igual que sus permisos actuales); **v3** ONYX Recepción (Parte L).
 5. ✅ Las migraciones de ONYX (031 y siguientes) se aplican en producción **cuando Darys esté satisfecho con ONYX** (decidido 2026-10-11). Hasta entonces, la rama no pasa a `main`.
-6. Voz de ONYX: recomendada la **voz de catálogo** (Parte F.7). Pendiente de confirmar.
+6. Voz de ONYX: voz de catálogo (Parte F.7), **voz femenina limpia** (decidido por Darys, 2026-10-11). Quién la pone (sintética o locutora) lo analiza Darys como trabajo aparte.
