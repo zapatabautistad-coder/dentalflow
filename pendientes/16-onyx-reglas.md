@@ -209,7 +209,7 @@ Ejemplo: el doctor dice "voy a extraer el 36" → ONYX al oído: "Atención: tom
 - Orden recomendado: nivel 1 primero (reglas fijas, alto valor, bajo riesgo), luego 2, luego 3.
 
 ## Parte J — Decisiones abiertas de Darys
-1. ¿Primero dictado (Nivel 1) y la consulta completa (Nivel 2) después?
+1. ✅ Primero el dictado (Nivel 1); la grabación de la consulta (Nivel 2) después (decidido 2026-10-11).
 2. ✅ Guardar la transcripción: sí (decidido 2026-10-11).
 3. ¿ONYX como actualización pagada por clínica?
 4. ¿Dicta solo el doctor o también el asistente dental (notas)?
