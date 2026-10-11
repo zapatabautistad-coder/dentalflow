@@ -189,3 +189,75 @@ Entrega: rama nueva + Pull Request con capturas de las dos pantallas. Antes de t
 `npm run lint`, `npm test` y `npm run build` deben pasar.
 ```
 Fase 2 (después, Claude): exigir aal2 también en la base (RLS) para admin y doctor.
+
+### C2 · Huella digital (WebAuthn) como segundo paso — laptop y celular, opcional
+Diseño (Claude, 2026-10-11): la huella **reemplaza escribir el código de 6 dígitos**, no la contraseña.
+Supabase Auth la registra como factor MFA `webauthn`; al verificarla la sesión queda en aal2, igual que
+con el código, así que la base no cambia de lógica. La migración **032** (`mfa_satisfied()` cuenta
+`webauthn` igual que `totp`) ya está escrita por Claude; se aplica en producción antes de unir este PR.
+Inicio de sesión **sin contraseña** (passkey sola, `signInWithPasskey`) queda fuera: no está claro que dé
+aal2 y saltaría la regla de MFA de la base.
+
+Antes de unir (Darys, en el panel de Supabase): Authentication → Multi-Factor → activar **WebAuthn**
+(enroll y verify) y fijar el dominio definitivo como Relying Party (`dentalflow-navy.vercel.app`).
+Si el dominio cambia después, las huellas registradas dejan de servir y hay que registrarlas de nuevo.
+
+```
+Lee CLAUDE.md, AGENTS.md y .github/copilot-instructions.md antes de empezar.
+Esta versión de Next.js es distinta a la que conoces: revisa node_modules/next/dist/docs/ antes de escribir código.
+
+Contexto: hoy admin y doctor (y quien quiera) usan verificación en dos pasos con app autenticadora (TOTP):
+/seguridad para activarla y /login/verificar para escribir el código. La base exige sesión aal2 a quien
+tiene factor (migración 031; la 032 ya cuenta también factores 'webauthn'). NO toques supabase/migrations.
+
+Objetivo: permitir, de forma OPCIONAL, usar la huella del dispositivo (Touch ID en Mac, Windows Hello en
+laptop, lector de huella o desbloqueo del celular) en lugar de escribir el código de 6 dígitos.
+Usa la API de Supabase ya instalada (@supabase/supabase-js 2.117): supabase.auth.mfa.enroll({ factorType:
+"webauthn", friendlyName }) / challenge / verify, o los helpers de supabase.auth.mfa.webauthn
+(revisa node_modules/@supabase/auth-js/dist/main/lib/types.d.ts y webauthn.d.ts). No uses signInWithPasskey.
+
+1. /seguridad: sección "Huella digital" visible SOLO si la app autenticadora ya está activa (queda de
+   respaldo si se pierde el equipo) y SOLO si el navegador lo soporta
+   (window.PublicKeyCredential y PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()).
+   Si no lo soporta, no se muestra nada (nada de botones que no hagan nada).
+   - "Agregar huella de este dispositivo": pide un nombre (p. ej. "Laptop consultorio", "Mi celular"),
+     hace enroll + verify. Se pueden tener varias (una por equipo).
+   - Lista de huellas registradas (nombre y fecha) con "Quitar" en cada una (unenroll).
+   - Quitar la app autenticadora mientras haya huellas: no permitido; primero quitar las huellas.
+2. /login/verificar: si el usuario tiene un factor webauthn verificado y el navegador lo soporta, mostrar
+   primero el botón "Usar huella" (challenge + verify webauthn). Debajo, siempre, "Usar código de la app
+   autenticadora" con el formulario actual. Si la huella falla o se cancela, mensaje claro y queda el código.
+3. Donde hoy se busca un factor verificado solo de tipo "totp" para decidir si pedir el segundo paso
+   (src/lib/supabase/proxy.ts, src/app/login/actions.ts, src/app/login/verificar/page.tsx y
+   verify-mfa-form.tsx), contar también "webauthn". La regla vive en src/lib/mfa.ts (getMfaDecision):
+   agrega una función pura hasVerifiedSecondFactor(factors) con pruebas Vitest en src/lib/mfa.test.ts
+   (totp verificado → true; webauthn verificado → true; solo no verificados → false; vacío → false).
+   Admin y doctor siguen obligados a activar la app autenticadora primero.
+4. E2E (Supabase local): en e2e/setup-local.sh activa [auth.mfa.web_authn] enroll_enabled y
+   verify_enabled y [auth.webauthn] con rp_id "localhost" y rp_origins ["http://localhost:3100"].
+   Prueba nueva e2e/13-huella.spec.ts con el autenticador virtual de Chromium (CDP:
+   WebAuthn.enable + WebAuthn.addVirtualAuthenticator con protocol "ctap2", transport "internal",
+   hasUserVerification e isUserVerified en true): un usuario con TOTP agrega huella en /seguridad, cierra
+   sesión, entra con contraseña y pasa /login/verificar con "Usar huella". Si no es viable, explica en
+   el PR por qué y cómo se probó a mano en Mac/Windows/celular.
+5. Textos fijos en español e inglés con data-i18n. Diseño actual (vidrio claro, azul cielo); no cambies
+   barra lateral, ícono ni paleta. Ícono de huella simple en línea con los demás.
+6. Al desactivar una cuenta (deactivateAccount en src/app/(app)/accounts/actions.ts), después del bloqueo
+   en Auth (ban_duration), borra TODOS sus factores de segundo paso (huellas y app autenticadora) con la
+   API de administración: admin.auth.admin.mfa.listFactors({ userId }) y deleteFactor({ id, userId }).
+   Así, si se reactiva, empieza de cero: admin y doctor tendrán que activar la app autenticadora otra vez
+   (getMfaDecision → "activar"). Orden: perfil inactivo → bloqueo → borrar factores. Si borrar falla, la
+   cuenta sigue desactivada y bloqueada; muestra "La cuenta quedó desactivada y bloqueada, pero no se
+   pudieron quitar sus métodos de verificación. Inténtalo de nuevo." Reactivar no restaura nada.
+   Agrega a e2e/13-huella.spec.ts (o a la prueba de cuentas que ya exista): desactivar un usuario con
+   huella → no tiene factores; reactivarlo → al entrar, si es doctor, va a /seguridad.
+
+Reglas:
+- No guardes credenciales, claves públicas ni datos biométricos en tablas propias ni en logs: la huella
+  nunca sale del dispositivo y Supabase guarda solo la clave pública. No inventes datos.
+- Errores en la URL solo como clave conocida (errorKey), nunca texto libre.
+- No unas el PR ni actives auto-merge.
+
+Entrega: rama nueva + PR con capturas (laptop y celular). Antes de terminar, `npm run lint`, `npm test`
+y `npm run build` deben pasar.
+```
