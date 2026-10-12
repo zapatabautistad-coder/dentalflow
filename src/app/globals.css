@@ -356,7 +356,7 @@ body {
   }
 }
 
-/* Ícono principal: diente azul de cristal (el de la imagen de venta) sobre un orbe de
+/* Ícono del login: diente azul de cristal (el de la imagen de venta) sobre un orbe de
    cristal blanco, con brillo arriba y reflejo celeste abajo. Todo en CSS, nítido a
    cualquier tamaño; el diente se sirve ya reducido para cada tamaño (brand-mark.tsx).
    isolation + z-index -1: el brillo queda detrás del diente, no le quita contraste. */
@@ -387,4 +387,23 @@ body {
   background:
     radial-gradient(60% 34% at 40% 10%, rgb(255 255 255 / 0.9), transparent 70%),
     linear-gradient(128deg, transparent 52%, rgb(255 255 255 / 0.38) 60%, transparent 68%);
+}
+
+/* Ícono de la barra lateral: orbe de vidrio translúcido, mismo material que la barra.
+   Deja ver el azul de detrás, así el celeste y el plateado del diente se leen (sobre
+   blanco se perdían) y el diente se ve de cristal. */
+.crystal-orb-glass {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: 9999px;
+  background: radial-gradient(circle at 32% 24%, rgb(255 255 255 / 0.55), rgb(255 255 255 / 0.18) 70%);
+  border: 1px solid rgb(255 255 255 / 0.85);
+  box-shadow:
+    inset 0 1px 1px #fff,
+    0 0 0 1px rgb(14 155 243 / 0.18),
+    0 8px 18px rgb(7 102 181 / 0.22);
+  /* El prefijo va antes: si va después, al compilar se pierde el estándar (Chrome). */
+  -webkit-backdrop-filter: blur(10px) saturate(160%);
+  backdrop-filter: blur(10px) saturate(160%);
 }

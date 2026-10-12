@@ -385,9 +385,9 @@ function Brand({ compact = false, clinicName, onNavigate }: { compact?: boolean;
           compact ? "h-12 w-12" : "h-20 w-20"
         }`}
       >
-        {/* Ícono: diente azul de cristal sobre orbe de cristal blanco (quieto).
+        {/* Ícono: diente azul de cristal sobre orbe de vidrio translúcido (quieto).
             sizes: ancho del diente (80 % del alto del orbe de 48 u 80 px). */}
-        <span className="crystal-orb flex h-full w-full items-center justify-center">
+        <span className="crystal-orb-glass flex h-full w-full items-center justify-center">
           <BrandMark
             sizes={compact ? "29.2px" : "48.6px"}
             className="relative h-[80%] w-auto [filter:drop-shadow(0_3px_4px_rgba(7,102,181,0.28))]"
