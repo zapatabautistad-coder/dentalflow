@@ -191,6 +191,9 @@ Entrega: rama nueva + Pull Request con capturas de las dos pantallas. Antes de t
 Fase 2 (después, Claude): exigir aal2 también en la base (RLS) para admin y doctor.
 
 ### C2 · Huella digital (WebAuthn) como segundo paso — laptop y celular, opcional
+**EN PAUSA (2026-10-12):** Supabase en la nube no permite activar WebAuthn como segundo paso. PR 48 en
+borrador; ver `14-huella-webauthn.md`.
+
 Diseño (Claude, 2026-10-11): la huella **reemplaza escribir el código de 6 dígitos**, no la contraseña.
 Supabase Auth la registra como factor MFA `webauthn`; al verificarla la sesión queda en aal2, igual que
 con el código, así que la base no cambia de lógica. La migración **032** (`mfa_satisfied()` cuenta
