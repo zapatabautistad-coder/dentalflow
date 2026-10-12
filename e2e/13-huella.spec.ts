@@ -44,6 +44,23 @@ test("admin puede agregar una huella y usarla para verificar el inicio", async (
   await expect(page).toHaveURL(/\/panel/);
 });
 
+// Cada huella queda ligada a su equipo: con dos, la de este equipo debe servir aunque
+// no sea la primera registrada. Un autenticador virtual nuevo hace de segundo equipo.
+test("con huellas en dos equipos, se entra con la del equipo que se usa", async ({ page }) => {
+  await login(page, "admin");
+  await enableVirtualAuthenticator(page);
+  await addFingerprint(page, "Celular E2E");
+  await logout(page);
+
+  await page.locator('input[name="email"]').fill("admin@e2e.test");
+  await page.locator('input[name="password"]').fill(PASSWORD);
+  await page.getByRole("button", { name: "Iniciar sesión" }).click();
+  await expect(page).toHaveURL(/\/login\/verificar/);
+  await expect(page.getByRole("button", { name: /Laptop E2E/ })).toBeVisible();
+  await page.getByRole("button", { name: /Celular E2E/ }).click();
+  await expect(page).toHaveURL(/\/panel/);
+});
+
 test("al desactivar una cuenta se eliminan sus factores y al reactivarla debe configurar MFA", async ({
   browser,
 }) => {

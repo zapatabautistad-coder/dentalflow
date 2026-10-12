@@ -47,6 +47,16 @@ export function webauthnFactors(all: MfaFactor[]): MfaFactor[] {
   return all.filter((factor) => factor.factor_type === "webauthn");
 }
 
+// Cada huella es un factor aparte ligado a un solo equipo: Supabase solo acepta la
+// del factor que se pide. Con varias (laptop y celular) hay que dejar elegir cuál.
+export type WebauthnOption = { id: string; name: string };
+
+export function verifiedWebauthnOptions(all: MfaFactor[]): WebauthnOption[] {
+  return webauthnFactors(all)
+    .filter((factor) => factor.status === "verified")
+    .map(({ id, friendly_name }) => ({ id, name: friendly_name ?? "" }));
+}
+
 // Supabase pide por defecto una llave de seguridad USB (cross-platform). Para usar la
 // huella o el desbloqueo del propio equipo (Touch ID, Windows Hello, celular) se pide
 // el autenticador del dispositivo y verificación obligatoria (huella, rostro o PIN).

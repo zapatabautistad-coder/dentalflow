@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { getMfaDecision, hasVerifiedSecondFactor, totpFactors } from "./mfa";
+import {
+  getMfaDecision,
+  hasVerifiedSecondFactor,
+  totpFactors,
+  verifiedWebauthnOptions,
+} from "./mfa";
 
 describe("hasVerifiedSecondFactor", () => {
   it("considera un TOTP verificado", () => {
@@ -47,6 +52,22 @@ describe("totpFactors", () => {
     ).toEqual([
       { id: "a", status: "verified" },
       { id: "b", status: "unverified" },
+    ]);
+  });
+});
+
+describe("verifiedWebauthnOptions", () => {
+  it("devuelve cada huella verificada con su nombre", () => {
+    expect(
+      verifiedWebauthnOptions([
+        { id: "a", factor_type: "webauthn", status: "verified", friendly_name: "Laptop" },
+        { id: "b", factor_type: "webauthn", status: "verified", friendly_name: "Celular" },
+        { id: "c", factor_type: "webauthn", status: "unverified", friendly_name: "Tablet" },
+        { id: "d", factor_type: "totp", status: "verified" },
+      ])
+    ).toEqual([
+      { id: "a", name: "Laptop" },
+      { id: "b", name: "Celular" },
     ]);
   });
 });

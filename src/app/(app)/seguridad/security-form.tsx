@@ -216,6 +216,14 @@ export function SecurityForm({
     setError(null);
     setSuccess(null);
     const supabase = createClient();
+    // Si se canceló el aviso del equipo, Supabase deja la huella a medio registrar y
+    // rechaza otra con el mismo nombre: se quita antes de intentarlo de nuevo.
+    const { data: current } = await supabase.auth.mfa.listFactors();
+    for (const pending of webauthnFactors(current?.all ?? [])) {
+      if (pending.status !== "verified" && pending.friendly_name === name) {
+        await supabase.auth.mfa.unenroll({ factorId: pending.id });
+      }
+    }
     const { error: enrollError } = await supabase.auth.mfa.webauthn.register({
       friendlyName: name,
       webauthn: {

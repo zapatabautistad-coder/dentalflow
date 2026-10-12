@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { hasVerifiedSecondFactor } from "@/lib/mfa";
+import { hasVerifiedSecondFactor, verifiedWebauthnOptions } from "@/lib/mfa";
 import { createClient } from "@/lib/supabase/server";
 import { LanguageBridge } from "../../(app)/language-bridge";
 import { VerifyMfaForm } from "./verify-mfa-form";
@@ -16,9 +16,7 @@ export default async function VerifyMfaPage() {
     ]);
   const allFactors = factors?.all ?? [];
   const verifiedTotp = factors?.totp.find((factor) => factor.status === "verified");
-  const verifiedWebauthn = allFactors.find(
-    (factor) => factor.factor_type === "webauthn" && factor.status === "verified"
-  );
+  const verifiedWebauthn = verifiedWebauthnOptions(allFactors);
 
   if (
     !factorError &&
@@ -42,7 +40,7 @@ export default async function VerifyMfaPage() {
         </div>
         <VerifyMfaForm
           initialTotpFactorId={verifiedTotp?.id ?? null}
-          initialWebauthnFactorId={verifiedWebauthn?.id ?? null}
+          initialWebauthnFactors={verifiedWebauthn}
           initialLoadError={Boolean(factorError || assuranceError)}
         />
       </section>

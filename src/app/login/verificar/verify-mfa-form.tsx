@@ -2,7 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { WEBAUTHN_REQUEST_OPTIONS } from "@/lib/mfa";
+import {
+  verifiedWebauthnOptions,
+  WEBAUTHN_REQUEST_OPTIONS,
+  type WebauthnOption,
+} from "@/lib/mfa";
 import { createClient } from "@/lib/supabase/client";
 import { logout } from "../../(app)/actions";
 
@@ -10,20 +14,18 @@ type VerifiedFactor = { id: string };
 
 export function VerifyMfaForm({
   initialTotpFactorId,
-  initialWebauthnFactorId,
+  initialWebauthnFactors,
   initialLoadError,
 }: {
   initialTotpFactorId: string | null;
-  initialWebauthnFactorId: string | null;
+  initialWebauthnFactors: WebauthnOption[];
   initialLoadError: boolean;
 }) {
   const router = useRouter();
   const [factor, setFactor] = useState<VerifiedFactor | null>(
     initialTotpFactorId ? { id: initialTotpFactorId } : null
   );
-  const [webauthnFactor, setWebauthnFactor] = useState<VerifiedFactor | null>(
-    initialWebauthnFactorId ? { id: initialWebauthnFactorId } : null
-  );
+  const [webauthnFactors, setWebauthnFactors] = useState<WebauthnOption[]>(initialWebauthnFactors);
   const [platformAvailable, setPlatformAvailable] = useState(false);
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
@@ -74,23 +76,19 @@ export function VerifyMfaForm({
     }
 
     const verified = factors.totp.find((item) => item.status === "verified");
-    const verifiedWebauthn = factors.all.find(
-      (item) => item.factor_type === "webauthn" && item.status === "verified"
-    );
     if (assurance.currentLevel === "aal2") {
       router.replace("/panel");
       return;
     }
     setFactor(verified ? { id: verified.id } : null);
-    setWebauthnFactor(verifiedWebauthn ? { id: verifiedWebauthn.id } : null);
+    setWebauthnFactors(verifiedWebauthnOptions(factors.all));
   };
 
-  const verifyWithFingerprint = async () => {
-    if (!webauthnFactor) return;
+  const verifyWithFingerprint = async (factorId: string) => {
     setBusy(true);
     setError(null);
     const { error: verifyError } = await createClient().auth.mfa.webauthn.authenticate({
-      factorId: webauthnFactor.id,
+      factorId,
       webauthn: {
         rpId: window.location.hostname,
         rpOrigins: [window.location.origin],
@@ -104,6 +102,8 @@ export function VerifyMfaForm({
     router.replace("/panel");
     router.refresh();
   };
+
+  const showFingerprint = platformAvailable && webauthnFactors.length > 0;
 
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -157,26 +157,34 @@ export function VerifyMfaForm({
         <p className="text-sm text-slate-600" data-i18n="security.loading">
           Cargando la configuración de seguridad…
         </p>
-      ) : factor || webauthnFactor ? (
+      ) : factor || webauthnFactors.length > 0 ? (
         <div className="space-y-4">
-          {platformAvailable && webauthnFactor && (
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => void verifyWithFingerprint()}
-              className="glass-button flex min-h-11 w-full items-center justify-center gap-2 text-sm font-semibold"
-            >
-              <FingerprintIcon />
-              <span data-i18n="security.useFingerprint">Usar huella</span>
-            </button>
-          )}
+          {/* Una huella por equipo: con varias, cada botón lleva el nombre del suyo. */}
+          {showFingerprint &&
+            webauthnFactors.map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                disabled={busy}
+                onClick={() => void verifyWithFingerprint(option.id)}
+                className="glass-button flex min-h-11 w-full items-center justify-center gap-2 px-4 text-sm font-semibold"
+              >
+                <FingerprintIcon />
+                <span data-i18n="security.useFingerprint">Usar huella</span>
+                {webauthnFactors.length > 1 && option.name && (
+                  <span className="min-w-0 truncate font-normal">· {option.name}</span>
+                )}
+              </button>
+            ))}
           {factor && (
             <>
-              <div className="flex items-center gap-3 text-xs text-slate-500" aria-hidden="true">
-                <span className="h-px flex-1 bg-[#0E9BF3]/20" />
-                <span data-i18n="security.orCode">o usa el código</span>
-                <span className="h-px flex-1 bg-[#0E9BF3]/20" />
-              </div>
+              {showFingerprint && (
+                <div className="flex items-center gap-3 text-xs text-slate-500" aria-hidden="true">
+                  <span className="h-px flex-1 bg-[#0E9BF3]/20" />
+                  <span data-i18n="security.orCode">o usa el código</span>
+                  <span className="h-px flex-1 bg-[#0E9BF3]/20" />
+                </div>
+              )}
               <form onSubmit={submit} className="space-y-4">
           <label className="flex flex-col gap-1.5 text-sm font-medium text-slate-700">
             <span data-i18n="security.code">Código de 6 dígitos</span>
