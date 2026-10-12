@@ -17,6 +17,24 @@ if grep -A3 '^\[auth\.mfa\.totp\]' supabase/config.toml | grep -q 'enabled = fal
   npx -y supabase@latest stop >/dev/null 2>&1 || true
 fi
 
+# Huella (WebAuthn, prompt C2). WebAuthn no acepta IP como dominio: la prueba 13 usa
+# http://localhost:3100. Si la configuración cambia, hay que reiniciar para que la tome.
+if ! grep -q '^rp_display_name = "DentalFlow"' supabase/config.toml; then
+  sed -i '/^\[auth\.mfa\.web_authn\]/,/^$/d;/^\[auth\.webauthn\]/,/^$/d' supabase/config.toml
+  cat >> supabase/config.toml <<'TOML'
+
+[auth.mfa.web_authn]
+enroll_enabled = true
+verify_enabled = true
+
+[auth.webauthn]
+rp_display_name = "DentalFlow"
+rp_id = "localhost"
+rp_origins = ["http://localhost:3100"]
+TOML
+  npx -y supabase@latest stop >/dev/null 2>&1 || true
+fi
+
 # Migraciones de producción en orden; 005 y 006 nunca se ejecutan.
 rm -f supabase/migrations/*.sql
 cp "$ROOT/e2e/local/000_plataforma.sql" supabase/migrations/20260101000000_plataforma.sql

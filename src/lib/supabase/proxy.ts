@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { USER_EMAIL_HEADER, USER_ID_HEADER } from "@/lib/auth-headers";
-import { getMfaDecision } from "@/lib/mfa";
+import { getMfaDecision, hasVerifiedSecondFactor } from "@/lib/mfa";
 
 // Verificación en dos pasos (ver src/lib/mfa.ts).
 const VERIFY_PATH = "/login/verificar";
@@ -90,10 +90,11 @@ export async function updateSession(request: NextRequest) {
       return redirectKeepingCookies(request, response, `${SECURITY_PATH}?error=check`);
     }
 
-    const hasVerifiedTotp = (user.factors ?? []).some(
-      (factor) => factor.factor_type === "totp" && factor.status === "verified"
+    const decision = getMfaDecision(
+      profile.role,
+      hasVerifiedSecondFactor(user.factors ?? []),
+      assurance.currentLevel
     );
-    const decision = getMfaDecision(profile.role, hasVerifiedTotp, assurance.currentLevel);
 
     if (decision === "verificar") {
       return redirectKeepingCookies(request, response, VERIFY_PATH);

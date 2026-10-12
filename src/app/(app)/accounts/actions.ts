@@ -13,6 +13,9 @@ export type AccountFormState = { error?: string; success?: string } | undefined;
 const MISSING_KEY_ERROR =
   "Falta configurar la clave del servidor (SUPABASE_SERVICE_ROLE_KEY). Avísale al encargado técnico.";
 
+const FACTORS_NOT_REMOVED_ERROR =
+  "La cuenta quedó desactivada y bloqueada, pero no se pudieron quitar sus métodos de verificación. Inténtalo de nuevo.";
+
 function isRole(value: string): value is Role {
   return value in ROLE_LABELS;
 }
@@ -136,10 +139,11 @@ export async function deactivateAccount(
   // Primero el perfil: al quedar inactivo pierde el acceso a los datos al
   // instante (RLS). Luego se bloquea el inicio de sesión en Auth.
   const supabase = await createClient();
-  const { error } = await supabase
+  const { data: updated, error } = await supabase
     .from("profiles")
     .update({ active: false, deactivated_reason: reason })
-    .eq("id", userId);
+    .eq("id", userId)
+    .select("id");
   if (error) {
     return {
       error: error.message.includes("al menos un administrador")
@@ -147,6 +151,9 @@ export async function deactivateAccount(
         : "No se pudo desactivar la cuenta. Inténtalo de nuevo.",
     };
   }
+  // Sin fila actualizada (otra clínica o id inexistente) no se toca nada en Auth:
+  // el bloqueo y el borrado de factores usan la clave de servicio, que salta RLS.
+  if (!updated?.length) return { error: "No se pudo desactivar la cuenta. Inténtalo de nuevo." };
 
   const { error: banError } = await admin.auth.admin.updateUserById(userId, { ban_duration: BAN_FOREVER });
   revalidatePath("/accounts");
@@ -155,6 +162,14 @@ export async function deactivateAccount(
       error:
         "La cuenta quedó desactivada y ya no ve ningún dato, pero no se pudo bloquear su inicio de sesión. Inténtalo de nuevo.",
     };
+  }
+
+  const { data: factors, error: factorsError } = await admin.auth.admin.mfa.listFactors({ userId });
+  if (factorsError) return { error: FACTORS_NOT_REMOVED_ERROR };
+
+  for (const factor of factors.factors) {
+    const { error: deleteError } = await admin.auth.admin.mfa.deleteFactor({ id: factor.id, userId });
+    if (deleteError) return { error: FACTORS_NOT_REMOVED_ERROR };
   }
   return undefined;
 }

@@ -1,8 +1,14 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
-import { totpFactors, type TotpFactor } from "@/lib/mfa";
+import { useEffect, useState } from "react";
+import {
+  totpFactors,
+  type MfaFactor,
+  type TotpFactor,
+  WEBAUTHN_CREATE_OPTIONS,
+  webauthnFactors,
+} from "@/lib/mfa";
 import { createClient } from "@/lib/supabase/client";
 
 type Enrollment = { factorId: string; qrCode: string; secret: string };
@@ -12,15 +18,20 @@ export function SecurityForm({
   initialRequiredNotice,
   initialCheckError,
   initialFactors,
+  initialWebauthnFactors,
   initialLoadError,
 }: {
   required: boolean;
   initialRequiredNotice: boolean;
   initialCheckError: boolean;
   initialFactors: TotpFactor[];
+  initialWebauthnFactors: MfaFactor[];
   initialLoadError: boolean;
 }) {
   const [factors, setFactors] = useState<TotpFactor[]>(initialFactors);
+  const [webauthn, setWebauthn] = useState<MfaFactor[]>(initialWebauthnFactors);
+  const [platformAvailable, setPlatformAvailable] = useState(false);
+  const [friendlyName, setFriendlyName] = useState("");
   const [enrollment, setEnrollment] = useState<Enrollment | null>(null);
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
@@ -35,6 +46,31 @@ export function SecurityForm({
   );
   const [success, setSuccess] = useState<string | null>(null);
 
+  useEffect(() => {
+    let cancelled = false;
+    const checkSupport = async () => {
+      if (
+        typeof window === "undefined" ||
+        !window.PublicKeyCredential ||
+        typeof window.PublicKeyCredential
+          .isUserVerifyingPlatformAuthenticatorAvailable !== "function"
+      ) {
+        return;
+      }
+      try {
+        const available =
+          await window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+        if (!cancelled) setPlatformAvailable(available);
+      } catch {
+        if (!cancelled) setPlatformAvailable(false);
+      }
+    };
+    void checkSupport();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const refreshFactors = async () => {
     setLoading(true);
     const { data, error: factorError } = await createClient().auth.mfa.listFactors();
@@ -45,6 +81,7 @@ export function SecurityForm({
     }
 
     setFactors(totpFactors(data.all));
+    setWebauthn(webauthnFactors(data.all));
     setLoaded(true);
     setError(null);
     return true;
@@ -52,6 +89,7 @@ export function SecurityForm({
 
   const activeFactor = factors.find((factor) => factor.status === "verified");
   const pendingFactor = factors.find((factor) => factor.status === "unverified");
+  const activeWebauthn = webauthn.filter((factor) => factor.status === "verified");
 
   const startEnrollment = async () => {
     setBusy(true);
@@ -140,6 +178,10 @@ export function SecurityForm({
   const removeActiveFactor = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!activeFactor) return;
+    if (activeWebauthn.length > 0) {
+      setError("security.removeTotpFirst");
+      return;
+    }
     setBusy(true);
     setError(null);
     const verified = await verifyCode(activeFactor.id);
@@ -159,6 +201,59 @@ export function SecurityForm({
 
     setCode("");
     setSuccess("security.successRemoved");
+    await refreshFactors();
+  };
+
+  const addWebauthn = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const name = friendlyName.trim();
+    if (!name || name.length > 100) {
+      setError("security.errorFingerprintName");
+      return;
+    }
+
+    setBusy(true);
+    setError(null);
+    setSuccess(null);
+    const supabase = createClient();
+    // Si se canceló el aviso del equipo, Supabase deja la huella a medio registrar y
+    // rechaza otra con el mismo nombre: se quita antes de intentarlo de nuevo.
+    const { data: current } = await supabase.auth.mfa.listFactors();
+    for (const pending of webauthnFactors(current?.all ?? [])) {
+      if (pending.status !== "verified" && pending.friendly_name === name) {
+        await supabase.auth.mfa.unenroll({ factorId: pending.id });
+      }
+    }
+    const { error: enrollError } = await supabase.auth.mfa.webauthn.register({
+      friendlyName: name,
+      webauthn: {
+        rpId: window.location.hostname,
+        rpOrigins: [window.location.origin],
+      },
+    }, WEBAUTHN_CREATE_OPTIONS);
+    setBusy(false);
+    if (enrollError) {
+      setError("security.errorFingerprint");
+      return;
+    }
+
+    setFriendlyName("");
+    setSuccess("security.fingerprintAdded");
+    await refreshFactors();
+  };
+
+  const removeWebauthn = async (factorId: string) => {
+    setBusy(true);
+    setError(null);
+    const { error: unenrollError } = await createClient().auth.mfa.unenroll({
+      factorId,
+    });
+    setBusy(false);
+    if (unenrollError) {
+      setError("security.errorFingerprintRemove");
+      return;
+    }
+    setSuccess("security.fingerprintRemoved");
     await refreshFactors();
   };
 
@@ -245,7 +340,8 @@ export function SecurityForm({
           <span data-i18n="security.retry">Reintentar</span>
         </button>
       ) : activeFactor ? (
-        <div className="crystal-card space-y-4 rounded-[20px] p-5 sm:p-6">
+        <div className="space-y-5">
+          <div className="crystal-card space-y-4 rounded-[20px] p-5 sm:p-6">
           <div>
             <h2 className="text-base font-black text-[#0F172A]" data-i18n="security.active">
               Verificación en dos pasos activa
@@ -254,7 +350,7 @@ export function SecurityForm({
               Tu cuenta está protegida con una app autenticadora.
             </p>
           </div>
-          <form onSubmit={removeActiveFactor} className="space-y-3 border-t border-[#0E9BF3]/15 pt-4">
+            <form onSubmit={removeActiveFactor} className="space-y-3 border-t border-[#0E9BF3]/15 pt-4">
             <label className="flex flex-col gap-1.5 text-sm font-medium text-slate-700">
               <span data-i18n="security.confirmRemoval">Confirma con un código de la app para quitarla.</span>
               <input
@@ -274,7 +370,69 @@ export function SecurityForm({
                 {busy ? "Procesando…" : "Quitar verificación en dos pasos"}
               </span>
             </button>
-          </form>
+            </form>
+          </div>
+          {platformAvailable && (
+            <div className="crystal-card space-y-4 rounded-[20px] p-5 sm:p-6">
+              <div className="flex items-start gap-3">
+                <FingerprintIcon />
+                <div>
+                  <h2 className="text-base font-black text-[#0F172A]" data-i18n="security.fingerprintTitle">
+                    Huella digital
+                  </h2>
+                  <p className="mt-1 text-sm text-slate-600" data-i18n="security.fingerprintHint">
+                    Usa Touch ID, Windows Hello o el desbloqueo de tu dispositivo como alternativa.
+                  </p>
+                </div>
+              </div>
+              <form onSubmit={addWebauthn} className="space-y-3 border-t border-[#0E9BF3]/15 pt-4">
+                <label className="flex flex-col gap-1.5 text-sm font-medium text-slate-700">
+                  <span data-i18n="security.fingerprintName">Nombre de este dispositivo</span>
+                  <input
+                    value={friendlyName}
+                    onChange={(event) => setFriendlyName(event.target.value)}
+                    maxLength={100}
+                    required
+                    className="glass-input"
+                    placeholder="Ej.: Laptop consultorio"
+                    data-i18n-placeholder="security.fingerprintNamePlaceholder"
+                  />
+                </label>
+                <button type="submit" disabled={busy} className="glass-button min-h-11 px-4 text-sm font-semibold">
+                  <span data-i18n={busy ? "security.working" : "security.fingerprintAdd"}>
+                    {busy ? "Procesando…" : "Agregar huella de este dispositivo"}
+                  </span>
+                </button>
+              </form>
+              {activeWebauthn.length > 0 && (
+                <ul className="space-y-2 border-t border-[#0E9BF3]/15 pt-4">
+                  {activeWebauthn.map((factor) => (
+                    <li key={factor.id} className="flex items-center justify-between gap-3 text-sm">
+                      <span className="min-w-0">
+                        <span className="block truncate font-semibold text-slate-700">
+                          {factor.friendly_name || "Dispositivo sin nombre"}
+                        </span>
+                        {factor.created_at && (
+                          <time dateTime={factor.created_at} className="text-xs text-slate-500">
+                            {new Date(factor.created_at).toLocaleDateString()}
+                          </time>
+                        )}
+                      </span>
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => void removeWebauthn(factor.id)}
+                        className="text-sm font-semibold text-[#0766B5] hover:underline"
+                        data-i18n="security.fingerprintRemove"
+                      >
+                        Quitar
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
         </div>
       ) : pendingFactor && !enrollment ? (
         <div className="crystal-card space-y-4 rounded-[20px] p-5 sm:p-6">
@@ -360,5 +518,13 @@ export function SecurityForm({
         </div>
       )}
     </div>
+  );
+}
+
+function FingerprintIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" className="mt-0.5 h-7 w-7 shrink-0 text-[#0E9BF3]" fill="none" stroke="currentColor" strokeWidth="1.7">
+      <path strokeLinecap="round" d="M12 3a7 7 0 0 0-7 7m14 0a7 7 0 0 0-7-7m-4 7a4 4 0 0 1 8 0c0 5-1 8-4 11m-4-11a4 4 0 0 1 8 0c0 3-.4 5.3-1.4 7.2M8 10a4 4 0 0 1 8 0c0 4.8-1.3 8-4 10.5M12 10c1.1 0 2 .9 2 2 0 2.6-.4 4.8-1.2 6.5" />
+    </svg>
   );
 }
