@@ -1,6 +1,6 @@
 > **Regla: responder siempre en español, breve y paso a paso.**
 
-Antes de escribir código, lee **`CLAUDE.md`** (fuente de verdad del proyecto) y **`AGENTS.md`**. Esta versión de Next.js tiene cambios: lee la guía relevante en `node_modules/next/dist/docs/` antes de usar una API (por ejemplo, `middleware` se llama `proxy`).
+Antes de escribir código, lee **`CLAUDE.md`** (fuente de verdad del proyecto) y **`AGENTS.md`**. Si la tarea toca un módulo (facturación, recetas, odontograma, etc.), lee también su archivo en **`.claude/rules/`**: ahí están las reglas de ese módulo. Esta versión de Next.js tiene cambios: lee la guía relevante en `node_modules/next/dist/docs/` antes de usar una API (por ejemplo, `middleware` se llama `proxy`).
 
 # DentalFlow
 
