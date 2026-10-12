@@ -164,11 +164,8 @@ test("nadie puede cambiar su clinic_id", async () => {
 
 // 033: una cita o un historial no se pueden pasar a un paciente de otra clínica.
 test("no se cambia el paciente de una cita ni de un historial (033)", async () => {
-  const { data: appt, error: apptError } = await recepA
-    .from("appointments")
-    .insert({ patient_id: patientA.id, starts_at: "2031-03-04T09:00:00-04:00", duration_minutes: 30 })
-    .select("id")
-    .single();
+  // Una cita ya existente de la clínica A (las crean 02 y 03).
+  const { data: appt, error: apptError } = await recepA.from("appointments").select("id").limit(1).single();
   expect(apptError).toBeNull();
 
   const { error: moveAppt } = await recepA.from("appointments").update({ patient_id: patientB.id }).eq("id", appt!.id);
