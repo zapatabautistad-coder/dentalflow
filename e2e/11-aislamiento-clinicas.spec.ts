@@ -161,3 +161,21 @@ test("nadie puede cambiar su clinic_id", async () => {
   const { data: movedA } = await adminA.from("clinics").update({ id: clinicB }).eq("id", clinicA).select("id");
   expect(movedA ?? []).toHaveLength(0);
 });
+
+// 033: una cita o un historial no se pueden pasar a un paciente de otra clínica.
+test("no se cambia el paciente de una cita ni de un historial (033)", async () => {
+  // Una cita ya existente de la clínica A (las crean 02 y 03).
+  const { data: appt, error: apptError } = await recepA.from("appointments").select("id").limit(1).single();
+  expect(apptError).toBeNull();
+
+  const { error: moveAppt } = await recepA.from("appointments").update({ patient_id: patientB.id }).eq("id", appt!.id);
+  expect(moveAppt?.message).toContain("El paciente de un registro no se puede cambiar");
+
+  const { error: historyError } = await recepA.from("patient_medical_history").upsert({ patient_id: patientA.id });
+  expect(historyError).toBeNull();
+  const { error: moveHistory } = await recepA
+    .from("patient_medical_history")
+    .update({ patient_id: patientB.id })
+    .eq("patient_id", patientA.id);
+  expect(moveHistory?.message).toContain("El paciente de un registro no se puede cambiar");
+});
