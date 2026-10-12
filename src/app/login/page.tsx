@@ -18,7 +18,7 @@ export default function LoginPage() {
                   "radial-gradient(circle, rgba(149,211,250,0.6) 0%, rgba(149,211,250,0) 70%)",
               }}
             />
-            {/* Mismo ícono que la barra lateral: diente de cristal sobre orbe de cristal blanco. */}
+            {/* Diente de cristal sobre orbe de cristal blanco (en la barra lateral el orbe es de vidrio translúcido). */}
             <span className="crystal-orb flex h-full w-full items-center justify-center">
               <BrandMark
                 sizes="121.6px"
