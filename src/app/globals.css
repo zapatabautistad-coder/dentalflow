@@ -358,9 +358,11 @@ body {
 
 /* Ícono principal: diente azul de cristal (el de la imagen de venta) sobre un orbe de
    cristal blanco, con brillo arriba y reflejo celeste abajo. Todo en CSS, nítido a
-   cualquier tamaño; el diente es un PNG de 389×512 que se sirve sin recomprimir. */
+   cualquier tamaño; el diente se sirve ya reducido para cada tamaño (brand-mark.tsx).
+   isolation + z-index -1: el brillo queda detrás del diente, no le quita contraste. */
 .crystal-orb {
   position: relative;
+  isolation: isolate;
   overflow: hidden;
   border-radius: 9999px;
   background:
@@ -378,6 +380,7 @@ body {
 .crystal-orb::after {
   content: "";
   position: absolute;
+  z-index: -1;
   inset: 0;
   border-radius: inherit;
   pointer-events: none;

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Image from "next/image";
+import { BrandMark } from "../brand-mark";
 import { LoginForm } from "./login-form";
 
 export const metadata: Metadata = { title: "Iniciar sesión · DentalFlow" };
@@ -20,13 +20,8 @@ export default function LoginPage() {
             />
             {/* Mismo ícono que la barra lateral: diente de cristal sobre orbe de cristal blanco. */}
             <span className="crystal-orb flex h-full w-full items-center justify-center">
-              <Image
-                src="/dentalflow-mark-sky.png"
-                alt="DentalFlow"
-                width={389}
-                height={512}
-                priority
-                unoptimized
+              <BrandMark
+                sizes="121.6px"
                 className="relative h-[80%] w-auto drop-shadow-[0_8px_12px_rgba(7,102,181,0.28)]"
               />
             </span>

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { formatHour } from "@/lib/timezone";
+import { BrandMark } from "../brand-mark";
 import { logout } from "./actions";
 import { getNotifications, type NotificationItem } from "./notifications";
 
@@ -385,15 +386,10 @@ function Brand({ compact = false, clinicName, onNavigate }: { compact?: boolean;
         }`}
       >
         {/* Ícono: diente azul de cristal sobre orbe de cristal blanco (quieto).
-            unoptimized: se sirve el PNG original, sin recompresión, para no perder nitidez. */}
+            sizes: ancho del diente (80 % del alto del orbe de 48 u 80 px). */}
         <span className="crystal-orb flex h-full w-full items-center justify-center">
-          <Image
-            src="/dentalflow-mark-sky.png"
-            alt="DentalFlow"
-            width={389}
-            height={512}
-            priority
-            unoptimized
+          <BrandMark
+            sizes={compact ? "29.2px" : "48.6px"}
             className="relative h-[80%] w-auto [filter:drop-shadow(0_3px_4px_rgba(7,102,181,0.28))]"
           />
         </span>
