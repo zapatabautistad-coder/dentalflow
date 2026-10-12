@@ -11,6 +11,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 # DentalFlow — instrucciones para agentes (Codex y otros)
 
 Lee `CLAUDE.md` antes de cualquier tarea: es la fuente de verdad. Responde siempre en español.
+Las reglas de cada módulo (facturación, recetas, odontograma, etc.) están en `.claude/rules/`: lee la del módulo antes de tocarlo o de revisar un PR que lo toque.
 Nunca unas un PR, actives auto-merge ni hagas push a `main`: solo Darys ordena unir.
 
 ## Review guidelines
