@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
+    "test:db": "bash e2e/test-db.sh",
     "test:e2e:setup": "bash e2e/setup-local.sh",
     "test:e2e": "playwright test",
     "db:types": "bash e2e/db-types.sh"

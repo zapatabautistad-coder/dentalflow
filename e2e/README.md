@@ -25,9 +25,12 @@ y en cada push a `main`, contra una Supabase local en Docker (sin secretos ni pr
 ## Tipos de la base
 
 `src/lib/supabase/database.types.ts` se genera desde esta Supabase local (nunca desde producción):
-después del paso 1, `npm run db:types`. **Si agregas una migración, corre los dos y sube el archivo**:
+después del paso 1, `npm run db:types`. **Si agregas una migración, corre `npm run db:types` y súbelo**:
 la CI falla si los tipos no coinciden con las migraciones. No se edita a mano. Las columnas que pone
 la base al insertar (`clinic_id`, numeraciones) se marcan opcionales en `src/lib/supabase/types.ts`.
+
+Las reglas de RLS, permisos, auditoría y MFA se prueban directamente en PostgreSQL local con
+`npm run test:db`, después de `npm run test:e2e:setup` y antes de las E2E.
 
 El CLI de Supabase tiene versión fija en `package.json` (devDependency exacta); para subirla, cambia
 esa versión en un PR propio.
