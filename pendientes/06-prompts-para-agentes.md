@@ -267,13 +267,13 @@ y `npm run build` deben pasar.
 
 ---
 
-## Parte D · Supabase a 10/10 (plan en `pendientes/15-supabase-10.md`)
+## Parte D · Supabase a 10/10 (plan en `pendientes/16-supabase-10.md`)
 
 Orden: C3 → C4 → C5. C5 solo después de que Darys haga D1 y D3. Un PR por tarea.
 
 ### C3 · Tipos generados de la base + CLI de Supabase con versión fija
 ```
-Lee CLAUDE.md, AGENTS.md y pendientes/15-supabase-10.md antes de empezar.
+Lee CLAUDE.md, AGENTS.md y pendientes/16-supabase-10.md antes de empezar.
 
 Objetivo: que un cambio de columna en la base rompa al compilar, no en producción.
 
@@ -300,7 +300,7 @@ Entrega: rama nueva + PR. Antes de terminar, `npm run lint`, `npm test` y `npm r
 
 ### C4 · Pruebas de la base en SQL (pgTAP)
 ```
-Lee CLAUDE.md, AGENTS.md, pendientes/15-supabase-10.md y las reglas de .claude/rules/ de cada
+Lee CLAUDE.md, AGENTS.md, pendientes/16-supabase-10.md y las reglas de .claude/rules/ de cada
 tabla que pruebes, antes de empezar.
 
 Objetivo: probar las reglas de seguridad DENTRO de la base, tabla por tabla, sin pasar por la
@@ -340,7 +340,7 @@ Entrega: rama nueva + PR. Antes de terminar, `npm run lint`, `npm test` y `npm r
 
 ### C5 · Verificación automática: repo ↔ producción (solo lectura)
 ```
-Requisito: Darys ya hizo D1 y D3 de pendientes/15-supabase-10.md (historial reparado y secreto
+Requisito: Darys ya hizo D1 y D3 de pendientes/16-supabase-10.md (historial reparado y secreto
 SUPABASE_DB_URL_LECTURA creado). Lee CLAUDE.md, AGENTS.md y ese archivo antes de empezar.
 
 Objetivo: enterarnos el mismo día si producción y supabase/migrations/ dejan de coincidir.
