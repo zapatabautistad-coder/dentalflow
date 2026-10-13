@@ -43,6 +43,9 @@ jobs:
             exit 1
           }
 
+      # Reglas RLS, permisos y auditoría directamente en PostgreSQL local.
+      - run: npm run test:db
+
       - name: Build con las variables de la base local
         run: |
           set -a; . ./.env.e2e; set +a
