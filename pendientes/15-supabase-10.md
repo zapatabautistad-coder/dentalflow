@@ -20,7 +20,7 @@ Diagnóstico de Claude (2026-10-13), con datos reales de producción (historial 
 
 | # | Tarea | Quién | Riesgo |
 |---|-------|-------|--------|
-| D1 | Reparar el historial de migraciones en producción | Darys (SQL Editor) | Bajo: solo agrega filas de registro, no cambia tablas |
+| D1 | ✅ Reparar el historial de migraciones en producción (hecho 2026-10-13, verificado por Claude) | Darys (SQL Editor) | Bajo: solo agrega filas de registro, no cambia tablas |
 | D2 | Activar protección de contraseñas filtradas | Darys (panel) | Ninguno |
 | D3 | Crear usuario de solo lectura para la verificación | Darys (SQL Editor) | Bajo |
 | C3 | Tipos generados + CLI con versión fija | Copilot | Bajo |
@@ -30,7 +30,9 @@ Diagnóstico de Claude (2026-10-13), con datos reales de producción (historial 
 
 Prompts de C3, C4 y C5: `06-prompts-para-agentes.md`.
 
-### D1 · Reparar el historial (Darys, SQL Editor de producción)
+### D1 · Reparar el historial (Darys, SQL Editor de producción) — ✅ hecho 2026-10-13
+
+**Hecho.** Producción tiene registradas 001–032 (sin 005/006) con su nombre de archivo; 033 sigue sin aplicar. Ojo: en el SQL Editor, comprobar siempre que el proyecto sea `DENTALFLOW` (`ytoxbvfxjbomqjjshumd`), no `dentalflow-demo`.
 
 Primero comprueba que lo que falta de verdad está aplicado (debe devolver 4 filas con `true`):
 
