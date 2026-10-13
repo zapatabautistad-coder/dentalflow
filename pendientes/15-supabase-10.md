@@ -21,7 +21,7 @@ Diagnóstico de Claude (2026-10-13), con datos reales de producción (historial 
 | # | Tarea | Quién | Riesgo |
 |---|-------|-------|--------|
 | D1 | ✅ Reparar el historial de migraciones en producción (hecho 2026-10-13, verificado por Claude) | Darys (SQL Editor) | Bajo: solo agrega filas de registro, no cambia tablas |
-| D2 | Activar protección de contraseñas filtradas | Darys (panel) | Ninguno |
+| D2 | ⏸ Activar protección de contraseñas filtradas — en pausa hasta pasar al plan Pro (decisión de Darys, 2026-10-13) | Darys (panel) | Ninguno |
 | D3 | Crear usuario de solo lectura para la verificación | Darys (SQL Editor) | Bajo |
 | C3 | Tipos generados + CLI con versión fija | Copilot | Bajo |
 | C4 | Pruebas de la base en SQL (pgTAP) | Copilot | Bajo (solo local) |
@@ -63,7 +63,9 @@ Si alguna da `false`, **no registres** y avísale a Claude.
 
 **Regla nueva desde aquí:** toda migración se registra con el mismo nombre que su archivo (`NNN_nombre`). La verificación de C5 compara por nombre.
 
-### D2 · Contraseñas filtradas (Darys, panel)
+### D2 · Contraseñas filtradas (Darys, panel) — ⏸ en pausa
+
+**En pausa (decisión de Darys, 2026-10-13):** el plan gratuito no la incluye; se activa al suscribirse a Pro. Enlace: https://supabase.com/dashboard/project/ytoxbvfxjbomqjjshumd/auth/providers
 
 Supabase → Authentication → Sign In / Providers → Email → activar *Prevent use of leaked passwords*. Si el plan gratuito no lo permite, queda anotado para cuando se pase a Pro.
 
