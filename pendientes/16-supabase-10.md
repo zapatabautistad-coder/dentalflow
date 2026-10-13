@@ -23,7 +23,7 @@ Diagnóstico de Claude (2026-10-13), con datos reales de producción (historial 
 | D1 | ✅ Reparar el historial de migraciones en producción (hecho 2026-10-13, verificado por Claude) | Darys (SQL Editor) | Bajo: solo agrega filas de registro, no cambia tablas |
 | D2 | ⏸ Activar protección de contraseñas filtradas — en pausa hasta pasar al plan Pro (decisión de Darys, 2026-10-13) | Darys (panel) | Ninguno |
 | D3 | Crear usuario de solo lectura para la verificación | Darys (SQL Editor) | Bajo |
-| C3 | Tipos generados + CLI con versión fija | Copilot | Bajo |
+| C3 | ✅ Tipos generados + CLI con versión fija (hecho por Claude, 2026-10-13) | Copilot | Bajo |
 | C4 | Pruebas de la base en SQL (pgTAP) | Copilot | Bajo (solo local) |
 | C5 | Verificación automática repo ↔ producción | Copilot (después de D1 y D3) | Bajo (solo lectura) |
 | D4 | Decidir entorno de prueba (staging) | Darys | — |

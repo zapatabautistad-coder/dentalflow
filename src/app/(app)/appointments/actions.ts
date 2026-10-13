@@ -224,7 +224,7 @@ export async function updateAppointment(
       starts_at: parsed.values.starts_at,
       duration_minutes: parsed.values.duration_minutes,
       reason: parsed.values.reason,
-      status,
+      status: status as AppointmentStatus,
     })
     .eq("id", appointmentId);
 

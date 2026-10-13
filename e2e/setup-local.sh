@@ -4,17 +4,19 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 WORK="${E2E_SUPABASE_DIR:-$ROOT/.e2e-supabase}"
+# CLI con versión fija (devDependency exacta en package.json), nunca "latest".
+SB="$ROOT/node_modules/.bin/supabase"
 
 mkdir -p "$WORK/supabase/migrations"
 cd "$WORK"
-[ -f supabase/config.toml ] || npx -y supabase@latest init --force >/dev/null
+[ -f supabase/config.toml ] || "$SB" init --force >/dev/null
 
 # Verificación en dos pasos (TOTP): admin y doctor deben usarla (src/lib/mfa.ts) y
 # e2e/global-setup.ts la activa. En Supabase local viene apagada; en la nube, encendida.
 if grep -A3 '^\[auth\.mfa\.totp\]' supabase/config.toml | grep -q 'enabled = false'; then
   sed -i '/^\[auth\.mfa\.totp\]/,/^\[/{s/^enroll_enabled = false/enroll_enabled = true/;s/^verify_enabled = false/verify_enabled = true/}' supabase/config.toml
   # Si ya estaba corriendo, hay que reiniciar para que tome la configuración.
-  npx -y supabase@latest stop >/dev/null 2>&1 || true
+  "$SB" stop >/dev/null 2>&1 || true
 fi
 
 # Migraciones de producción en orden; 005 y 006 nunca se ejecutan.
@@ -27,13 +29,13 @@ for f in "$ROOT"/supabase/migrations/*.sql; do
 done
 
 EXCLUDE=studio,imgproxy,edge-runtime,logflare,vector,supavisor,mailpit,realtime,storage-api,postgres-meta
-if npx -y supabase@latest status >/dev/null 2>&1; then
-  npx -y supabase@latest db reset >/dev/null
+if "$SB" status >/dev/null 2>&1; then
+  "$SB" db reset >/dev/null
 else
-  npx -y supabase@latest start -x "$EXCLUDE" >/dev/null
+  "$SB" start -x "$EXCLUDE" >/dev/null
 fi
 
-eval "$(npx -y supabase@latest status -o env | grep -E '^(API_URL|ANON_KEY|SERVICE_ROLE_KEY)=')"
+eval "$("$SB" status -o env | grep -E '^(API_URL|ANON_KEY|SERVICE_ROLE_KEY)=')"
 DB=$(docker ps --format '{{.Names}}' | grep -m1 supabase_db)
 CLINIC_A=$(docker exec -i "$DB" psql -U postgres -tA -c "select id from public.clinics order by created_at limit 1;")
 for role in admin recepcion doctor enfermeria; do

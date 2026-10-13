@@ -65,9 +65,9 @@ export async function createClinic(_prev: PlatformFormState, formData: FormData)
   // 1. La clínica. Si falla aquí todavía no existe nada.
   const { data: clinicId, error: clinicError } = await supabase.rpc("platform_create_clinic", {
     p_name: name,
-    p_address: address || null,
-    p_phone: phone || null,
-    p_tax_id: taxId || null,
+    p_address: address || undefined,
+    p_phone: phone || undefined,
+    p_tax_id: taxId || undefined,
   });
   if (clinicError || !clinicId) return { error: "No se pudo crear la clínica. Inténtalo de nuevo." };
 

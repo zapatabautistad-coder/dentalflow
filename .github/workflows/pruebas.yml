@@ -34,6 +34,15 @@ jobs:
       # Supabase local en Docker (nunca producción); escribe .env.e2e.
       - run: npm run test:e2e:setup
 
+      # Los tipos de la base deben coincidir con las migraciones (npm run db:types).
+      - name: Tipos de la base al día
+        run: |
+          npm run db:types
+          git diff --exit-code src/lib/supabase/database.types.ts || {
+            echo "::error::Los tipos no coinciden con las migraciones. Corre npm run test:e2e:setup y npm run db:types, y sube src/lib/supabase/database.types.ts."
+            exit 1
+          }
+
       - name: Build con las variables de la base local
         run: |
           set -a; . ./.env.e2e; set +a

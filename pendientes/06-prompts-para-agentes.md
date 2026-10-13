@@ -272,6 +272,7 @@ y `npm run build` deben pasar.
 Orden: C3 → C4 → C5. C5 solo después de que Darys haga D1 y D3. Un PR por tarea.
 
 ### C3 · Tipos generados de la base + CLI de Supabase con versión fija
+**✅ Hecho por Claude (2026-10-13, orden directa de Darys): rama `ccr-d305f1c9-2xjt1f`.** No dárselo a Copilot.
 ```
 Lee CLAUDE.md, AGENTS.md y pendientes/16-supabase-10.md antes de empezar.
 

@@ -44,7 +44,7 @@ export async function createPrescription(
   const { error } = await supabase.rpc("create_prescription", {
     p_patient_id: patientId,
     p_items: parsed.items,
-    p_indications: parsed.indications,
+    p_indications: parsed.indications ?? undefined,
   });
   if (error) return { error: prescriptionDbError(error.message, "No se pudo guardar la receta. Inténtalo de nuevo.") };
 
