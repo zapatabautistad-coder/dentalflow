@@ -308,7 +308,8 @@ Objetivo: probar las reglas de seguridad DENTRO de la base, tabla por tabla, sin
 pantalla. Corre solo contra el Supabase local de las E2E, nunca contra producción.
 
 1. Crea supabase/tests/*.sql con pgTAP y un script `npm run test:db` que copie esos archivos al
-   directorio de trabajo de e2e/setup-local.sh y ejecute `npx supabase test db` ahí.
+   directorio de trabajo de e2e/setup-local.sh y ejecute ahí `test db` con el CLI de versión fija
+   (`node_modules/.bin/supabase`, como hacen setup-local.sh y db-types.sh; nunca `@latest`).
 2. Pruebas de estructura (recorren el catálogo, así una tabla nueva queda cubierta sola):
    - Toda tabla de `public` tiene RLS activado. Excepciones permitidas solo en una lista explícita
      dentro de la prueba, cada una con su motivo.
