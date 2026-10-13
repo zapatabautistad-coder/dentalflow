@@ -9,7 +9,8 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:e2e:setup": "bash e2e/setup-local.sh",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "db:types": "bash e2e/db-types.sh"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
@@ -26,6 +27,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.3.6",
+    "supabase": "2.120.0",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vite": "^8.3.1",

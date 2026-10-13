@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Enciende Docker al empezar una sesión de Claude Code en la nube, para las
-# pruebas E2E contra Supabase local. En la PC (sin dockerd) no hace nada.
+# pruebas E2E contra Supabase local. En la PC no hace nada.
+[ "${CLAUDE_CODE_REMOTE:-}" = "true" ] || exit 0
 command -v dockerd >/dev/null 2>&1 || exit 0
 docker ps >/dev/null 2>&1 && exit 0
 nohup dockerd >/tmp/dockerd.log 2>&1 &

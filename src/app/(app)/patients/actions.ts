@@ -9,6 +9,7 @@ import { combineDateTime, isValidDateKey } from "@/lib/timezone";
 import { cleanDocumentIdDigits, cleanPhoneDigits } from "@/lib/phone";
 import { matchingMedicationAllergy, type MedicationAllergyHistory } from "@/lib/medication-allergy";
 import { parseVitalSignsInput, type VitalSignsInput } from "@/lib/vital-signs";
+import type { Database } from "@/lib/supabase/types";
 
 export type PatientFormState = { error: string } | undefined;
 
@@ -241,7 +242,7 @@ export async function saveMedicalHistory(
 ): Promise<MedicalHistoryState> {
   await requireProfile();
 
-  const values: Record<string, boolean | string | null> = { patient_id: patientId };
+  const values: Database["public"]["Tables"]["patient_medical_history"]["Insert"] = { patient_id: patientId };
   for (const flag of MEDICAL_FLAGS) {
     values[flag] = formData.get(flag) === "on";
   }
@@ -329,7 +330,7 @@ export async function addClinicalEntry(
 
   const submittedValues = clinicalEntryFormValues(formData);
 
-  const values: Record<string, string | null> = {
+  const values: Database["public"]["Tables"]["clinical_entries"]["Insert"] = {
     patient_id: patientId,
     kind,
     corrects_entry_id: correctsEntryId,

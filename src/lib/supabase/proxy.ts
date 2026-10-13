@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { USER_EMAIL_HEADER, USER_ID_HEADER } from "@/lib/auth-headers";
 import { getMfaDecision } from "@/lib/mfa";
+import type { Database } from "./types";
 
 // Verificación en dos pasos (ver src/lib/mfa.ts).
 const VERIFY_PATH = "/login/verificar";
@@ -17,7 +18,7 @@ export async function updateSession(request: NextRequest) {
 
   let response = NextResponse.next({ request: { headers: requestHeaders } });
 
-  const supabase = createServerClient(
+  const supabase = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
     {

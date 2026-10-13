@@ -264,3 +264,105 @@ Reglas:
 Entrega: rama nueva + PR con capturas (laptop y celular). Antes de terminar, `npm run lint`, `npm test`
 y `npm run build` deben pasar.
 ```
+
+---
+
+## Parte D · Supabase a 10/10 (plan en `pendientes/16-supabase-10.md`)
+
+Orden: C3 → C4 → C5. C5 solo después de que Darys haga D1 y D3. Un PR por tarea.
+
+### C3 · Tipos generados de la base + CLI de Supabase con versión fija
+**✅ Hecho por Claude (2026-10-13, orden directa de Darys): rama `ccr-d305f1c9-2xjt1f`.** No dárselo a Copilot.
+```
+Lee CLAUDE.md, AGENTS.md y pendientes/16-supabase-10.md antes de empezar.
+
+Objetivo: que un cambio de columna en la base rompa al compilar, no en producción.
+
+1. CLI con versión fija: agrega `supabase` como devDependency con versión EXACTA (sin ^ ni ~,
+   la última estable). En e2e/setup-local.sh cambia todo `npx -y supabase@latest` por `npx supabase`.
+2. Script `npm run db:types`: genera los tipos desde el Supabase LOCAL (el que levanta
+   `npm run test:e2e:setup`, con todas las migraciones menos 005 y 006):
+   `supabase gen types typescript --local --schema public > src/lib/supabase/database.types.ts`
+   (ejecútalo dentro del directorio de trabajo que usa setup-local.sh). Nunca contra producción.
+3. Pasa el tipo a los cuatro clientes: createBrowserClient<Database> (client.ts),
+   createServerClient<Database> (server.ts y proxy.ts) y createClient<Database> (admin.ts).
+4. Corrige los errores de tipos que aparezcan. Reglas:
+   - No uses `any`, `as unknown as` ni `@ts-ignore` para callarlos. Si un error revela un bug
+     real (columna que no existe, tipo equivocado), corrígelo y descríbelo en el PR.
+   - No cambies comportamiento, consultas ni columnas seleccionadas (siguen explícitas, nunca "*").
+5. CI (.github/workflows/pruebas.yml): después de `npm run test:e2e:setup`, ejecuta
+   `npm run db:types` y falla si `git diff --exit-code src/lib/supabase/database.types.ts`
+   muestra cambios (alguien cambió una migración sin regenerar tipos).
+6. Documenta en e2e/README.md: "si agregas una migración, corre npm run db:types y súbelo".
+
+No toques: migraciones, diseño, textos. No unas el PR ni actives auto-merge.
+Entrega: rama nueva + PR. Antes de terminar, `npm run lint`, `npm test` y `npm run build` deben pasar.
+```
+
+### C4 · Pruebas de la base en SQL (pgTAP)
+```
+Lee CLAUDE.md, AGENTS.md, pendientes/16-supabase-10.md y las reglas de .claude/rules/ de cada
+tabla que pruebes, antes de empezar.
+
+Objetivo: probar las reglas de seguridad DENTRO de la base, tabla por tabla, sin pasar por la
+pantalla. Corre solo contra el Supabase local de las E2E, nunca contra producción.
+
+1. Crea supabase/tests/*.sql con pgTAP y un script `npm run test:db` que copie esos archivos al
+   directorio de trabajo de e2e/setup-local.sh y ejecute `npx supabase test db` ahí.
+2. Pruebas de estructura (recorren el catálogo, así una tabla nueva queda cubierta sola):
+   - Toda tabla de `public` tiene RLS activado. Excepciones permitidas solo en una lista explícita
+     dentro de la prueba, cada una con su motivo.
+   - Ninguna tabla clínica tiene privilegio DELETE para `authenticated` ni `anon`
+     (patients, appointments, queue, clinical_entries, odontogram_entries, vital_signs,
+     prescriptions, prescription_items, treatment_plan_items, billing_charges, billing_payments,
+     patient_medical_history, doctor_schedules, doctor_time_off; revisa las migraciones por si falta alguna).
+   - Toda tabla clínica tiene el trigger que llama a `audit_row`.
+   - clinical_entries, odontogram_entries y vital_signs no tienen UPDATE para `authenticated`.
+     Para prescriptions y prescription_items sigue lo que dice .claude/rules/recetas.md.
+   - Toda función SECURITY DEFINER de `public` tiene `search_path` fijo y no es ejecutable por `anon`.
+3. Pruebas de comportamiento, simulando usuarios (set local role authenticated +
+   set local request.jwt.claims con sub, clinic_id y aal):
+   - Aislamiento: un usuario de la clínica A no ve ni modifica filas de la clínica B en cada tabla
+     clínica (select devuelve 0 filas; insert/update con clinic_id de B falla).
+   - Roles: recepción no escribe en clinical_entries; asistente dental (enfermeria) no receta
+     medicamentos; solo admin y recepción archivan pacientes.
+   - MFA: un doctor con aal1 no lee pacientes (mfa_satisfied() = false).
+   - Una corrección en clinical_entries exige corrects_entry_id y correction_reason.
+   Usa datos ficticios claramente de prueba, creados dentro de la prueba (begin ... rollback).
+4. CI: en .github/workflows/pruebas.yml, ejecuta `npm run test:db` después de
+   `npm run test:e2e:setup` y antes de las E2E.
+5. Si una prueba descubre un fallo real de seguridad, NO lo corrijas en este PR ni edites una
+   migración existente: deja esa prueba marcada con todo('motivo') y descríbelo en el PR como
+   grave, para que Claude escriba la migración nueva.
+
+No toques: migraciones existentes, código de la app, diseño. No unas el PR ni actives auto-merge.
+Entrega: rama nueva + PR. Antes de terminar, `npm run lint`, `npm test` y `npm run build` deben pasar.
+```
+
+### C5 · Verificación automática: repo ↔ producción (solo lectura)
+```
+Requisito: Darys ya hizo D1 y D3 de pendientes/16-supabase-10.md (historial reparado y secreto
+SUPABASE_DB_URL_LECTURA creado). Lee CLAUDE.md, AGENTS.md y ese archivo antes de empezar.
+
+Objetivo: enterarnos el mismo día si producción y supabase/migrations/ dejan de coincidir.
+
+1. Script scripts/verificar-migraciones.mjs (Node, sin dependencias nuevas si se puede; si hace
+   falta, usa `pg` como devDependency con versión exacta):
+   - Lee los nombres de supabase/migrations/*.sql (sin .sql), ignorando 005 y 006.
+   - Lee `select name from supabase_migrations.schema_migrations` usando SUPABASE_DB_URL_LECTURA.
+   - Compara por NOMBRE (no por versión: en producción las versiones son fechas).
+   - Imprime en español: "En el repo y sin aplicar en producción: …" y
+     "Aplicadas en producción y sin archivo en el repo: …".
+   - Sale con error solo si hay algo aplicado en producción que no está en el repo (eso es grave).
+     Lo pendiente de aplicar es un aviso, no un error (es normal entre el merge y la aplicación).
+   - Nunca imprime la cadena de conexión ni la contraseña. Solo SELECT: ninguna escritura.
+2. Workflow .github/workflows/verificar-migraciones.yml: corre a diario (cron) y a mano
+   (workflow_dispatch); permissions: contents: read; si falta el secreto, avisa y termina sin error
+   (igual que respaldo-base.yml). No lo pongas en los PR (los PR de forks no deben ver el secreto).
+3. Documenta en supabase/RESPALDO.md (o un archivo nuevo supabase/MIGRACIONES.md) cómo leer el
+   resultado y la regla: toda migración se registra con el mismo nombre que su archivo.
+
+No toques: migraciones, la base de producción (solo lectura), el workflow de respaldo.
+No unas el PR ni actives auto-merge.
+Entrega: rama nueva + PR. Antes de terminar, `npm run lint`, `npm test` y `npm run build` deben pasar.
+```

@@ -21,3 +21,13 @@ las migraciones (RLS automático en tablas nuevas, sin exposición automática d
 
 El workflow `.github/workflows/pruebas.yml` corre lint, pruebas unitarias, build y estas E2E en cada PR hacia `main`
 y en cada push a `main`, contra una Supabase local en Docker (sin secretos ni producción).
+
+## Tipos de la base
+
+`src/lib/supabase/database.types.ts` se genera desde esta Supabase local (nunca desde producción):
+después del paso 1, `npm run db:types`. **Si agregas una migración, corre los dos y sube el archivo**:
+la CI falla si los tipos no coinciden con las migraciones. No se edita a mano. Las columnas que pone
+la base al insertar (`clinic_id`, numeraciones) se marcan opcionales en `src/lib/supabase/types.ts`.
+
+El CLI de Supabase tiene versión fija en `package.json` (devDependency exacta); para subirla, cambia
+esa versión en un PR propio.
