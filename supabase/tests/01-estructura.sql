@@ -2,18 +2,17 @@ begin;
 
 select plan(8);
 
--- clinic_counters y platform_admins no tienen políticas ni permisos de API:
--- los usan únicamente funciones SECURITY DEFINER de la base.
+-- Sin excepciones: también clinic_counters y platform_admins (sin políticas ni
+-- permisos de API; solo las usan funciones SECURITY DEFINER) tienen RLS.
 select is(
   (select count(*)::integer
      from pg_class c
      join pg_namespace n on n.oid = c.relnamespace
     where n.nspname = 'public'
       and c.relkind = 'r'
-      and not c.relrowsecurity
-      and c.relname not in ('clinic_counters', 'platform_admins')),
+      and not c.relrowsecurity),
   0,
-  'toda tabla pública expuesta tiene RLS activado'
+  'toda tabla pública tiene RLS activado'
 );
 
 select is(
