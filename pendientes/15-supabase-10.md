@@ -41,6 +41,8 @@ union all select 'no solapar 028', exists (select 1 from pg_constraint where con
 union all select 'mfa 031', to_regprocedure('public.mfa_satisfied()') is not null;
 ```
 
+> **2026-10-13: Claude ya hizo esta comprobación en producción: las 4 dan `true`** (y la 031 sí está activa dentro de `get_my_role()`; la 033 confirmada sin aplicar). Falta solo el registro de abajo: la guardia `.claude/hooks/guardian.mjs` no deja que un agente escriba en producción, así que lo pega Darys.
+
 Si las 4 dan `true`, registra las que faltan (no ejecuta nada de las migraciones, solo anota):
 
 ```sql
