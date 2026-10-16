@@ -32,5 +32,7 @@ la base al insertar (`clinic_id`, numeraciones) se marcan opcionales en `src/lib
 Las reglas de RLS, permisos, auditoría y MFA se prueban directamente en PostgreSQL local con
 `npm run test:db`, después de `npm run test:e2e:setup` y antes de las E2E.
 
+`supabase/schema.sql` (foto del esquema, `npm run db:schema`) se genera igual y la CI también lo compara.
+
 El CLI de Supabase tiene versión fija en `package.json` (devDependency exacta); para subirla, cambia
 esa versión en un PR propio.
