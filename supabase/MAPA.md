@@ -20,13 +20,14 @@ Todas: RLS activo y aislamiento restrictivo por `clinic_id` (029), salvo `clinic
 | queue | Sala de espera | 001 | 002, 010, 014, 016, 024, 025, 029, 034 | sala-de-espera |
 | doctor_schedules | Bloques semanales del doctor | 022 | 024, 029, 034 | horarios |
 | doctor_time_off | Días libres del doctor | 022 | 024, 029, 034 | horarios |
-| clinical_entries | Registro clínico (solo INSERT) | 012 | 023, 024, 029, 034 | — |
-| odontogram_entries | Odontograma (solo INSERT) | 018 | 024, 029, 034 | odontograma |
+| encounters | Consulta: agrupa lo registrado en una visita; abre doctor/asistente, cierra el doctor; cerrada no cambia | 035 | — | — |
+| clinical_entries | Registro clínico (solo INSERT) | 012 | 023, 024, 029, 034, 035 | — |
+| odontogram_entries | Odontograma (solo INSERT) | 018 | 024, 029, 034, 035 | odontograma |
 | treatment_plan_items | Plan de tratamiento | 019 | 020, 024, 029, 034 | plan-tratamiento |
 | billing_charges | Cargos; se anulan | 020 | 021, 024, 025, 029, 034 | facturacion |
 | billing_payments | Pagos; se anulan | 020 | 024, 025, 029, 034 | facturacion |
-| vital_signs | Signos vitales (solo INSERT) | 026 | 029, 034 | signos-vitales |
-| prescriptions | Recetas; se anulan con motivo | 027 | 029, 033, 034 | recetas |
+| vital_signs | Signos vitales (solo INSERT) | 026 | 029, 034, 035 | signos-vitales |
+| prescriptions | Recetas; se anulan con motivo | 027 | 029, 033, 034, 035 | recetas |
 | prescription_items | Medicamentos de la receta (solo INSERT) | 027 | 029, 033, 034 | recetas |
 | audit_log | Auditoría de todo cambio | 009 | 014, 015, 024, 025, 029, 030, 034 | — |
 
@@ -41,6 +42,7 @@ Todas: RLS activo y aislamiento restrictivo por `clinic_id` (029), salvo `clinic
 | `audit_row()` | Escribe en `audit_log` | 029 |
 | `stamp_created()` | Autor y fecha de pacientes y citas | 034 |
 | `block_truncate()` | Bloquea TRUNCATE | 034 |
+| `stamp_encounter()` / `check_encounter_link()` | Ciclo de la consulta; enlace solo a consulta abierta del mismo paciente | 035 |
 | `create_prescription()` | Crea receta con sus medicamentos | 027 |
 | `platform_*()` | Alta y activación de clínicas | 030 |
 
