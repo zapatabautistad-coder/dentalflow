@@ -104,6 +104,7 @@ export default async function EditAppointmentPage({
           action={updateAppointmentWithId}
           doctors={doctors ?? []}
           defaultPatient={appointment.patients}
+          lockPatient
           defaultValues={{
             doctor_id: appointment.doctor_id,
             date: dateKey,

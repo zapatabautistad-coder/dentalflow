@@ -15,6 +15,7 @@ type AppointmentFormProps = {
   ) => Promise<AppointmentFormState>;
   doctors: Doctor[];
   defaultPatient?: PatientResult | null;
+  lockPatient?: boolean;
   defaultValues?: {
     doctor_id?: string;
     date?: string;
@@ -32,6 +33,7 @@ export function AppointmentForm({
   action,
   doctors,
   defaultPatient,
+  lockPatient = false,
   defaultValues,
   showStatus = false,
   submitLabel,
@@ -60,7 +62,7 @@ export function AppointmentForm({
           al botón "Cambiar" que aparece al seleccionar y borra la selección. */}
       <div className="flex flex-col gap-1.5 text-sm font-medium" data-i18n="appointments.form.patient">
         Paciente
-        <PatientPicker defaultPatient={defaultPatient} />
+        <PatientPicker defaultPatient={defaultPatient} locked={lockPatient} />
       </div>
 
       <label className="flex flex-col gap-1.5 text-sm font-medium" data-i18n="appointments.form.doctor">
