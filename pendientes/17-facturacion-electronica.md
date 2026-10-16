@@ -15,7 +15,7 @@ Decisiones y datos al 2026-10-16. Diseño previo de la tabla: `12-ideas-gemini.m
 ## Decisión de arquitectura
 - **Motor con adaptadores:** DentalFlow arma el comprobante (31/32/34, exento de ITBIS, estados) y lo envía por un adaptador. Adaptador 1: proveedor autorizado (para cumplir plazos). Adaptador 2: homologación propia con la DGII (TesteCF desde la Oficina Virtual, credenciales en 3–10 días laborables), meta a largo plazo: DentalFlow emisor para todas sus clínicas. Cambiar de adaptador no toca base ni pantallas.
 - **[CONFIRMAR con la DGII]** qué figura necesita un software multi-tenant para emitir por varias clínicas (proveedor de software o PSFE) y si cada clínica requiere su propio certificado digital.
-- DentalFlow **no** se certifica como emisor: integra un **proveedor autorizado por la DGII** vía API. DentalFlow envía el cobro y guarda la respuesta (e-NCF, estado, código de seguridad/QR, enlace).
+- Fase 1 (adaptador 1): integrar un **proveedor autorizado por la DGII** vía API. DentalFlow envía el cobro y guarda la respuesta (e-NCF, estado, código de seguridad/QR, enlace).
 - Libro interno (`billing_*`) intacto. Lo fiscal va en tablas aparte: `fiscal_invoices` (solo INSERT; anulación = otro registro tipo 34) y estado por consulta al proveedor.
 - Credenciales del proveedor por clínica: nunca en tablas legibles; en Supabase Vault o secreto del servidor.
 
