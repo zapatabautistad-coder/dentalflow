@@ -43,6 +43,15 @@ jobs:
             exit 1
           }
 
+      # La foto del esquema debe coincidir con las migraciones (npm run db:schema).
+      - name: Esquema al día
+        run: |
+          npm run db:schema
+          git diff --exit-code supabase/schema.sql || {
+            echo "::error::supabase/schema.sql no coincide con las migraciones. Corre npm run test:e2e:setup y npm run db:schema, y súbelo."
+            exit 1
+          }
+
       # Reglas RLS, permisos y auditoría directamente en PostgreSQL local.
       - run: npm run test:db
 
