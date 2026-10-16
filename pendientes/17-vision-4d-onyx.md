@@ -46,7 +46,7 @@ Estado: **visión de Darys (2026-10-16), nada construido.** La imagen del "Denta
 | Fase | Qué | Requisito |
 |---|---|---|
 | 0 | Línea de tiempo por diente con lo que ya guarda `odontogram_entries` | Ninguno; sin cambiar el esquema |
-| 0.5 | Visor 3D interactivo con modelo **ilustrativo**: agarrar la mandíbula con el mouse y abrir o cerrar la boca (prompt C1 en `06-prompts-para-agentes.md`) | Modelo GLB con licencia comercial y mandíbula como malla separada (lo aporta Darys) |
+| 0.5 | Visor 3D interactivo con modelo **ilustrativo**: agarrar la mandíbula con el mouse y abrir o cerrar la boca (solo diseño; sin prompt para Copilot hasta que Darys lo ordene) | Modelo GLB con licencia comercial y mandíbula como malla separada (lo aporta Darys) |
 | 1 | Subir y ver radiografías y fotos del paciente | Tablas nuevas (sección 6) |
 | 2 | Borrador de nota por voz que el doctor confirma | Contrato con proveedor de voz y consentimiento |
 | 3 | IA que sugiere hallazgos en radiografías | Contrato y revisión regulatoria |
