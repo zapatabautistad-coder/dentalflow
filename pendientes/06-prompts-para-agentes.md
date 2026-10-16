@@ -367,3 +367,49 @@ No toques: migraciones, la base de producción (solo lectura), el workflow de re
 No unas el PR ni actives auto-merge.
 Entrega: rama nueva + PR. Antes de terminar, `npm run lint`, `npm test` y `npm run build` deben pasar.
 ```
+
+---
+
+## Parte E · Visión 4D (EN PAUSA: diseño guardado, no asignar hasta que Darys lo ordene) (ver `pendientes/17-vision-4d-onyx.md`)
+
+### E1 · Visor 3D interactivo de la boca (fase 0.5, modelo ilustrativo)
+**Requisito previo (Darys):** conseguir un modelo anatómico con licencia comercial, en glTF/GLB, con la **mandíbula como malla separada** y el punto de articulación (cóndilo) identificable; colocarlo en el primer nivel de `public/` (el proxy no deja pasar subcarpetas sin sesión). Sin ese archivo, no empezar.
+```
+Lee CLAUDE.md, AGENTS.md y pendientes/17-vision-4d-onyx.md antes de empezar. Lee también la guía
+correspondiente en node_modules/next/dist/docs/ (esta versión de Next tiene cambios).
+
+Objetivo: página /patients/[id]/visor-3d con un visor 3D interactivo de una boca ILUSTRATIVA:
+el usuario agarra la mandíbula con el mouse (o el dedo) y la mueve hacia arriba o abajo para
+abrir y cerrar la boca.
+
+Reglas de producto (obligatorias):
+- Es un modelo genérico, NO la boca del paciente. Rótulo visible y fijo: "Modelo ilustrativo; no
+  es la boca de este paciente" (con data-i18n, ES/EN). Sin cifras, milímetros ni "hallazgos".
+- No lee ni escribe datos clínicos. Sin tablas nuevas, sin migraciones, sin llamadas a IA ni a
+  servicios externos. Solo requireProfile para acceder, como las demás páginas de la ficha.
+- El enlace desde la ficha del paciente se llama "Visor 3D (ilustrativo)". No toques barra
+  lateral, ícono ni paleta (diseño congelado: cristal claro, azul cielo).
+
+Interacción:
+- three.js con @react-three/fiber (y drei si hace falta). Versiones EXACTAS, sin ^. Carga con
+  dynamic import (ssr: false) para no pesar en el resto de la app.
+- Agarre: raycast sobre la malla de la mandíbula. Cursor mano abierta al pasar, mano cerrada al
+  arrastrar. Arrastrar hacia abajo abre; hacia arriba cierra.
+- Movimiento: rotación alrededor del cóndilo en los primeros grados y traslación hacia delante
+  al abrir más; con tope máximo (no se puede abrir de forma imposible). Inercia leve.
+- La lógica del movimiento va en src/lib/jaw-motion.ts como funciones puras (ángulo desde el
+  desplazamiento del cursor, límites, traslación) con pruebas Vitest (bordes: 0, máximo, valores
+  negativos, NaN).
+- Táctil con el mismo gesto. Alternativa accesible: un deslizador (input range) y teclado
+  (flechas) que mueven la misma apertura. Respeta prefers-reduced-motion.
+- Interruptores de capas solo si el modelo trae mallas separadas (hueso, dientes, encía); si no,
+  no los muestres (nada de botones que no hacen nada).
+- Rendimiento: modelo en GLB comprimido; si falla la carga o no hay WebGL, estado vacío honesto
+  en ES/EN, sin romper la página.
+
+No toques: migraciones, base de datos, autenticación, proxy, next.config.ts salvo lo estrictamente
+necesario (y explícalo en el PR).
+No unas el PR ni actives auto-merge.
+Entrega: rama nueva + PR. Antes de terminar, `npm run lint`, `npm test` y `npm run build` deben
+pasar. Describe en el PR qué licencia tiene el modelo y de dónde viene.
+```
