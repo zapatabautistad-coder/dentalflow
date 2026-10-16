@@ -218,8 +218,8 @@ export async function updateAppointment(
 
   const { error } = await supabase
     .from("appointments")
+    // El paciente de una cita no se cambia (033): no se envía en la edición.
     .update({
-      patient_id: parsed.values.patient_id,
       doctor_id: parsed.values.doctor_id,
       starts_at: parsed.values.starts_at,
       duration_minutes: parsed.values.duration_minutes,

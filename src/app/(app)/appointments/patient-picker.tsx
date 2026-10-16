@@ -6,8 +6,11 @@ import { searchPatients, type PatientResult } from "./actions";
 
 export function PatientPicker({
   defaultPatient,
+  locked = false,
 }: {
   defaultPatient?: PatientResult | null;
+  // En edición el paciente de la cita no se cambia (migración 033).
+  locked?: boolean;
 }) {
   const [selected, setSelected] = useState<PatientResult | null>(defaultPatient ?? null);
   const [term, setTerm] = useState("");
@@ -45,17 +48,19 @@ export function PatientPicker({
           )}
         </div>
         <input type="hidden" name="patient_id" value={selected.id} />
-        <button
-          type="button"
-          onClick={() => {
-            setSelected(null);
-            setTerm("");
-          }}
-          className="shrink-0 rounded-lg border border-white/90 bg-white/70 px-3 py-1.5 text-[13px] font-semibold text-slate-700 transition hover:border-[#0766B5] hover:text-[#0766B5]"
-          data-i18n="patient.change"
-        >
-          Cambiar
-        </button>
+        {!locked && (
+          <button
+            type="button"
+            onClick={() => {
+              setSelected(null);
+              setTerm("");
+            }}
+            className="shrink-0 rounded-lg border border-white/90 bg-white/70 px-3 py-1.5 text-[13px] font-semibold text-slate-700 transition hover:border-[#0766B5] hover:text-[#0766B5]"
+            data-i18n="patient.change"
+          >
+            Cambiar
+          </button>
+        )}
       </div>
     );
   }
