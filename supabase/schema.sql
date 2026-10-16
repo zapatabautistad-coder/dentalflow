@@ -2,6 +2,22 @@
 -- Solo referencia: lo que se aplica en producción son las migraciones.
 CREATE SCHEMA IF NOT EXISTS "public";
 COMMENT ON SCHEMA "public" IS 'standard public schema';
+CREATE TYPE "public"."ai_consent_scope" AS ENUM (
+    'dictado',
+    'procesamiento_ia'
+);
+CREATE TYPE "public"."ai_draft_kind" AS ENUM (
+    'odontograma',
+    'nota',
+    'signos',
+    'plan',
+    'pregunta'
+);
+CREATE TYPE "public"."ai_draft_status" AS ENUM (
+    'propuesto',
+    'aceptado',
+    'rechazado'
+);
 CREATE TYPE "public"."appointment_status" AS ENUM (
     'programada',
     'confirmada',
@@ -55,6 +71,10 @@ CREATE TYPE "public"."queue_status" AS ENUM (
     'atendido',
     'cancelado'
 );
+CREATE TYPE "public"."record_source" AS ENUM (
+    'manual',
+    'ia_confirmada'
+);
 CREATE TYPE "public"."treatment_status" AS ENUM (
     'pendiente',
     'en_proceso',
@@ -67,6 +87,16 @@ CREATE TYPE "public"."user_role" AS ENUM (
     'admin',
     'enfermeria'
 );
+CREATE OR REPLACE FUNCTION "public"."ai_consent_active"("p_patient" "uuid", "p_scope" "public"."ai_consent_scope") RETURNS boolean
+    LANGUAGE "sql" STABLE
+    SET "search_path" TO ''
+    AS $$
+  select coalesce((
+    select c.granted from public.ai_consents c
+     where c.patient_id = p_patient and c.scope = p_scope
+     order by c.recorded_at desc, c.id desc
+     limit 1), false);
+$$;
 CREATE OR REPLACE FUNCTION "public"."appointment_range"("p_starts_at" timestamp with time zone, "p_duration_minutes" integer) RETURNS "tstzrange"
     LANGUAGE "sql" IMMUTABLE PARALLEL SAFE
     SET "search_path" TO ''
@@ -576,6 +606,142 @@ CREATE OR REPLACE FUNCTION "public"."set_updated_at"() RETURNS "trigger"
     AS $$
 begin
   new.updated_at = now();
+  return new;
+end;
+$$;
+CREATE OR REPLACE FUNCTION "public"."stamp_ai_consent"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    SET "search_path" TO ''
+    AS $$
+begin
+  new.recorded_by := auth.uid();
+  new.recorded_at := clock_timestamp();
+  return new;
+end;
+$$;
+CREATE OR REPLACE FUNCTION "public"."stamp_ai_draft"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    SET "search_path" TO ''
+    AS $$
+declare
+  v_ok boolean;
+begin
+  if tg_op = 'INSERT' then
+    -- Solo el dueño de una sesión activa de la misma consulta y paciente.
+    if not exists (
+      select 1 from public.ai_sessions s
+       where s.id = new.session_id
+         and s.user_id = auth.uid()
+         and s.ended_at is null
+         and s.encounter_id = new.encounter_id
+         and s.patient_id = new.patient_id
+    ) then
+      raise exception 'El borrador debe pertenecer a una sesión de IA activa propia de esta consulta.';
+    end if;
+    if not exists (select 1 from public.encounters e where e.id = new.encounter_id and e.status = 'abierta') then
+      raise exception 'La consulta está cerrada: no admite borradores.';
+    end if;
+    new.status := 'propuesto';
+    new.accepted_record_id := null;
+    new.decision_note := null;
+    new.decided_by := null;
+    new.decided_at := null;
+    new.created_at := clock_timestamp();
+    return new;
+  end if;
+  if old.status <> 'propuesto' then
+    raise exception 'El borrador ya fue decidido y no se modifica.';
+  end if;
+  if new.status = 'propuesto' then
+    raise exception 'Un borrador solo se acepta o se rechaza.';
+  end if;
+  if new.session_id is distinct from old.session_id
+     or new.encounter_id is distinct from old.encounter_id
+     or new.kind is distinct from old.kind
+     or new.payload is distinct from old.payload
+     or new.created_at is distinct from old.created_at then
+    raise exception 'Al decidir un borrador solo cambian el estado, la nota y el registro aceptado.';
+  end if;
+  -- Firma: el doctor decide todo; el asistente dental solo signos vitales.
+  if (select public.get_my_role()) <> 'doctor'
+     and not ((select public.get_my_role()) = 'enfermeria' and old.kind = 'signos') then
+    raise exception 'Solo el doctor decide este borrador.';
+  end if;
+  -- Aceptar exige el registro creado en la tabla clínica, de la misma consulta.
+  if new.status = 'aceptado' and old.kind <> 'pregunta' then
+    if new.accepted_record_id is null then
+      raise exception 'Para aceptar un borrador hay que indicar el registro creado.';
+    end if;
+    v_ok := case old.kind
+      when 'odontograma' then exists (select 1 from public.odontogram_entries r
+        where r.id = new.accepted_record_id and r.encounter_id = old.encounter_id and r.source = 'ia_confirmada')
+      when 'nota' then exists (select 1 from public.clinical_entries r
+        where r.id = new.accepted_record_id and r.encounter_id = old.encounter_id and r.source = 'ia_confirmada')
+      when 'signos' then exists (select 1 from public.vital_signs r
+        where r.id = new.accepted_record_id and r.encounter_id = old.encounter_id and r.source = 'ia_confirmada')
+      when 'plan' then exists (select 1 from public.treatment_plan_items r
+        where r.id = new.accepted_record_id and r.patient_id = old.patient_id)
+    end;
+    if not v_ok then
+      raise exception 'El registro aceptado no corresponde a este borrador.';
+    end if;
+  elsif new.accepted_record_id is not null then
+    raise exception 'Una pregunta o un rechazo no llevan registro.';
+  end if;
+  new.decided_by := auth.uid();
+  new.decided_at := clock_timestamp();
+  return new;
+end;
+$$;
+CREATE OR REPLACE FUNCTION "public"."stamp_ai_session"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    SET "search_path" TO ''
+    AS $$
+declare
+  v_patient uuid;
+  v_status public.encounter_status;
+begin
+  if tg_op = 'INSERT' then
+    select e.patient_id, e.status into v_patient, v_status
+      from public.encounters e where e.id = new.encounter_id;
+    if v_patient is distinct from new.patient_id then
+      raise exception 'La consulta no es de este paciente.';
+    end if;
+    if v_status <> 'abierta' then
+      raise exception 'La consulta está cerrada: no admite sesiones de IA.';
+    end if;
+    if not public.ai_consent_active(new.patient_id, 'procesamiento_ia') then
+      raise exception 'El paciente no ha dado consentimiento para procesamiento con IA.';
+    end if;
+    new.user_id := auth.uid();
+    new.started_at := clock_timestamp();
+    new.ended_at := null;
+    new.input_tokens := 0;
+    new.output_tokens := 0;
+    new.cache_read_tokens := 0;
+    new.cache_write_tokens := 0;
+    new.cost_usd := 0;
+    return new;
+  end if;
+  if old.ended_at is not null then
+    raise exception 'La sesión de IA ya terminó y no se modifica.';
+  end if;
+  if new.encounter_id is distinct from old.encounter_id
+     or new.user_id is distinct from old.user_id
+     or new.model is distinct from old.model
+     or new.started_at is distinct from old.started_at then
+    raise exception 'De una sesión de IA solo cambian el consumo y el fin.';
+  end if;
+  -- El consumo solo sube: nadie puede bajar su uso para saltarse el límite.
+  if new.input_tokens < old.input_tokens or new.output_tokens < old.output_tokens
+     or new.cache_read_tokens < old.cache_read_tokens
+     or new.cache_write_tokens < old.cache_write_tokens
+     or new.cost_usd < old.cost_usd then
+    raise exception 'El consumo de una sesión de IA no puede bajar.';
+  end if;
+  if new.ended_at is not null then
+    new.ended_at := clock_timestamp();
+  end if;
   return new;
 end;
 $$;
@@ -1120,6 +1286,57 @@ begin
   return new;
 end;
 $$;
+CREATE TABLE IF NOT EXISTS "public"."ai_consents" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "patient_id" "uuid" NOT NULL,
+    "scope" "public"."ai_consent_scope" NOT NULL,
+    "granted" boolean NOT NULL,
+    "note" "text",
+    "recorded_by" "uuid",
+    "recorded_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "clinic_id" "uuid" NOT NULL,
+    CONSTRAINT "ai_consents_note_check" CHECK ((("note" IS NULL) OR ("length"("note") <= 500)))
+);
+CREATE TABLE IF NOT EXISTS "public"."ai_drafts" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "session_id" "uuid" NOT NULL,
+    "encounter_id" "uuid" NOT NULL,
+    "patient_id" "uuid" NOT NULL,
+    "kind" "public"."ai_draft_kind" NOT NULL,
+    "payload" "jsonb" NOT NULL,
+    "status" "public"."ai_draft_status" DEFAULT 'propuesto'::"public"."ai_draft_status" NOT NULL,
+    "accepted_record_id" "uuid",
+    "decision_note" "text",
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "decided_by" "uuid",
+    "decided_at" timestamp with time zone,
+    "clinic_id" "uuid" NOT NULL,
+    CONSTRAINT "ai_drafts_decided_consistent" CHECK ((("status" = 'propuesto'::"public"."ai_draft_status") = ("decided_at" IS NULL))),
+    CONSTRAINT "ai_drafts_decision_note_check" CHECK ((("decision_note" IS NULL) OR ("length"("decision_note") <= 500))),
+    CONSTRAINT "ai_drafts_payload_check" CHECK ((("jsonb_typeof"("payload") = 'object'::"text") AND ("pg_column_size"("payload") <= 16384))),
+    CONSTRAINT "ai_drafts_record_only_if_accepted" CHECK ((("accepted_record_id" IS NULL) OR ("status" = 'aceptado'::"public"."ai_draft_status")))
+);
+CREATE TABLE IF NOT EXISTS "public"."ai_sessions" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "encounter_id" "uuid" NOT NULL,
+    "patient_id" "uuid" NOT NULL,
+    "user_id" "uuid",
+    "model" "text" NOT NULL,
+    "input_tokens" integer DEFAULT 0 NOT NULL,
+    "output_tokens" integer DEFAULT 0 NOT NULL,
+    "cache_read_tokens" integer DEFAULT 0 NOT NULL,
+    "cache_write_tokens" integer DEFAULT 0 NOT NULL,
+    "cost_usd" numeric(10,4) DEFAULT 0 NOT NULL,
+    "started_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "ended_at" timestamp with time zone,
+    "clinic_id" "uuid" NOT NULL,
+    CONSTRAINT "ai_sessions_cache_read_tokens_check" CHECK (("cache_read_tokens" >= 0)),
+    CONSTRAINT "ai_sessions_cache_write_tokens_check" CHECK (("cache_write_tokens" >= 0)),
+    CONSTRAINT "ai_sessions_cost_usd_check" CHECK (("cost_usd" >= (0)::numeric)),
+    CONSTRAINT "ai_sessions_input_tokens_check" CHECK (("input_tokens" >= 0)),
+    CONSTRAINT "ai_sessions_model_check" CHECK ((("length"("model") >= 3) AND ("length"("model") <= 100))),
+    CONSTRAINT "ai_sessions_output_tokens_check" CHECK (("output_tokens" >= 0))
+);
 CREATE TABLE IF NOT EXISTS "public"."appointments" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
     "patient_id" "uuid" NOT NULL,
@@ -1223,11 +1440,13 @@ CREATE TABLE IF NOT EXISTS "public"."clinical_entries" (
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "clinic_id" "uuid" NOT NULL,
     "encounter_id" "uuid",
+    "source" "public"."record_source" DEFAULT 'manual'::"public"."record_source" NOT NULL,
     CONSTRAINT "clinical_entries_body_check" CHECK ((("body" IS NULL) OR ("length"("body") <= 4000))),
     CONSTRAINT "clinical_entries_content" CHECK (((("kind" = 'medicamento'::"public"."clinical_entry_kind") AND ("length"(TRIM(BOTH FROM COALESCE("medication_name", ''::"text"))) > 0) AND ("length"(TRIM(BOTH FROM COALESCE("dose", ''::"text"))) > 0) AND ("length"(TRIM(BOTH FROM COALESCE("route", ''::"text"))) > 0) AND ("administered_at" IS NOT NULL)) OR (("kind" = ANY (ARRAY['nota'::"public"."clinical_entry_kind", 'procedimiento'::"public"."clinical_entry_kind"])) AND ("length"(TRIM(BOTH FROM COALESCE("body", ''::"text"))) > 0)))),
     CONSTRAINT "clinical_entries_correction" CHECK (((("corrects_entry_id" IS NULL) AND ("correction_reason" IS NULL)) OR (("corrects_entry_id" IS NOT NULL) AND ("length"(TRIM(BOTH FROM COALESCE("correction_reason", ''::"text"))) >= 5)))),
     CONSTRAINT "clinical_entries_correction_reason_check" CHECK ((("correction_reason" IS NULL) OR ("length"("correction_reason") <= 500))),
     CONSTRAINT "clinical_entries_dose_check" CHECK ((("dose" IS NULL) OR ("length"("dose") <= 100))),
+    CONSTRAINT "clinical_entries_ia_needs_encounter" CHECK ((("source" = 'manual'::"public"."record_source") OR ("encounter_id" IS NOT NULL))),
     CONSTRAINT "clinical_entries_medication_name_check" CHECK ((("medication_name" IS NULL) OR ("length"("medication_name") <= 200))),
     CONSTRAINT "clinical_entries_route_check" CHECK ((("route" IS NULL) OR ("length"("route") <= 100)))
 );
@@ -1304,9 +1523,11 @@ CREATE TABLE IF NOT EXISTS "public"."odontogram_entries" (
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "clinic_id" "uuid" NOT NULL,
     "encounter_id" "uuid",
+    "source" "public"."record_source" DEFAULT 'manual'::"public"."record_source" NOT NULL,
     CONSTRAINT "odontogram_entries_content" CHECK ((("condition" IS NOT NULL) OR ("corrects_entry_id" IS NOT NULL))),
     CONSTRAINT "odontogram_entries_correction" CHECK (((("corrects_entry_id" IS NULL) AND ("correction_reason" IS NULL)) OR (("corrects_entry_id" IS NOT NULL) AND ("length"(TRIM(BOTH FROM COALESCE("correction_reason", ''::"text"))) >= 5)))),
     CONSTRAINT "odontogram_entries_correction_reason_check" CHECK ((("correction_reason" IS NULL) OR ("length"("correction_reason") <= 500))),
+    CONSTRAINT "odontogram_entries_ia_needs_encounter" CHECK ((("source" = 'manual'::"public"."record_source") OR ("encounter_id" IS NOT NULL))),
     CONSTRAINT "odontogram_entries_note_check" CHECK ((("note" IS NULL) OR ("length"("note") <= 500))),
     CONSTRAINT "odontogram_entries_surfaces" CHECK ((("condition" IS NULL) OR (("condition" = ANY (ARRAY['caries'::"public"."odontogram_condition", 'obturacion'::"public"."odontogram_condition", 'sellante'::"public"."odontogram_condition"])) AND ("surfaces" IS NOT NULL)) OR (("condition" <> ALL (ARRAY['caries'::"public"."odontogram_condition", 'obturacion'::"public"."odontogram_condition", 'sellante'::"public"."odontogram_condition"])) AND ("surfaces" IS NULL)))),
     CONSTRAINT "odontogram_entries_surfaces_check" CHECK ((("surfaces" IS NULL) OR ((("cardinality"("surfaces") >= 1) AND ("cardinality"("surfaces") <= 5)) AND ("surfaces" <@ ARRAY['M'::"text", 'D'::"text", 'O'::"text", 'V'::"text", 'L'::"text"])))),
@@ -1470,6 +1691,7 @@ CREATE TABLE IF NOT EXISTS "public"."vital_signs" (
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "clinic_id" "uuid" NOT NULL,
     "encounter_id" "uuid",
+    "source" "public"."record_source" DEFAULT 'manual'::"public"."record_source" NOT NULL,
     CONSTRAINT "vital_signs_bp_order" CHECK ((("systolic" IS NULL) OR ("systolic" > "diastolic"))),
     CONSTRAINT "vital_signs_bp_pair" CHECK ((("systolic" IS NULL) = ("diastolic" IS NULL))),
     CONSTRAINT "vital_signs_correction" CHECK ((("corrects_entry_id" IS NULL) = ("correction_reason" IS NULL))),
@@ -1477,11 +1699,18 @@ CREATE TABLE IF NOT EXISTS "public"."vital_signs" (
     CONSTRAINT "vital_signs_diastolic_check" CHECK ((("diastolic" IS NULL) OR (("diastolic" >= 30) AND ("diastolic" <= 160)))),
     CONSTRAINT "vital_signs_glucose_mg_dl_check" CHECK ((("glucose_mg_dl" IS NULL) OR (("glucose_mg_dl" >= 20) AND ("glucose_mg_dl" <= 600)))),
     CONSTRAINT "vital_signs_heart_rate_check" CHECK ((("heart_rate" IS NULL) OR (("heart_rate" >= 30) AND ("heart_rate" <= 220)))),
+    CONSTRAINT "vital_signs_ia_needs_encounter" CHECK ((("source" = 'manual'::"public"."record_source") OR ("encounter_id" IS NOT NULL))),
     CONSTRAINT "vital_signs_note_check" CHECK ((("note" IS NULL) OR ("length"("note") <= 500))),
     CONSTRAINT "vital_signs_oxygen_saturation_check" CHECK ((("oxygen_saturation" IS NULL) OR (("oxygen_saturation" >= 50) AND ("oxygen_saturation" <= 100)))),
     CONSTRAINT "vital_signs_some_value" CHECK ((("systolic" IS NOT NULL) OR ("heart_rate" IS NOT NULL) OR ("glucose_mg_dl" IS NOT NULL) OR ("oxygen_saturation" IS NOT NULL))),
     CONSTRAINT "vital_signs_systolic_check" CHECK ((("systolic" IS NULL) OR (("systolic" >= 60) AND ("systolic" <= 260))))
 );
+ALTER TABLE ONLY "public"."ai_consents"
+    ADD CONSTRAINT "ai_consents_pkey" PRIMARY KEY ("id");
+ALTER TABLE ONLY "public"."ai_drafts"
+    ADD CONSTRAINT "ai_drafts_pkey" PRIMARY KEY ("id");
+ALTER TABLE ONLY "public"."ai_sessions"
+    ADD CONSTRAINT "ai_sessions_pkey" PRIMARY KEY ("id");
 ALTER TABLE ONLY "public"."appointments"
     ADD CONSTRAINT "appointments_no_overlap" EXCLUDE USING "gist" ("doctor_id" WITH =, "public"."appointment_range"("starts_at", "duration_minutes") WITH &&) WHERE (("status" <> ALL (ARRAY['cancelada'::"public"."appointment_status", 'no_asistio'::"public"."appointment_status"])));
 ALTER TABLE ONLY "public"."appointments"
@@ -1536,6 +1765,18 @@ ALTER TABLE ONLY "public"."treatment_plan_items"
     ADD CONSTRAINT "treatment_plan_items_pkey" PRIMARY KEY ("id");
 ALTER TABLE ONLY "public"."vital_signs"
     ADD CONSTRAINT "vital_signs_pkey" PRIMARY KEY ("id");
+CREATE INDEX "ai_consents_clinic_id_idx" ON "public"."ai_consents" USING "btree" ("clinic_id");
+CREATE INDEX "ai_consents_patient_idx" ON "public"."ai_consents" USING "btree" ("patient_id", "scope", "recorded_at" DESC);
+CREATE INDEX "ai_consents_recorded_by_idx" ON "public"."ai_consents" USING "btree" ("recorded_by");
+CREATE INDEX "ai_drafts_clinic_id_idx" ON "public"."ai_drafts" USING "btree" ("clinic_id");
+CREATE INDEX "ai_drafts_decided_by_idx" ON "public"."ai_drafts" USING "btree" ("decided_by");
+CREATE INDEX "ai_drafts_encounter_idx" ON "public"."ai_drafts" USING "btree" ("encounter_id", "status");
+CREATE INDEX "ai_drafts_patient_idx" ON "public"."ai_drafts" USING "btree" ("patient_id");
+CREATE INDEX "ai_drafts_session_idx" ON "public"."ai_drafts" USING "btree" ("session_id");
+CREATE INDEX "ai_sessions_clinic_started_idx" ON "public"."ai_sessions" USING "btree" ("clinic_id", "started_at");
+CREATE INDEX "ai_sessions_encounter_idx" ON "public"."ai_sessions" USING "btree" ("encounter_id");
+CREATE INDEX "ai_sessions_patient_idx" ON "public"."ai_sessions" USING "btree" ("patient_id");
+CREATE INDEX "ai_sessions_user_idx" ON "public"."ai_sessions" USING "btree" ("user_id");
 CREATE INDEX "appointments_clinic_id_idx" ON "public"."appointments" USING "btree" ("clinic_id");
 CREATE INDEX "appointments_completed_patient_starts_idx" ON "public"."appointments" USING "btree" ("patient_id", "starts_at") WHERE ("status" = 'completada'::"public"."appointment_status");
 CREATE INDEX "appointments_doctor_starts_idx" ON "public"."appointments" USING "btree" ("doctor_id", "starts_at");
@@ -1605,6 +1846,9 @@ CREATE INDEX "vital_signs_clinic_id_idx" ON "public"."vital_signs" USING "btree"
 CREATE INDEX "vital_signs_corrects_idx" ON "public"."vital_signs" USING "btree" ("corrects_entry_id");
 CREATE INDEX "vital_signs_encounter_idx" ON "public"."vital_signs" USING "btree" ("encounter_id");
 CREATE INDEX "vital_signs_patient_idx" ON "public"."vital_signs" USING "btree" ("patient_id", "created_at");
+CREATE OR REPLACE TRIGGER "a0_set_clinic_id" BEFORE INSERT OR UPDATE ON "public"."ai_consents" FOR EACH ROW EXECUTE FUNCTION "public"."set_clinic_id"();
+CREATE OR REPLACE TRIGGER "a0_set_clinic_id" BEFORE INSERT OR UPDATE ON "public"."ai_drafts" FOR EACH ROW EXECUTE FUNCTION "public"."set_clinic_id"();
+CREATE OR REPLACE TRIGGER "a0_set_clinic_id" BEFORE INSERT OR UPDATE ON "public"."ai_sessions" FOR EACH ROW EXECUTE FUNCTION "public"."set_clinic_id"();
 CREATE OR REPLACE TRIGGER "a0_set_clinic_id" BEFORE INSERT OR UPDATE ON "public"."appointments" FOR EACH ROW EXECUTE FUNCTION "public"."set_clinic_id"();
 CREATE OR REPLACE TRIGGER "a0_set_clinic_id" BEFORE INSERT OR UPDATE ON "public"."billing_charges" FOR EACH ROW EXECUTE FUNCTION "public"."set_clinic_id"();
 CREATE OR REPLACE TRIGGER "a0_set_clinic_id" BEFORE INSERT OR UPDATE ON "public"."billing_payments" FOR EACH ROW EXECUTE FUNCTION "public"."set_clinic_id"();
@@ -1625,6 +1869,12 @@ CREATE OR REPLACE TRIGGER "a1_billing_payments_receipt" BEFORE INSERT ON "public
 CREATE OR REPLACE TRIGGER "a1_patients_record_number" BEFORE INSERT OR UPDATE ON "public"."patients" FOR EACH ROW EXECUTE FUNCTION "public"."assign_record_number"();
 CREATE OR REPLACE TRIGGER "a2_appointments_stamp_created" BEFORE INSERT OR UPDATE ON "public"."appointments" FOR EACH ROW EXECUTE FUNCTION "public"."stamp_created"();
 CREATE OR REPLACE TRIGGER "a2_patients_stamp_created" BEFORE INSERT OR UPDATE ON "public"."patients" FOR EACH ROW EXECUTE FUNCTION "public"."stamp_created"();
+CREATE OR REPLACE TRIGGER "ai_consents_audit" AFTER INSERT OR DELETE OR UPDATE ON "public"."ai_consents" FOR EACH ROW EXECUTE FUNCTION "public"."audit_row"();
+CREATE OR REPLACE TRIGGER "ai_consents_stamp" BEFORE INSERT ON "public"."ai_consents" FOR EACH ROW EXECUTE FUNCTION "public"."stamp_ai_consent"();
+CREATE OR REPLACE TRIGGER "ai_drafts_audit" AFTER INSERT OR DELETE OR UPDATE ON "public"."ai_drafts" FOR EACH ROW EXECUTE FUNCTION "public"."audit_row"();
+CREATE OR REPLACE TRIGGER "ai_drafts_stamp" BEFORE INSERT OR UPDATE ON "public"."ai_drafts" FOR EACH ROW EXECUTE FUNCTION "public"."stamp_ai_draft"();
+CREATE OR REPLACE TRIGGER "ai_sessions_audit" AFTER INSERT OR DELETE OR UPDATE ON "public"."ai_sessions" FOR EACH ROW EXECUTE FUNCTION "public"."audit_row"();
+CREATE OR REPLACE TRIGGER "ai_sessions_stamp" BEFORE INSERT OR UPDATE ON "public"."ai_sessions" FOR EACH ROW EXECUTE FUNCTION "public"."stamp_ai_session"();
 CREATE OR REPLACE TRIGGER "appointments_audit" AFTER INSERT OR DELETE OR UPDATE ON "public"."appointments" FOR EACH ROW EXECUTE FUNCTION "public"."audit_row"();
 CREATE OR REPLACE TRIGGER "appointments_doctor_update_guard" BEFORE UPDATE ON "public"."appointments" FOR EACH ROW EXECUTE FUNCTION "public"."enforce_doctor_appointment_update"();
 CREATE OR REPLACE TRIGGER "appointments_schedule_guard" BEFORE INSERT OR UPDATE ON "public"."appointments" FOR EACH ROW EXECUTE FUNCTION "public"."enforce_appointment_schedule"();
@@ -1638,6 +1888,9 @@ CREATE OR REPLACE TRIGGER "billing_charges_audit" AFTER INSERT OR DELETE OR UPDA
 CREATE OR REPLACE TRIGGER "billing_charges_stamp" BEFORE INSERT OR UPDATE ON "public"."billing_charges" FOR EACH ROW EXECUTE FUNCTION "public"."stamp_billing_charge"();
 CREATE OR REPLACE TRIGGER "billing_payments_audit" AFTER INSERT OR DELETE OR UPDATE ON "public"."billing_payments" FOR EACH ROW EXECUTE FUNCTION "public"."audit_row"();
 CREATE OR REPLACE TRIGGER "billing_payments_stamp" BEFORE INSERT OR UPDATE ON "public"."billing_payments" FOR EACH ROW EXECUTE FUNCTION "public"."stamp_billing_payment"();
+CREATE OR REPLACE TRIGGER "block_truncate" BEFORE TRUNCATE ON "public"."ai_consents" FOR EACH STATEMENT EXECUTE FUNCTION "public"."block_truncate"();
+CREATE OR REPLACE TRIGGER "block_truncate" BEFORE TRUNCATE ON "public"."ai_drafts" FOR EACH STATEMENT EXECUTE FUNCTION "public"."block_truncate"();
+CREATE OR REPLACE TRIGGER "block_truncate" BEFORE TRUNCATE ON "public"."ai_sessions" FOR EACH STATEMENT EXECUTE FUNCTION "public"."block_truncate"();
 CREATE OR REPLACE TRIGGER "block_truncate" BEFORE TRUNCATE ON "public"."appointments" FOR EACH STATEMENT EXECUTE FUNCTION "public"."block_truncate"();
 CREATE OR REPLACE TRIGGER "block_truncate" BEFORE TRUNCATE ON "public"."audit_log" FOR EACH STATEMENT EXECUTE FUNCTION "public"."block_truncate"();
 CREATE OR REPLACE TRIGGER "block_truncate" BEFORE TRUNCATE ON "public"."billing_charges" FOR EACH STATEMENT EXECUTE FUNCTION "public"."block_truncate"();
@@ -1686,6 +1939,30 @@ CREATE OR REPLACE TRIGGER "treatment_plan_items_audit" AFTER INSERT OR DELETE OR
 CREATE OR REPLACE TRIGGER "treatment_plan_items_stamp" BEFORE INSERT OR UPDATE ON "public"."treatment_plan_items" FOR EACH ROW EXECUTE FUNCTION "public"."stamp_treatment_plan_item"();
 CREATE OR REPLACE TRIGGER "vital_signs_audit" AFTER INSERT OR DELETE OR UPDATE ON "public"."vital_signs" FOR EACH ROW EXECUTE FUNCTION "public"."audit_row"();
 CREATE OR REPLACE TRIGGER "vital_signs_stamp" BEFORE INSERT ON "public"."vital_signs" FOR EACH ROW EXECUTE FUNCTION "public"."stamp_vital_signs"();
+ALTER TABLE ONLY "public"."ai_consents"
+    ADD CONSTRAINT "ai_consents_clinic_id_fkey" FOREIGN KEY ("clinic_id") REFERENCES "public"."clinics"("id");
+ALTER TABLE ONLY "public"."ai_consents"
+    ADD CONSTRAINT "ai_consents_patient_id_fkey" FOREIGN KEY ("patient_id") REFERENCES "public"."patients"("id") ON DELETE RESTRICT;
+ALTER TABLE ONLY "public"."ai_consents"
+    ADD CONSTRAINT "ai_consents_recorded_by_fkey" FOREIGN KEY ("recorded_by") REFERENCES "public"."profiles"("id") ON DELETE RESTRICT;
+ALTER TABLE ONLY "public"."ai_drafts"
+    ADD CONSTRAINT "ai_drafts_clinic_id_fkey" FOREIGN KEY ("clinic_id") REFERENCES "public"."clinics"("id");
+ALTER TABLE ONLY "public"."ai_drafts"
+    ADD CONSTRAINT "ai_drafts_decided_by_fkey" FOREIGN KEY ("decided_by") REFERENCES "public"."profiles"("id") ON DELETE RESTRICT;
+ALTER TABLE ONLY "public"."ai_drafts"
+    ADD CONSTRAINT "ai_drafts_encounter_id_fkey" FOREIGN KEY ("encounter_id") REFERENCES "public"."encounters"("id") ON DELETE RESTRICT;
+ALTER TABLE ONLY "public"."ai_drafts"
+    ADD CONSTRAINT "ai_drafts_patient_id_fkey" FOREIGN KEY ("patient_id") REFERENCES "public"."patients"("id") ON DELETE RESTRICT;
+ALTER TABLE ONLY "public"."ai_drafts"
+    ADD CONSTRAINT "ai_drafts_session_id_fkey" FOREIGN KEY ("session_id") REFERENCES "public"."ai_sessions"("id") ON DELETE RESTRICT;
+ALTER TABLE ONLY "public"."ai_sessions"
+    ADD CONSTRAINT "ai_sessions_clinic_id_fkey" FOREIGN KEY ("clinic_id") REFERENCES "public"."clinics"("id");
+ALTER TABLE ONLY "public"."ai_sessions"
+    ADD CONSTRAINT "ai_sessions_encounter_id_fkey" FOREIGN KEY ("encounter_id") REFERENCES "public"."encounters"("id") ON DELETE RESTRICT;
+ALTER TABLE ONLY "public"."ai_sessions"
+    ADD CONSTRAINT "ai_sessions_patient_id_fkey" FOREIGN KEY ("patient_id") REFERENCES "public"."patients"("id") ON DELETE RESTRICT;
+ALTER TABLE ONLY "public"."ai_sessions"
+    ADD CONSTRAINT "ai_sessions_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."profiles"("id") ON DELETE RESTRICT;
 ALTER TABLE ONLY "public"."appointments"
     ADD CONSTRAINT "appointments_clinic_id_fkey" FOREIGN KEY ("clinic_id") REFERENCES "public"."clinics"("id");
 ALTER TABLE ONLY "public"."appointments"
@@ -1830,6 +2107,36 @@ ALTER TABLE ONLY "public"."vital_signs"
     ADD CONSTRAINT "vital_signs_encounter_id_fkey" FOREIGN KEY ("encounter_id") REFERENCES "public"."encounters"("id") ON DELETE RESTRICT;
 ALTER TABLE ONLY "public"."vital_signs"
     ADD CONSTRAINT "vital_signs_patient_id_fkey" FOREIGN KEY ("patient_id") REFERENCES "public"."patients"("id") ON DELETE RESTRICT;
+ALTER TABLE "public"."ai_consents" ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "ai_consents: registrar" ON "public"."ai_consents" FOR INSERT TO "authenticated" WITH CHECK (((( SELECT "public"."get_my_role"() AS "get_my_role") = ANY (ARRAY['admin'::"public"."user_role", 'recepcion'::"public"."user_role", 'doctor'::"public"."user_role", 'enfermeria'::"public"."user_role"])) AND (EXISTS ( SELECT 1
+   FROM "public"."patients" "p"
+  WHERE ("p"."id" = "ai_consents"."patient_id")))));
+CREATE POLICY "ai_consents: ver" ON "public"."ai_consents" FOR SELECT TO "authenticated" USING (((( SELECT "public"."get_my_role"() AS "get_my_role") = ANY (ARRAY['admin'::"public"."user_role", 'recepcion'::"public"."user_role", 'doctor'::"public"."user_role", 'enfermeria'::"public"."user_role"])) AND (EXISTS ( SELECT 1
+   FROM "public"."patients" "p"
+  WHERE ("p"."id" = "ai_consents"."patient_id")))));
+ALTER TABLE "public"."ai_drafts" ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "ai_drafts: decidir" ON "public"."ai_drafts" FOR UPDATE TO "authenticated" USING (((( SELECT "public"."get_my_role"() AS "get_my_role") = ANY (ARRAY['doctor'::"public"."user_role", 'enfermeria'::"public"."user_role"])) AND (EXISTS ( SELECT 1
+   FROM "public"."patients" "p"
+  WHERE ("p"."id" = "ai_drafts"."patient_id"))))) WITH CHECK (((( SELECT "public"."get_my_role"() AS "get_my_role") = ANY (ARRAY['doctor'::"public"."user_role", 'enfermeria'::"public"."user_role"])) AND (EXISTS ( SELECT 1
+   FROM "public"."patients" "p"
+  WHERE ("p"."id" = "ai_drafts"."patient_id")))));
+CREATE POLICY "ai_drafts: proponer" ON "public"."ai_drafts" FOR INSERT TO "authenticated" WITH CHECK (((( SELECT "public"."get_my_role"() AS "get_my_role") = ANY (ARRAY['doctor'::"public"."user_role", 'enfermeria'::"public"."user_role"])) AND (EXISTS ( SELECT 1
+   FROM "public"."patients" "p"
+  WHERE ("p"."id" = "ai_drafts"."patient_id")))));
+CREATE POLICY "ai_drafts: ver" ON "public"."ai_drafts" FOR SELECT TO "authenticated" USING (((( SELECT "public"."get_my_role"() AS "get_my_role") = ANY (ARRAY['doctor'::"public"."user_role", 'enfermeria'::"public"."user_role"])) AND (EXISTS ( SELECT 1
+   FROM "public"."patients" "p"
+  WHERE ("p"."id" = "ai_drafts"."patient_id")))));
+ALTER TABLE "public"."ai_sessions" ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "ai_sessions: dueño registra consumo" ON "public"."ai_sessions" FOR UPDATE TO "authenticated" USING (((( SELECT "public"."get_my_role"() AS "get_my_role") = ANY (ARRAY['doctor'::"public"."user_role", 'enfermeria'::"public"."user_role"])) AND ("user_id" = ( SELECT "auth"."uid"() AS "uid")))) WITH CHECK (((( SELECT "public"."get_my_role"() AS "get_my_role") = ANY (ARRAY['doctor'::"public"."user_role", 'enfermeria'::"public"."user_role"])) AND ("user_id" = ( SELECT "auth"."uid"() AS "uid"))));
+CREATE POLICY "ai_sessions: iniciar" ON "public"."ai_sessions" FOR INSERT TO "authenticated" WITH CHECK (((( SELECT "public"."get_my_role"() AS "get_my_role") = ANY (ARRAY['doctor'::"public"."user_role", 'enfermeria'::"public"."user_role"])) AND (EXISTS ( SELECT 1
+   FROM "public"."patients" "p"
+  WHERE ("p"."id" = "ai_sessions"."patient_id")))));
+CREATE POLICY "ai_sessions: ver" ON "public"."ai_sessions" FOR SELECT TO "authenticated" USING (((( SELECT "public"."get_my_role"() AS "get_my_role") = ANY (ARRAY['admin'::"public"."user_role", 'doctor'::"public"."user_role", 'enfermeria'::"public"."user_role"])) AND (EXISTS ( SELECT 1
+   FROM "public"."patients" "p"
+  WHERE ("p"."id" = "ai_sessions"."patient_id")))));
+CREATE POLICY "aislamiento por clínica" ON "public"."ai_consents" AS RESTRICTIVE TO "authenticated" USING (("clinic_id" = ( SELECT "public"."get_my_clinic"() AS "get_my_clinic"))) WITH CHECK (("clinic_id" = ( SELECT "public"."get_my_clinic"() AS "get_my_clinic")));
+CREATE POLICY "aislamiento por clínica" ON "public"."ai_drafts" AS RESTRICTIVE TO "authenticated" USING (("clinic_id" = ( SELECT "public"."get_my_clinic"() AS "get_my_clinic"))) WITH CHECK (("clinic_id" = ( SELECT "public"."get_my_clinic"() AS "get_my_clinic")));
+CREATE POLICY "aislamiento por clínica" ON "public"."ai_sessions" AS RESTRICTIVE TO "authenticated" USING (("clinic_id" = ( SELECT "public"."get_my_clinic"() AS "get_my_clinic"))) WITH CHECK (("clinic_id" = ( SELECT "public"."get_my_clinic"() AS "get_my_clinic")));
 CREATE POLICY "aislamiento por clínica" ON "public"."appointments" AS RESTRICTIVE TO "authenticated" USING (("clinic_id" = ( SELECT "public"."get_my_clinic"() AS "get_my_clinic"))) WITH CHECK (("clinic_id" = ( SELECT "public"."get_my_clinic"() AS "get_my_clinic")));
 CREATE POLICY "aislamiento por clínica" ON "public"."audit_log" AS RESTRICTIVE TO "authenticated" USING (("clinic_id" = ( SELECT "public"."get_my_clinic"() AS "get_my_clinic"))) WITH CHECK (("clinic_id" = ( SELECT "public"."get_my_clinic"() AS "get_my_clinic")));
 CREATE POLICY "aislamiento por clínica" ON "public"."billing_charges" AS RESTRICTIVE TO "authenticated" USING (("clinic_id" = ( SELECT "public"."get_my_clinic"() AS "get_my_clinic"))) WITH CHECK (("clinic_id" = ( SELECT "public"."get_my_clinic"() AS "get_my_clinic")));
@@ -1982,6 +2289,9 @@ GRANT USAGE ON SCHEMA "public" TO "postgres";
 GRANT USAGE ON SCHEMA "public" TO "anon";
 GRANT USAGE ON SCHEMA "public" TO "authenticated";
 GRANT USAGE ON SCHEMA "public" TO "service_role";
+REVOKE ALL ON FUNCTION "public"."ai_consent_active"("p_patient" "uuid", "p_scope" "public"."ai_consent_scope") FROM PUBLIC;
+GRANT ALL ON FUNCTION "public"."ai_consent_active"("p_patient" "uuid", "p_scope" "public"."ai_consent_scope") TO "service_role";
+GRANT ALL ON FUNCTION "public"."ai_consent_active"("p_patient" "uuid", "p_scope" "public"."ai_consent_scope") TO "authenticated";
 REVOKE ALL ON FUNCTION "public"."appointment_range"("p_starts_at" timestamp with time zone, "p_duration_minutes" integer) FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."appointment_range"("p_starts_at" timestamp with time zone, "p_duration_minutes" integer) TO "service_role";
 GRANT ALL ON FUNCTION "public"."appointment_range"("p_starts_at" timestamp with time zone, "p_duration_minutes" integer) TO "authenticated";
@@ -2045,6 +2355,12 @@ REVOKE ALL ON FUNCTION "public"."set_clinic_id"() FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."set_clinic_id"() TO "service_role";
 REVOKE ALL ON FUNCTION "public"."set_updated_at"() FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."set_updated_at"() TO "service_role";
+REVOKE ALL ON FUNCTION "public"."stamp_ai_consent"() FROM PUBLIC;
+GRANT ALL ON FUNCTION "public"."stamp_ai_consent"() TO "service_role";
+REVOKE ALL ON FUNCTION "public"."stamp_ai_draft"() FROM PUBLIC;
+GRANT ALL ON FUNCTION "public"."stamp_ai_draft"() TO "service_role";
+REVOKE ALL ON FUNCTION "public"."stamp_ai_session"() FROM PUBLIC;
+GRANT ALL ON FUNCTION "public"."stamp_ai_session"() TO "service_role";
 REVOKE ALL ON FUNCTION "public"."stamp_billing_charge"() FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."stamp_billing_charge"() TO "service_role";
 REVOKE ALL ON FUNCTION "public"."stamp_billing_payment"() FROM PUBLIC;
@@ -2077,6 +2393,12 @@ REVOKE ALL ON FUNCTION "public"."stamp_treatment_plan_item"() FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."stamp_treatment_plan_item"() TO "service_role";
 REVOKE ALL ON FUNCTION "public"."stamp_vital_signs"() FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."stamp_vital_signs"() TO "service_role";
+GRANT ALL ON TABLE "public"."ai_consents" TO "service_role";
+GRANT SELECT,INSERT ON TABLE "public"."ai_consents" TO "authenticated";
+GRANT ALL ON TABLE "public"."ai_drafts" TO "service_role";
+GRANT SELECT,INSERT,UPDATE ON TABLE "public"."ai_drafts" TO "authenticated";
+GRANT ALL ON TABLE "public"."ai_sessions" TO "service_role";
+GRANT SELECT,INSERT,UPDATE ON TABLE "public"."ai_sessions" TO "authenticated";
 GRANT ALL ON TABLE "public"."appointments" TO "service_role";
 GRANT SELECT,INSERT,UPDATE ON TABLE "public"."appointments" TO "authenticated";
 GRANT ALL ON TABLE "public"."audit_log" TO "service_role";

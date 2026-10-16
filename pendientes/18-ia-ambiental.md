@@ -1,6 +1,6 @@
 # IA ambiental (harness sobre la API de Claude)
 
-Diseño al 2026-10-16. Estado: **propuesto**, falta OK de Darys (costo, consentimiento, migración 036).
+Diseño al 2026-10-16. Estado: diseño aprobado y 036 escrita; falta aplicarla, la clave de la API y el consentimiento revisado por abogado.
 
 ## Principio
 "Vida propia" = agente con herramientas, memoria y mapa del dominio dentro de un harness. No escribe datos clínicos por su cuenta: **la IA propone, el doctor firma**. Toda lectura y escritura pasa por RLS y triggers como el usuario logueado.
@@ -26,7 +26,7 @@ Micrófono (Web Speech API `es-DO`/`en-US`) → texto en el navegador → server
 - Sesiones largas: compaction (beta `compact-2026-01-12`).
 - Límite por clínica (consultas/día y tokens/mes) en la base; corte duro al pasarlo.
 
-## Migración 036 (propuesta, no escrita)
+## Migración 036 (escrita: `supabase/migrations/036_ia_ambiental.sql`, pruebas `05-ia.sql`; pendiente de aplicar)
 - `ai_consents`: paciente, alcance (`dictado`, `procesamiento_ia`), otorgado/revocado (revocar = fila nueva), autor y fecha por trigger. Sin consentimiento vigente la IA no corre para ese paciente (Ley 172-13 [CONFIRMAR con abogado]).
 - `ai_sessions`: consulta, usuario, modelo, tokens entrada/salida/caché, costo estimado, inicio/fin. Solo INSERT + cierre.
 - `ai_drafts`: sesión, `encounter_id`, paciente, tipo, `payload jsonb` validado, estado (`propuesto`/`aceptado`/`rechazado`), `accepted_record_id`, decidido por/fecha (trigger). Sin DELETE; solo cambia el estado una vez.
