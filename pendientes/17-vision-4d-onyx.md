@@ -46,6 +46,7 @@ Estado: **visión de Darys (2026-10-16), nada construido.** La imagen del "Denta
 | Fase | Qué | Requisito |
 |---|---|---|
 | 0 | Línea de tiempo por diente con lo que ya guarda `odontogram_entries` | Ninguno; sin cambiar el esquema |
+| 0.5 | Visor 3D interactivo con modelo **ilustrativo**: agarrar la mandíbula con el mouse y abrir o cerrar la boca (prompt C1 en `06-prompts-para-agentes.md`) | Modelo GLB con licencia comercial y mandíbula como malla separada (lo aporta Darys) |
 | 1 | Subir y ver radiografías y fotos del paciente | Tablas nuevas (sección 6) |
 | 2 | Borrador de nota por voz que el doctor confirma | Contrato con proveedor de voz y consentimiento |
 | 3 | IA que sugiere hallazgos en radiografías | Contrato y revisión regulatoria |
@@ -68,3 +69,10 @@ Pendiente de decidir con Darys: qué roles ven imágenes (recepción sí o no), 
 ## 7. Riesgos abiertos
 
 Regulación del software de diagnóstico; datos anotados para entrenar un modelo propio; costo y tamaño de las tomografías; privacidad del audio en sala; marca ONYX sin búsqueda; hipótesis de ahorro de tiempo sin medir.
+
+## 8. Interacción del modelo (fase 0.5)
+
+- Agarre del mouse sobre la mandíbula: arrastrar abajo abre, arriba cierra. Rotación en el cóndilo más traslación hacia delante, con tope máximo.
+- Con modelo genérico es **ilustrativo** y debe rotularse así. Para que refleje al paciente hace falta segmentar su tomografía (mandíbula, maxilar y dientes como mallas separadas): fase 4.
+- Milímetros de apertura solo cuando salgan de la geometría real del modelo del paciente; nunca en el modelo ilustrativo.
+- Biomecánica real (fuerzas, guía de mordida) es investigación aparte; esta fase es solo movimiento visual.
