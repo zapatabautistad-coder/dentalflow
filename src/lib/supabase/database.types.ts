@@ -168,14 +168,14 @@ isOneToOne: false
                   ]
                 },"clinical_entries": {
                   Row: {
-                    "administered_at": string | null,"author_id": string | null,"author_role": Database["public"]['Enums']["user_role"] | null,"body": string | null,"clinic_id": string,"correction_reason": string | null,"corrects_entry_id": string | null,"created_at": string,"dose": string | null,"id": string,"kind": Database["public"]['Enums']["clinical_entry_kind"],"medication_name": string | null,"patient_id": string,"route": string | null
+                    "administered_at": string | null,"author_id": string | null,"author_role": Database["public"]['Enums']["user_role"] | null,"body": string | null,"clinic_id": string,"correction_reason": string | null,"corrects_entry_id": string | null,"created_at": string,"dose": string | null,"encounter_id": string | null,"id": string,"kind": Database["public"]['Enums']["clinical_entry_kind"],"medication_name": string | null,"patient_id": string,"route": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "administered_at"?: string | null,"author_id"?: string | null,"author_role"?: Database["public"]['Enums']["user_role"] | null,"body"?: string | null,"clinic_id": string,"correction_reason"?: string | null,"corrects_entry_id"?: string | null,"created_at"?: string,"dose"?: string | null,"id"?: string,"kind": Database["public"]['Enums']["clinical_entry_kind"],"medication_name"?: string | null,"patient_id": string,"route"?: string | null
+                    "administered_at"?: string | null,"author_id"?: string | null,"author_role"?: Database["public"]['Enums']["user_role"] | null,"body"?: string | null,"clinic_id": string,"correction_reason"?: string | null,"corrects_entry_id"?: string | null,"created_at"?: string,"dose"?: string | null,"encounter_id"?: string | null,"id"?: string,"kind": Database["public"]['Enums']["clinical_entry_kind"],"medication_name"?: string | null,"patient_id": string,"route"?: string | null
                   }
                   Update: {
-                    "administered_at"?: string | null,"author_id"?: string | null,"author_role"?: Database["public"]['Enums']["user_role"] | null,"body"?: string | null,"clinic_id"?: string,"correction_reason"?: string | null,"corrects_entry_id"?: string | null,"created_at"?: string,"dose"?: string | null,"id"?: string,"kind"?: Database["public"]['Enums']["clinical_entry_kind"],"medication_name"?: string | null,"patient_id"?: string,"route"?: string | null
+                    "administered_at"?: string | null,"author_id"?: string | null,"author_role"?: Database["public"]['Enums']["user_role"] | null,"body"?: string | null,"clinic_id"?: string,"correction_reason"?: string | null,"corrects_entry_id"?: string | null,"created_at"?: string,"dose"?: string | null,"encounter_id"?: string | null,"id"?: string,"kind"?: Database["public"]['Enums']["clinical_entry_kind"],"medication_name"?: string | null,"patient_id"?: string,"route"?: string | null
                   }
                   Relationships: [
                     {
@@ -195,6 +195,12 @@ isOneToOne: false
       columns: ["corrects_entry_id"]
 isOneToOne: false
       referencedRelation: "clinical_entries"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "clinical_entries_encounter_id_fkey"
+      columns: ["encounter_id"]
+isOneToOne: false
+      referencedRelation: "encounters"
       referencedColumns: ["id"]
     },{
       foreignKeyName: "clinical_entries_patient_id_fkey"
@@ -294,16 +300,60 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
-                },"odontogram_entries": {
+                },"encounters": {
                   Row: {
-                    "author_id": string | null,"author_role": Database["public"]['Enums']["user_role"] | null,"clinic_id": string,"condition": Database["public"]['Enums']["odontogram_condition"] | null,"correction_reason": string | null,"corrects_entry_id": string | null,"created_at": string,"id": string,"note": string | null,"patient_id": string,"surfaces": (string)[] | null,"tooth": number
+                    "appointment_id": string | null,"clinic_id": string,"closed_at": string | null,"closed_by": string | null,"closure_note": string | null,"id": string,"opened_at": string,"opened_by": string | null,"opened_by_role": Database["public"]['Enums']["user_role"] | null,"patient_id": string,"reason": string | null,"status": Database["public"]['Enums']["encounter_status"]
                   }
                   ComputedFields: never
                   Insert: {
-                    "author_id"?: string | null,"author_role"?: Database["public"]['Enums']["user_role"] | null,"clinic_id": string,"condition"?: Database["public"]['Enums']["odontogram_condition"] | null,"correction_reason"?: string | null,"corrects_entry_id"?: string | null,"created_at"?: string,"id"?: string,"note"?: string | null,"patient_id": string,"surfaces"?: (string)[] | null,"tooth": number
+                    "appointment_id"?: string | null,"clinic_id": string,"closed_at"?: string | null,"closed_by"?: string | null,"closure_note"?: string | null,"id"?: string,"opened_at"?: string,"opened_by"?: string | null,"opened_by_role"?: Database["public"]['Enums']["user_role"] | null,"patient_id": string,"reason"?: string | null,"status"?: Database["public"]['Enums']["encounter_status"]
                   }
                   Update: {
-                    "author_id"?: string | null,"author_role"?: Database["public"]['Enums']["user_role"] | null,"clinic_id"?: string,"condition"?: Database["public"]['Enums']["odontogram_condition"] | null,"correction_reason"?: string | null,"corrects_entry_id"?: string | null,"created_at"?: string,"id"?: string,"note"?: string | null,"patient_id"?: string,"surfaces"?: (string)[] | null,"tooth"?: number
+                    "appointment_id"?: string | null,"clinic_id"?: string,"closed_at"?: string | null,"closed_by"?: string | null,"closure_note"?: string | null,"id"?: string,"opened_at"?: string,"opened_by"?: string | null,"opened_by_role"?: Database["public"]['Enums']["user_role"] | null,"patient_id"?: string,"reason"?: string | null,"status"?: Database["public"]['Enums']["encounter_status"]
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "encounters_appointment_id_fkey"
+      columns: ["appointment_id"]
+isOneToOne: false
+      referencedRelation: "appointments"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "encounters_clinic_id_fkey"
+      columns: ["clinic_id"]
+isOneToOne: false
+      referencedRelation: "clinics"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "encounters_closed_by_fkey"
+      columns: ["closed_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "encounters_opened_by_fkey"
+      columns: ["opened_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "encounters_patient_id_fkey"
+      columns: ["patient_id"]
+isOneToOne: false
+      referencedRelation: "patients"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"odontogram_entries": {
+                  Row: {
+                    "author_id": string | null,"author_role": Database["public"]['Enums']["user_role"] | null,"clinic_id": string,"condition": Database["public"]['Enums']["odontogram_condition"] | null,"correction_reason": string | null,"corrects_entry_id": string | null,"created_at": string,"encounter_id": string | null,"id": string,"note": string | null,"patient_id": string,"surfaces": (string)[] | null,"tooth": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "author_id"?: string | null,"author_role"?: Database["public"]['Enums']["user_role"] | null,"clinic_id": string,"condition"?: Database["public"]['Enums']["odontogram_condition"] | null,"correction_reason"?: string | null,"corrects_entry_id"?: string | null,"created_at"?: string,"encounter_id"?: string | null,"id"?: string,"note"?: string | null,"patient_id": string,"surfaces"?: (string)[] | null,"tooth": number
+                  }
+                  Update: {
+                    "author_id"?: string | null,"author_role"?: Database["public"]['Enums']["user_role"] | null,"clinic_id"?: string,"condition"?: Database["public"]['Enums']["odontogram_condition"] | null,"correction_reason"?: string | null,"corrects_entry_id"?: string | null,"created_at"?: string,"encounter_id"?: string | null,"id"?: string,"note"?: string | null,"patient_id"?: string,"surfaces"?: (string)[] | null,"tooth"?: number
                   }
                   Relationships: [
                     {
@@ -323,6 +373,12 @@ isOneToOne: false
       columns: ["corrects_entry_id"]
 isOneToOne: false
       referencedRelation: "odontogram_entries"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "odontogram_entries_encounter_id_fkey"
+      columns: ["encounter_id"]
+isOneToOne: false
+      referencedRelation: "encounters"
       referencedColumns: ["id"]
     },{
       foreignKeyName: "odontogram_entries_patient_id_fkey"
@@ -444,14 +500,14 @@ isOneToOne: false
                   ]
                 },"prescriptions": {
                   Row: {
-                    "appointment_id": string | null,"clinic_id": string,"created_at": string,"doctor_exequatur": string,"doctor_id": string | null,"doctor_name": string,"id": string,"indications": string | null,"patient_id": string,"void_reason": string | null,"voided_at": string | null,"voided_by": string | null
+                    "appointment_id": string | null,"clinic_id": string,"created_at": string,"doctor_exequatur": string,"doctor_id": string | null,"doctor_name": string,"encounter_id": string | null,"id": string,"indications": string | null,"patient_id": string,"void_reason": string | null,"voided_at": string | null,"voided_by": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "appointment_id"?: string | null,"clinic_id": string,"created_at"?: string,"doctor_exequatur"?: string,"doctor_id"?: string | null,"doctor_name"?: string,"id"?: string,"indications"?: string | null,"patient_id": string,"void_reason"?: string | null,"voided_at"?: string | null,"voided_by"?: string | null
+                    "appointment_id"?: string | null,"clinic_id": string,"created_at"?: string,"doctor_exequatur"?: string,"doctor_id"?: string | null,"doctor_name"?: string,"encounter_id"?: string | null,"id"?: string,"indications"?: string | null,"patient_id": string,"void_reason"?: string | null,"voided_at"?: string | null,"voided_by"?: string | null
                   }
                   Update: {
-                    "appointment_id"?: string | null,"clinic_id"?: string,"created_at"?: string,"doctor_exequatur"?: string,"doctor_id"?: string | null,"doctor_name"?: string,"id"?: string,"indications"?: string | null,"patient_id"?: string,"void_reason"?: string | null,"voided_at"?: string | null,"voided_by"?: string | null
+                    "appointment_id"?: string | null,"clinic_id"?: string,"created_at"?: string,"doctor_exequatur"?: string,"doctor_id"?: string | null,"doctor_name"?: string,"encounter_id"?: string | null,"id"?: string,"indications"?: string | null,"patient_id"?: string,"void_reason"?: string | null,"voided_at"?: string | null,"voided_by"?: string | null
                   }
                   Relationships: [
                     {
@@ -471,6 +527,12 @@ isOneToOne: false
       columns: ["doctor_id"]
 isOneToOne: false
       referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "prescriptions_encounter_id_fkey"
+      columns: ["encounter_id"]
+isOneToOne: false
+      referencedRelation: "encounters"
       referencedColumns: ["id"]
     },{
       foreignKeyName: "prescriptions_patient_id_fkey"
@@ -590,14 +652,14 @@ isOneToOne: false
                   ]
                 },"vital_signs": {
                   Row: {
-                    "appointment_id": string | null,"author_id": string | null,"author_role": Database["public"]['Enums']["user_role"] | null,"clinic_id": string,"correction_reason": string | null,"corrects_entry_id": string | null,"created_at": string,"diastolic": number | null,"glucose_mg_dl": number | null,"heart_rate": number | null,"id": string,"note": string | null,"oxygen_saturation": number | null,"patient_id": string,"systolic": number | null
+                    "appointment_id": string | null,"author_id": string | null,"author_role": Database["public"]['Enums']["user_role"] | null,"clinic_id": string,"correction_reason": string | null,"corrects_entry_id": string | null,"created_at": string,"diastolic": number | null,"encounter_id": string | null,"glucose_mg_dl": number | null,"heart_rate": number | null,"id": string,"note": string | null,"oxygen_saturation": number | null,"patient_id": string,"systolic": number | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "appointment_id"?: string | null,"author_id"?: string | null,"author_role"?: Database["public"]['Enums']["user_role"] | null,"clinic_id": string,"correction_reason"?: string | null,"corrects_entry_id"?: string | null,"created_at"?: string,"diastolic"?: number | null,"glucose_mg_dl"?: number | null,"heart_rate"?: number | null,"id"?: string,"note"?: string | null,"oxygen_saturation"?: number | null,"patient_id": string,"systolic"?: number | null
+                    "appointment_id"?: string | null,"author_id"?: string | null,"author_role"?: Database["public"]['Enums']["user_role"] | null,"clinic_id": string,"correction_reason"?: string | null,"corrects_entry_id"?: string | null,"created_at"?: string,"diastolic"?: number | null,"encounter_id"?: string | null,"glucose_mg_dl"?: number | null,"heart_rate"?: number | null,"id"?: string,"note"?: string | null,"oxygen_saturation"?: number | null,"patient_id": string,"systolic"?: number | null
                   }
                   Update: {
-                    "appointment_id"?: string | null,"author_id"?: string | null,"author_role"?: Database["public"]['Enums']["user_role"] | null,"clinic_id"?: string,"correction_reason"?: string | null,"corrects_entry_id"?: string | null,"created_at"?: string,"diastolic"?: number | null,"glucose_mg_dl"?: number | null,"heart_rate"?: number | null,"id"?: string,"note"?: string | null,"oxygen_saturation"?: number | null,"patient_id"?: string,"systolic"?: number | null
+                    "appointment_id"?: string | null,"author_id"?: string | null,"author_role"?: Database["public"]['Enums']["user_role"] | null,"clinic_id"?: string,"correction_reason"?: string | null,"corrects_entry_id"?: string | null,"created_at"?: string,"diastolic"?: number | null,"encounter_id"?: string | null,"glucose_mg_dl"?: number | null,"heart_rate"?: number | null,"id"?: string,"note"?: string | null,"oxygen_saturation"?: number | null,"patient_id"?: string,"systolic"?: number | null
                   }
                   Relationships: [
                     {
@@ -623,6 +685,12 @@ isOneToOne: false
       columns: ["corrects_entry_id"]
 isOneToOne: false
       referencedRelation: "vital_signs"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "vital_signs_encounter_id_fkey"
+      columns: ["encounter_id"]
+isOneToOne: false
+      referencedRelation: "encounters"
       referencedColumns: ["id"]
     },{
       foreignKeyName: "vital_signs_patient_id_fkey"
@@ -683,7 +751,7 @@ isOneToOne: false
                            }
           }
           Enums: {
-            "appointment_status": "programada"|"confirmada"|"en_curso"|"completada"|"cancelada"|"no_asistio","ars_claim_status": "no_aplica"|"pendiente"|"reclamado"|"pagado"|"rechazado","clinical_entry_kind": "nota"|"medicamento"|"procedimiento","insurance_type": "ars"|"privado","odontogram_condition": "sano"|"caries"|"obturacion"|"sellante"|"corona"|"endodoncia"|"fractura"|"extraccion_indicada"|"ausente"|"implante","payment_method": "efectivo"|"tarjeta"|"transferencia"|"cheque","queue_status": "en_espera"|"llamado"|"en_atencion"|"atendido"|"cancelado","treatment_status": "pendiente"|"en_proceso"|"completado"|"cancelado","user_role": "doctor"|"recepcion"|"admin"|"enfermeria"
+            "appointment_status": "programada"|"confirmada"|"en_curso"|"completada"|"cancelada"|"no_asistio","ars_claim_status": "no_aplica"|"pendiente"|"reclamado"|"pagado"|"rechazado","clinical_entry_kind": "nota"|"medicamento"|"procedimiento","encounter_status": "abierta"|"cerrada","insurance_type": "ars"|"privado","odontogram_condition": "sano"|"caries"|"obturacion"|"sellante"|"corona"|"endodoncia"|"fractura"|"extraccion_indicada"|"ausente"|"implante","payment_method": "efectivo"|"tarjeta"|"transferencia"|"cheque","queue_status": "en_espera"|"llamado"|"en_atencion"|"atendido"|"cancelado","treatment_status": "pendiente"|"en_proceso"|"completado"|"cancelado","user_role": "doctor"|"recepcion"|"admin"|"enfermeria"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -799,7 +867,7 @@ export type CompositeTypes<
 export const Constants = {
   "public": {
           Enums: {
-            "appointment_status": ["programada", "confirmada", "en_curso", "completada", "cancelada", "no_asistio"],"ars_claim_status": ["no_aplica", "pendiente", "reclamado", "pagado", "rechazado"],"clinical_entry_kind": ["nota", "medicamento", "procedimiento"],"insurance_type": ["ars", "privado"],"odontogram_condition": ["sano", "caries", "obturacion", "sellante", "corona", "endodoncia", "fractura", "extraccion_indicada", "ausente", "implante"],"payment_method": ["efectivo", "tarjeta", "transferencia", "cheque"],"queue_status": ["en_espera", "llamado", "en_atencion", "atendido", "cancelado"],"treatment_status": ["pendiente", "en_proceso", "completado", "cancelado"],"user_role": ["doctor", "recepcion", "admin", "enfermeria"]
+            "appointment_status": ["programada", "confirmada", "en_curso", "completada", "cancelada", "no_asistio"],"ars_claim_status": ["no_aplica", "pendiente", "reclamado", "pagado", "rechazado"],"clinical_entry_kind": ["nota", "medicamento", "procedimiento"],"encounter_status": ["abierta", "cerrada"],"insurance_type": ["ars", "privado"],"odontogram_condition": ["sano", "caries", "obturacion", "sellante", "corona", "endodoncia", "fractura", "extraccion_indicada", "ausente", "implante"],"payment_method": ["efectivo", "tarjeta", "transferencia", "cheque"],"queue_status": ["en_espera", "llamado", "en_atencion", "atendido", "cancelado"],"treatment_status": ["pendiente", "en_proceso", "completado", "cancelado"],"user_role": ["doctor", "recepcion", "admin", "enfermeria"]
           }
         }
 } as const

@@ -367,3 +367,36 @@ No toques: migraciones, la base de producción (solo lectura), el workflow de re
 No unas el PR ni actives auto-merge.
 Entrega: rama nueva + PR. Antes de terminar, `npm run lint`, `npm test` y `npm run build` deben pasar.
 ```
+
+---
+
+## Parte E · Consultas (encounters)
+
+### C6 · Pantalla de consultas (después de aplicar la migración 035 en producción)
+```
+Lee CLAUDE.md, AGENTS.md, supabase/MAPA.md y supabase/migrations/035_encounters.sql antes de empezar.
+
+Contexto: la tabla `encounters` agrupa lo registrado en una visita. La abre el doctor o el asistente
+dental (`enfermeria`); la cierra solo el doctor; cerrada no cambia. clinical_entries, odontogram_entries,
+vital_signs y prescriptions tienen `encounter_id` opcional; la base rechaza enlazar a una consulta
+cerrada o de otro paciente. Autor, rol, estado y fechas los pone la base: la app nunca los envía.
+
+Objetivo, en la ficha del paciente (/patients/[id]):
+1. Sección "Consultas": lista (más reciente primero) con fecha de apertura, quién la abrió, estado
+   (Abierta / Cerrada), motivo y nota de cierre. Estado vacío honesto si no hay.
+2. Botón "Abrir consulta" (solo doctor y asistente dental): motivo opcional (máx. 500) y cita opcional
+   del mismo paciente (si viene desde una cita, preseleccionada). Una cita admite una sola consulta:
+   si ya existe, mostrar el error de la base como mensaje claro.
+3. Botón "Cerrar consulta" (solo doctor, solo si está abierta): nota de cierre opcional (máx. 1000) y
+   confirmación. Cerrada no muestra botones.
+4. Mientras haya una consulta abierta del paciente, los formularios de nota clínica, odontograma y
+   signos vitales envían su `encounter_id` (recetas: no tocar `create_prescription` en este PR).
+5. Textos fijos en español e inglés con data-i18n; nunca data-i18n en datos de Supabase.
+
+Reglas: columnas explícitas (nunca select("*")); sin botones de borrar; errores en la URL solo como
+errorKey; no toques migraciones ni la base; diseño actual sin cambios de paleta ni barra lateral.
+Pruebas: E2E nueva en e2e/ (asistente abre, nota enlazada, doctor cierra, cerrada sin botones,
+recepción no ve "Abrir consulta").
+No unas el PR ni actives auto-merge.
+Entrega: rama nueva + PR. Antes de terminar, `npm run lint`, `npm test` y `npm run build` deben pasar.
+```

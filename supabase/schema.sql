@@ -22,6 +22,10 @@ CREATE TYPE "public"."clinical_entry_kind" AS ENUM (
     'medicamento',
     'procedimiento'
 );
+CREATE TYPE "public"."encounter_status" AS ENUM (
+    'abierta',
+    'cerrada'
+);
 CREATE TYPE "public"."insurance_type" AS ENUM (
     'ars',
     'privado'
@@ -149,6 +153,34 @@ CREATE OR REPLACE FUNCTION "public"."block_truncate"() RETURNS "trigger"
     AS $$
 begin
   raise exception 'TRUNCATE no está permitido en %: los registros no se borran.', tg_table_name;
+end;
+$$;
+CREATE OR REPLACE FUNCTION "public"."check_encounter_link"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    SET "search_path" TO ''
+    AS $$
+declare
+  v_patient uuid;
+  v_status public.encounter_status;
+begin
+  if tg_op = 'UPDATE' then
+    if new.encounter_id is distinct from old.encounter_id then
+      raise exception 'La consulta de un registro no se puede cambiar.';
+    end if;
+    return new;
+  end if;
+  if new.encounter_id is null then
+    return new;
+  end if;
+  select e.patient_id, e.status into v_patient, v_status
+    from public.encounters e where e.id = new.encounter_id;
+  if v_patient is distinct from new.patient_id then
+    raise exception 'La consulta no es de este paciente.';
+  end if;
+  if v_status <> 'abierta' then
+    raise exception 'La consulta está cerrada: no admite registros nuevos.';
+  end if;
+  return new;
 end;
 $$;
 CREATE OR REPLACE FUNCTION "public"."create_prescription"("p_patient_id" "uuid", "p_items" "jsonb", "p_indications" "text" DEFAULT NULL::"text", "p_appointment_id" "uuid" DEFAULT NULL::"uuid") RETURNS "uuid"
@@ -758,6 +790,40 @@ begin
   return new;
 end;
 $$;
+CREATE OR REPLACE FUNCTION "public"."stamp_encounter"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    SET "search_path" TO ''
+    AS $$
+begin
+  if tg_op = 'INSERT' then
+    new.status := 'abierta';
+    new.opened_by := auth.uid();
+    new.opened_by_role := (select public.get_my_role());
+    new.opened_at := now();
+    new.closed_by := null;
+    new.closed_at := null;
+    new.closure_note := null;
+    return new;
+  end if;
+  if old.status = 'cerrada' then
+    raise exception 'La consulta ya está cerrada y no se modifica.';
+  end if;
+  if new.status <> 'cerrada' then
+    raise exception 'Una consulta abierta solo se puede cerrar.';
+  end if;
+  if new.patient_id is distinct from old.patient_id
+     or new.appointment_id is distinct from old.appointment_id
+     or new.reason is distinct from old.reason
+     or new.opened_by is distinct from old.opened_by
+     or new.opened_by_role is distinct from old.opened_by_role
+     or new.opened_at is distinct from old.opened_at then
+    raise exception 'Al cerrar una consulta solo se agrega la nota de cierre.';
+  end if;
+  new.closed_by := auth.uid();
+  new.closed_at := now();
+  return new;
+end;
+$$;
 CREATE OR REPLACE FUNCTION "public"."stamp_medical_history"() RETURNS "trigger"
     LANGUAGE "plpgsql"
     SET "search_path" TO ''
@@ -1156,6 +1222,7 @@ CREATE TABLE IF NOT EXISTS "public"."clinical_entries" (
     "author_role" "public"."user_role",
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "clinic_id" "uuid" NOT NULL,
+    "encounter_id" "uuid",
     CONSTRAINT "clinical_entries_body_check" CHECK ((("body" IS NULL) OR ("length"("body") <= 4000))),
     CONSTRAINT "clinical_entries_content" CHECK (((("kind" = 'medicamento'::"public"."clinical_entry_kind") AND ("length"(TRIM(BOTH FROM COALESCE("medication_name", ''::"text"))) > 0) AND ("length"(TRIM(BOTH FROM COALESCE("dose", ''::"text"))) > 0) AND ("length"(TRIM(BOTH FROM COALESCE("route", ''::"text"))) > 0) AND ("administered_at" IS NOT NULL)) OR (("kind" = ANY (ARRAY['nota'::"public"."clinical_entry_kind", 'procedimiento'::"public"."clinical_entry_kind"])) AND ("length"(TRIM(BOTH FROM COALESCE("body", ''::"text"))) > 0)))),
     CONSTRAINT "clinical_entries_correction" CHECK (((("corrects_entry_id" IS NULL) AND ("correction_reason" IS NULL)) OR (("corrects_entry_id" IS NOT NULL) AND ("length"(TRIM(BOTH FROM COALESCE("correction_reason", ''::"text"))) >= 5)))),
@@ -1206,6 +1273,23 @@ CREATE TABLE IF NOT EXISTS "public"."doctor_time_off" (
     CONSTRAINT "doctor_time_off_void" CHECK ((("voided_at" IS NULL) = ("void_reason" IS NULL))),
     CONSTRAINT "doctor_time_off_void_reason_check" CHECK ((("void_reason" IS NULL) OR (("length"(TRIM(BOTH FROM "void_reason")) >= 5) AND ("length"(TRIM(BOTH FROM "void_reason")) <= 500))))
 );
+CREATE TABLE IF NOT EXISTS "public"."encounters" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "patient_id" "uuid" NOT NULL,
+    "appointment_id" "uuid",
+    "reason" "text",
+    "status" "public"."encounter_status" DEFAULT 'abierta'::"public"."encounter_status" NOT NULL,
+    "opened_by" "uuid",
+    "opened_by_role" "public"."user_role",
+    "opened_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "closed_by" "uuid",
+    "closed_at" timestamp with time zone,
+    "closure_note" "text",
+    "clinic_id" "uuid" NOT NULL,
+    CONSTRAINT "encounters_closed_consistent" CHECK ((("status" = 'cerrada'::"public"."encounter_status") = ("closed_at" IS NOT NULL))),
+    CONSTRAINT "encounters_closure_note_check" CHECK ((("closure_note" IS NULL) OR ("length"("closure_note") <= 1000))),
+    CONSTRAINT "encounters_reason_check" CHECK ((("reason" IS NULL) OR ("length"("reason") <= 500)))
+);
 CREATE TABLE IF NOT EXISTS "public"."odontogram_entries" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
     "patient_id" "uuid" NOT NULL,
@@ -1219,6 +1303,7 @@ CREATE TABLE IF NOT EXISTS "public"."odontogram_entries" (
     "author_role" "public"."user_role",
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "clinic_id" "uuid" NOT NULL,
+    "encounter_id" "uuid",
     CONSTRAINT "odontogram_entries_content" CHECK ((("condition" IS NOT NULL) OR ("corrects_entry_id" IS NOT NULL))),
     CONSTRAINT "odontogram_entries_correction" CHECK (((("corrects_entry_id" IS NULL) AND ("correction_reason" IS NULL)) OR (("corrects_entry_id" IS NOT NULL) AND ("length"(TRIM(BOTH FROM COALESCE("correction_reason", ''::"text"))) >= 5)))),
     CONSTRAINT "odontogram_entries_correction_reason_check" CHECK ((("correction_reason" IS NULL) OR ("length"("correction_reason") <= 500))),
@@ -1307,6 +1392,7 @@ CREATE TABLE IF NOT EXISTS "public"."prescriptions" (
     "voided_by" "uuid",
     "void_reason" "text",
     "clinic_id" "uuid" NOT NULL,
+    "encounter_id" "uuid",
     CONSTRAINT "prescriptions_indications_check" CHECK ((("indications" IS NULL) OR ("length"("indications") <= 1000))),
     CONSTRAINT "prescriptions_void" CHECK ((("voided_at" IS NULL) = ("void_reason" IS NULL))),
     CONSTRAINT "prescriptions_void_reason_check" CHECK ((("void_reason" IS NULL) OR (("length"(TRIM(BOTH FROM "void_reason")) >= 5) AND ("length"(TRIM(BOTH FROM "void_reason")) <= 500))))
@@ -1383,6 +1469,7 @@ CREATE TABLE IF NOT EXISTS "public"."vital_signs" (
     "author_role" "public"."user_role",
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "clinic_id" "uuid" NOT NULL,
+    "encounter_id" "uuid",
     CONSTRAINT "vital_signs_bp_order" CHECK ((("systolic" IS NULL) OR ("systolic" > "diastolic"))),
     CONSTRAINT "vital_signs_bp_pair" CHECK ((("systolic" IS NULL) = ("diastolic" IS NULL))),
     CONSTRAINT "vital_signs_correction" CHECK ((("corrects_entry_id" IS NULL) = ("correction_reason" IS NULL))),
@@ -1417,6 +1504,8 @@ ALTER TABLE ONLY "public"."doctor_schedules"
     ADD CONSTRAINT "doctor_schedules_pkey" PRIMARY KEY ("id");
 ALTER TABLE ONLY "public"."doctor_time_off"
     ADD CONSTRAINT "doctor_time_off_pkey" PRIMARY KEY ("id");
+ALTER TABLE ONLY "public"."encounters"
+    ADD CONSTRAINT "encounters_pkey" PRIMARY KEY ("id");
 ALTER TABLE ONLY "public"."odontogram_entries"
     ADD CONSTRAINT "odontogram_entries_pkey" PRIMARY KEY ("id");
 ALTER TABLE ONLY "public"."patient_medical_history"
@@ -1465,6 +1554,7 @@ CREATE INDEX "billing_payments_received_by_idx" ON "public"."billing_payments" U
 CREATE INDEX "billing_payments_voided_by_idx" ON "public"."billing_payments" USING "btree" ("voided_by");
 CREATE INDEX "clinical_entries_author_id_idx" ON "public"."clinical_entries" USING "btree" ("author_id");
 CREATE INDEX "clinical_entries_clinic_id_idx" ON "public"."clinical_entries" USING "btree" ("clinic_id");
+CREATE INDEX "clinical_entries_encounter_idx" ON "public"."clinical_entries" USING "btree" ("encounter_id");
 CREATE UNIQUE INDEX "clinical_entries_one_correction" ON "public"."clinical_entries" USING "btree" ("corrects_entry_id") WHERE ("corrects_entry_id" IS NOT NULL);
 CREATE INDEX "clinical_entries_patient_idx" ON "public"."clinical_entries" USING "btree" ("patient_id", "created_at" DESC);
 CREATE INDEX "doctor_schedules_clinic_id_idx" ON "public"."doctor_schedules" USING "btree" ("clinic_id");
@@ -1475,8 +1565,14 @@ CREATE INDEX "doctor_time_off_clinic_id_idx" ON "public"."doctor_time_off" USING
 CREATE INDEX "doctor_time_off_created_by_idx" ON "public"."doctor_time_off" USING "btree" ("created_by");
 CREATE INDEX "doctor_time_off_doctor_idx" ON "public"."doctor_time_off" USING "btree" ("doctor_id", "starts_on") WHERE ("voided_at" IS NULL);
 CREATE INDEX "doctor_time_off_voided_by_idx" ON "public"."doctor_time_off" USING "btree" ("voided_by");
+CREATE UNIQUE INDEX "encounters_appointment_key" ON "public"."encounters" USING "btree" ("appointment_id") WHERE ("appointment_id" IS NOT NULL);
+CREATE INDEX "encounters_clinic_id_idx" ON "public"."encounters" USING "btree" ("clinic_id");
+CREATE INDEX "encounters_closed_by_idx" ON "public"."encounters" USING "btree" ("closed_by");
+CREATE INDEX "encounters_opened_by_idx" ON "public"."encounters" USING "btree" ("opened_by");
+CREATE INDEX "encounters_patient_idx" ON "public"."encounters" USING "btree" ("patient_id", "opened_at");
 CREATE INDEX "odontogram_entries_author_id_idx" ON "public"."odontogram_entries" USING "btree" ("author_id");
 CREATE INDEX "odontogram_entries_clinic_id_idx" ON "public"."odontogram_entries" USING "btree" ("clinic_id");
+CREATE INDEX "odontogram_entries_encounter_idx" ON "public"."odontogram_entries" USING "btree" ("encounter_id");
 CREATE UNIQUE INDEX "odontogram_entries_one_correction" ON "public"."odontogram_entries" USING "btree" ("corrects_entry_id") WHERE ("corrects_entry_id" IS NOT NULL);
 CREATE INDEX "odontogram_entries_patient_idx" ON "public"."odontogram_entries" USING "btree" ("patient_id", "created_at");
 CREATE INDEX "patient_medical_history_clinic_id_idx" ON "public"."patient_medical_history" USING "btree" ("clinic_id");
@@ -1489,6 +1585,7 @@ CREATE INDEX "prescription_items_patient_idx" ON "public"."prescription_items" U
 CREATE INDEX "prescriptions_appointment_idx" ON "public"."prescriptions" USING "btree" ("appointment_id");
 CREATE INDEX "prescriptions_clinic_id_idx" ON "public"."prescriptions" USING "btree" ("clinic_id");
 CREATE INDEX "prescriptions_doctor_idx" ON "public"."prescriptions" USING "btree" ("doctor_id");
+CREATE INDEX "prescriptions_encounter_idx" ON "public"."prescriptions" USING "btree" ("encounter_id");
 CREATE INDEX "prescriptions_patient_idx" ON "public"."prescriptions" USING "btree" ("patient_id", "created_at");
 CREATE INDEX "prescriptions_voided_by_idx" ON "public"."prescriptions" USING "btree" ("voided_by");
 CREATE INDEX "profiles_clinic_id_idx" ON "public"."profiles" USING "btree" ("clinic_id");
@@ -1506,6 +1603,7 @@ CREATE INDEX "vital_signs_appointment_idx" ON "public"."vital_signs" USING "btre
 CREATE INDEX "vital_signs_author_idx" ON "public"."vital_signs" USING "btree" ("author_id");
 CREATE INDEX "vital_signs_clinic_id_idx" ON "public"."vital_signs" USING "btree" ("clinic_id");
 CREATE INDEX "vital_signs_corrects_idx" ON "public"."vital_signs" USING "btree" ("corrects_entry_id");
+CREATE INDEX "vital_signs_encounter_idx" ON "public"."vital_signs" USING "btree" ("encounter_id");
 CREATE INDEX "vital_signs_patient_idx" ON "public"."vital_signs" USING "btree" ("patient_id", "created_at");
 CREATE OR REPLACE TRIGGER "a0_set_clinic_id" BEFORE INSERT OR UPDATE ON "public"."appointments" FOR EACH ROW EXECUTE FUNCTION "public"."set_clinic_id"();
 CREATE OR REPLACE TRIGGER "a0_set_clinic_id" BEFORE INSERT OR UPDATE ON "public"."billing_charges" FOR EACH ROW EXECUTE FUNCTION "public"."set_clinic_id"();
@@ -1513,6 +1611,7 @@ CREATE OR REPLACE TRIGGER "a0_set_clinic_id" BEFORE INSERT OR UPDATE ON "public"
 CREATE OR REPLACE TRIGGER "a0_set_clinic_id" BEFORE INSERT OR UPDATE ON "public"."clinical_entries" FOR EACH ROW EXECUTE FUNCTION "public"."set_clinic_id"();
 CREATE OR REPLACE TRIGGER "a0_set_clinic_id" BEFORE INSERT OR UPDATE ON "public"."doctor_schedules" FOR EACH ROW EXECUTE FUNCTION "public"."set_clinic_id"();
 CREATE OR REPLACE TRIGGER "a0_set_clinic_id" BEFORE INSERT OR UPDATE ON "public"."doctor_time_off" FOR EACH ROW EXECUTE FUNCTION "public"."set_clinic_id"();
+CREATE OR REPLACE TRIGGER "a0_set_clinic_id" BEFORE INSERT OR UPDATE ON "public"."encounters" FOR EACH ROW EXECUTE FUNCTION "public"."set_clinic_id"();
 CREATE OR REPLACE TRIGGER "a0_set_clinic_id" BEFORE INSERT OR UPDATE ON "public"."odontogram_entries" FOR EACH ROW EXECUTE FUNCTION "public"."set_clinic_id"();
 CREATE OR REPLACE TRIGGER "a0_set_clinic_id" BEFORE INSERT OR UPDATE ON "public"."patient_medical_history" FOR EACH ROW EXECUTE FUNCTION "public"."set_clinic_id"();
 CREATE OR REPLACE TRIGGER "a0_set_clinic_id" BEFORE INSERT OR UPDATE ON "public"."patients" FOR EACH ROW EXECUTE FUNCTION "public"."set_clinic_id"();
@@ -1531,6 +1630,10 @@ CREATE OR REPLACE TRIGGER "appointments_doctor_update_guard" BEFORE UPDATE ON "p
 CREATE OR REPLACE TRIGGER "appointments_schedule_guard" BEFORE INSERT OR UPDATE ON "public"."appointments" FOR EACH ROW EXECUTE FUNCTION "public"."enforce_appointment_schedule"();
 CREATE OR REPLACE TRIGGER "appointments_slot_overlap_guard" BEFORE INSERT OR UPDATE ON "public"."appointments" FOR EACH ROW EXECUTE FUNCTION "public"."enforce_appointment_no_overlap"();
 CREATE OR REPLACE TRIGGER "appointments_updated_at" BEFORE UPDATE ON "public"."appointments" FOR EACH ROW EXECUTE FUNCTION "public"."set_updated_at"();
+CREATE OR REPLACE TRIGGER "b_check_encounter" BEFORE INSERT OR UPDATE ON "public"."clinical_entries" FOR EACH ROW EXECUTE FUNCTION "public"."check_encounter_link"();
+CREATE OR REPLACE TRIGGER "b_check_encounter" BEFORE INSERT OR UPDATE ON "public"."odontogram_entries" FOR EACH ROW EXECUTE FUNCTION "public"."check_encounter_link"();
+CREATE OR REPLACE TRIGGER "b_check_encounter" BEFORE INSERT OR UPDATE ON "public"."prescriptions" FOR EACH ROW EXECUTE FUNCTION "public"."check_encounter_link"();
+CREATE OR REPLACE TRIGGER "b_check_encounter" BEFORE INSERT OR UPDATE ON "public"."vital_signs" FOR EACH ROW EXECUTE FUNCTION "public"."check_encounter_link"();
 CREATE OR REPLACE TRIGGER "billing_charges_audit" AFTER INSERT OR DELETE OR UPDATE ON "public"."billing_charges" FOR EACH ROW EXECUTE FUNCTION "public"."audit_row"();
 CREATE OR REPLACE TRIGGER "billing_charges_stamp" BEFORE INSERT OR UPDATE ON "public"."billing_charges" FOR EACH ROW EXECUTE FUNCTION "public"."stamp_billing_charge"();
 CREATE OR REPLACE TRIGGER "billing_payments_audit" AFTER INSERT OR DELETE OR UPDATE ON "public"."billing_payments" FOR EACH ROW EXECUTE FUNCTION "public"."audit_row"();
@@ -1543,6 +1646,7 @@ CREATE OR REPLACE TRIGGER "block_truncate" BEFORE TRUNCATE ON "public"."clinical
 CREATE OR REPLACE TRIGGER "block_truncate" BEFORE TRUNCATE ON "public"."clinics" FOR EACH STATEMENT EXECUTE FUNCTION "public"."block_truncate"();
 CREATE OR REPLACE TRIGGER "block_truncate" BEFORE TRUNCATE ON "public"."doctor_schedules" FOR EACH STATEMENT EXECUTE FUNCTION "public"."block_truncate"();
 CREATE OR REPLACE TRIGGER "block_truncate" BEFORE TRUNCATE ON "public"."doctor_time_off" FOR EACH STATEMENT EXECUTE FUNCTION "public"."block_truncate"();
+CREATE OR REPLACE TRIGGER "block_truncate" BEFORE TRUNCATE ON "public"."encounters" FOR EACH STATEMENT EXECUTE FUNCTION "public"."block_truncate"();
 CREATE OR REPLACE TRIGGER "block_truncate" BEFORE TRUNCATE ON "public"."odontogram_entries" FOR EACH STATEMENT EXECUTE FUNCTION "public"."block_truncate"();
 CREATE OR REPLACE TRIGGER "block_truncate" BEFORE TRUNCATE ON "public"."patient_medical_history" FOR EACH STATEMENT EXECUTE FUNCTION "public"."block_truncate"();
 CREATE OR REPLACE TRIGGER "block_truncate" BEFORE TRUNCATE ON "public"."patients" FOR EACH STATEMENT EXECUTE FUNCTION "public"."block_truncate"();
@@ -1559,6 +1663,8 @@ CREATE OR REPLACE TRIGGER "doctor_schedules_audit" AFTER INSERT OR DELETE OR UPD
 CREATE OR REPLACE TRIGGER "doctor_schedules_stamp" BEFORE INSERT OR UPDATE ON "public"."doctor_schedules" FOR EACH ROW EXECUTE FUNCTION "public"."stamp_doctor_schedule"();
 CREATE OR REPLACE TRIGGER "doctor_time_off_audit" AFTER INSERT OR DELETE OR UPDATE ON "public"."doctor_time_off" FOR EACH ROW EXECUTE FUNCTION "public"."audit_row"();
 CREATE OR REPLACE TRIGGER "doctor_time_off_stamp" BEFORE INSERT OR UPDATE ON "public"."doctor_time_off" FOR EACH ROW EXECUTE FUNCTION "public"."stamp_doctor_time_off"();
+CREATE OR REPLACE TRIGGER "encounters_audit" AFTER INSERT OR DELETE OR UPDATE ON "public"."encounters" FOR EACH ROW EXECUTE FUNCTION "public"."audit_row"();
+CREATE OR REPLACE TRIGGER "encounters_stamp" BEFORE INSERT OR UPDATE ON "public"."encounters" FOR EACH ROW EXECUTE FUNCTION "public"."stamp_encounter"();
 CREATE OR REPLACE TRIGGER "odontogram_entries_audit" AFTER INSERT OR DELETE OR UPDATE ON "public"."odontogram_entries" FOR EACH ROW EXECUTE FUNCTION "public"."audit_row"();
 CREATE OR REPLACE TRIGGER "odontogram_entries_stamp" BEFORE INSERT ON "public"."odontogram_entries" FOR EACH ROW EXECUTE FUNCTION "public"."stamp_odontogram_entry"();
 CREATE OR REPLACE TRIGGER "patient_medical_history_audit" AFTER INSERT OR DELETE OR UPDATE ON "public"."patient_medical_history" FOR EACH ROW EXECUTE FUNCTION "public"."audit_row"();
@@ -1617,6 +1723,8 @@ ALTER TABLE ONLY "public"."clinical_entries"
 ALTER TABLE ONLY "public"."clinical_entries"
     ADD CONSTRAINT "clinical_entries_corrects_entry_id_fkey" FOREIGN KEY ("corrects_entry_id") REFERENCES "public"."clinical_entries"("id") ON DELETE RESTRICT;
 ALTER TABLE ONLY "public"."clinical_entries"
+    ADD CONSTRAINT "clinical_entries_encounter_id_fkey" FOREIGN KEY ("encounter_id") REFERENCES "public"."encounters"("id") ON DELETE RESTRICT;
+ALTER TABLE ONLY "public"."clinical_entries"
     ADD CONSTRAINT "clinical_entries_patient_id_fkey" FOREIGN KEY ("patient_id") REFERENCES "public"."patients"("id") ON DELETE RESTRICT;
 ALTER TABLE ONLY "public"."doctor_schedules"
     ADD CONSTRAINT "doctor_schedules_clinic_id_fkey" FOREIGN KEY ("clinic_id") REFERENCES "public"."clinics"("id");
@@ -1634,12 +1742,24 @@ ALTER TABLE ONLY "public"."doctor_time_off"
     ADD CONSTRAINT "doctor_time_off_doctor_id_fkey" FOREIGN KEY ("doctor_id") REFERENCES "public"."profiles"("id") ON DELETE RESTRICT;
 ALTER TABLE ONLY "public"."doctor_time_off"
     ADD CONSTRAINT "doctor_time_off_voided_by_fkey" FOREIGN KEY ("voided_by") REFERENCES "public"."profiles"("id") ON DELETE SET NULL;
+ALTER TABLE ONLY "public"."encounters"
+    ADD CONSTRAINT "encounters_appointment_id_fkey" FOREIGN KEY ("appointment_id") REFERENCES "public"."appointments"("id") ON DELETE RESTRICT;
+ALTER TABLE ONLY "public"."encounters"
+    ADD CONSTRAINT "encounters_clinic_id_fkey" FOREIGN KEY ("clinic_id") REFERENCES "public"."clinics"("id");
+ALTER TABLE ONLY "public"."encounters"
+    ADD CONSTRAINT "encounters_closed_by_fkey" FOREIGN KEY ("closed_by") REFERENCES "public"."profiles"("id") ON DELETE RESTRICT;
+ALTER TABLE ONLY "public"."encounters"
+    ADD CONSTRAINT "encounters_opened_by_fkey" FOREIGN KEY ("opened_by") REFERENCES "public"."profiles"("id") ON DELETE RESTRICT;
+ALTER TABLE ONLY "public"."encounters"
+    ADD CONSTRAINT "encounters_patient_id_fkey" FOREIGN KEY ("patient_id") REFERENCES "public"."patients"("id") ON DELETE RESTRICT;
 ALTER TABLE ONLY "public"."odontogram_entries"
     ADD CONSTRAINT "odontogram_entries_author_id_fkey" FOREIGN KEY ("author_id") REFERENCES "public"."profiles"("id") ON DELETE SET NULL;
 ALTER TABLE ONLY "public"."odontogram_entries"
     ADD CONSTRAINT "odontogram_entries_clinic_id_fkey" FOREIGN KEY ("clinic_id") REFERENCES "public"."clinics"("id");
 ALTER TABLE ONLY "public"."odontogram_entries"
     ADD CONSTRAINT "odontogram_entries_corrects_entry_id_fkey" FOREIGN KEY ("corrects_entry_id") REFERENCES "public"."odontogram_entries"("id") ON DELETE RESTRICT;
+ALTER TABLE ONLY "public"."odontogram_entries"
+    ADD CONSTRAINT "odontogram_entries_encounter_id_fkey" FOREIGN KEY ("encounter_id") REFERENCES "public"."encounters"("id") ON DELETE RESTRICT;
 ALTER TABLE ONLY "public"."odontogram_entries"
     ADD CONSTRAINT "odontogram_entries_patient_id_fkey" FOREIGN KEY ("patient_id") REFERENCES "public"."patients"("id") ON DELETE RESTRICT;
 ALTER TABLE ONLY "public"."patient_medical_history"
@@ -1668,6 +1788,8 @@ ALTER TABLE ONLY "public"."prescriptions"
     ADD CONSTRAINT "prescriptions_clinic_id_fkey" FOREIGN KEY ("clinic_id") REFERENCES "public"."clinics"("id");
 ALTER TABLE ONLY "public"."prescriptions"
     ADD CONSTRAINT "prescriptions_doctor_id_fkey" FOREIGN KEY ("doctor_id") REFERENCES "public"."profiles"("id") ON DELETE SET NULL;
+ALTER TABLE ONLY "public"."prescriptions"
+    ADD CONSTRAINT "prescriptions_encounter_id_fkey" FOREIGN KEY ("encounter_id") REFERENCES "public"."encounters"("id") ON DELETE RESTRICT;
 ALTER TABLE ONLY "public"."prescriptions"
     ADD CONSTRAINT "prescriptions_patient_id_fkey" FOREIGN KEY ("patient_id") REFERENCES "public"."patients"("id") ON DELETE RESTRICT;
 ALTER TABLE ONLY "public"."prescriptions"
@@ -1705,6 +1827,8 @@ ALTER TABLE ONLY "public"."vital_signs"
 ALTER TABLE ONLY "public"."vital_signs"
     ADD CONSTRAINT "vital_signs_corrects_entry_id_fkey" FOREIGN KEY ("corrects_entry_id") REFERENCES "public"."vital_signs"("id") ON DELETE RESTRICT;
 ALTER TABLE ONLY "public"."vital_signs"
+    ADD CONSTRAINT "vital_signs_encounter_id_fkey" FOREIGN KEY ("encounter_id") REFERENCES "public"."encounters"("id") ON DELETE RESTRICT;
+ALTER TABLE ONLY "public"."vital_signs"
     ADD CONSTRAINT "vital_signs_patient_id_fkey" FOREIGN KEY ("patient_id") REFERENCES "public"."patients"("id") ON DELETE RESTRICT;
 CREATE POLICY "aislamiento por clínica" ON "public"."appointments" AS RESTRICTIVE TO "authenticated" USING (("clinic_id" = ( SELECT "public"."get_my_clinic"() AS "get_my_clinic"))) WITH CHECK (("clinic_id" = ( SELECT "public"."get_my_clinic"() AS "get_my_clinic")));
 CREATE POLICY "aislamiento por clínica" ON "public"."audit_log" AS RESTRICTIVE TO "authenticated" USING (("clinic_id" = ( SELECT "public"."get_my_clinic"() AS "get_my_clinic"))) WITH CHECK (("clinic_id" = ( SELECT "public"."get_my_clinic"() AS "get_my_clinic")));
@@ -1713,6 +1837,7 @@ CREATE POLICY "aislamiento por clínica" ON "public"."billing_payments" AS RESTR
 CREATE POLICY "aislamiento por clínica" ON "public"."clinical_entries" AS RESTRICTIVE TO "authenticated" USING (("clinic_id" = ( SELECT "public"."get_my_clinic"() AS "get_my_clinic"))) WITH CHECK (("clinic_id" = ( SELECT "public"."get_my_clinic"() AS "get_my_clinic")));
 CREATE POLICY "aislamiento por clínica" ON "public"."doctor_schedules" AS RESTRICTIVE TO "authenticated" USING (("clinic_id" = ( SELECT "public"."get_my_clinic"() AS "get_my_clinic"))) WITH CHECK (("clinic_id" = ( SELECT "public"."get_my_clinic"() AS "get_my_clinic")));
 CREATE POLICY "aislamiento por clínica" ON "public"."doctor_time_off" AS RESTRICTIVE TO "authenticated" USING (("clinic_id" = ( SELECT "public"."get_my_clinic"() AS "get_my_clinic"))) WITH CHECK (("clinic_id" = ( SELECT "public"."get_my_clinic"() AS "get_my_clinic")));
+CREATE POLICY "aislamiento por clínica" ON "public"."encounters" AS RESTRICTIVE TO "authenticated" USING (("clinic_id" = ( SELECT "public"."get_my_clinic"() AS "get_my_clinic"))) WITH CHECK (("clinic_id" = ( SELECT "public"."get_my_clinic"() AS "get_my_clinic")));
 CREATE POLICY "aislamiento por clínica" ON "public"."odontogram_entries" AS RESTRICTIVE TO "authenticated" USING (("clinic_id" = ( SELECT "public"."get_my_clinic"() AS "get_my_clinic"))) WITH CHECK (("clinic_id" = ( SELECT "public"."get_my_clinic"() AS "get_my_clinic")));
 CREATE POLICY "aislamiento por clínica" ON "public"."patient_medical_history" AS RESTRICTIVE TO "authenticated" USING (("clinic_id" = ( SELECT "public"."get_my_clinic"() AS "get_my_clinic"))) WITH CHECK (("clinic_id" = ( SELECT "public"."get_my_clinic"() AS "get_my_clinic")));
 CREATE POLICY "aislamiento por clínica" ON "public"."patients" AS RESTRICTIVE TO "authenticated" USING (("clinic_id" = ( SELECT "public"."get_my_clinic"() AS "get_my_clinic"))) WITH CHECK (("clinic_id" = ( SELECT "public"."get_my_clinic"() AS "get_my_clinic")));
@@ -1771,6 +1896,18 @@ ALTER TABLE "public"."doctor_time_off" ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "doctor_time_off: anular" ON "public"."doctor_time_off" FOR UPDATE TO "authenticated" USING (((( SELECT "public"."get_my_role"() AS "get_my_role") = ANY (ARRAY['admin'::"public"."user_role", 'recepcion'::"public"."user_role"])) OR ((( SELECT "public"."get_my_role"() AS "get_my_role") = 'doctor'::"public"."user_role") AND ("doctor_id" = ( SELECT "auth"."uid"() AS "uid"))))) WITH CHECK (((( SELECT "public"."get_my_role"() AS "get_my_role") = ANY (ARRAY['admin'::"public"."user_role", 'recepcion'::"public"."user_role"])) OR ((( SELECT "public"."get_my_role"() AS "get_my_role") = 'doctor'::"public"."user_role") AND ("doctor_id" = ( SELECT "auth"."uid"() AS "uid")))));
 CREATE POLICY "doctor_time_off: registrar" ON "public"."doctor_time_off" FOR INSERT TO "authenticated" WITH CHECK (((( SELECT "public"."get_my_role"() AS "get_my_role") = ANY (ARRAY['admin'::"public"."user_role", 'recepcion'::"public"."user_role"])) OR ((( SELECT "public"."get_my_role"() AS "get_my_role") = 'doctor'::"public"."user_role") AND ("doctor_id" = ( SELECT "auth"."uid"() AS "uid")))));
 CREATE POLICY "doctor_time_off: ver" ON "public"."doctor_time_off" FOR SELECT TO "authenticated" USING ((( SELECT "public"."get_my_role"() AS "get_my_role") IS NOT NULL));
+ALTER TABLE "public"."encounters" ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "encounters: abrir" ON "public"."encounters" FOR INSERT TO "authenticated" WITH CHECK (((( SELECT "public"."get_my_role"() AS "get_my_role") = ANY (ARRAY['doctor'::"public"."user_role", 'enfermeria'::"public"."user_role"])) AND (EXISTS ( SELECT 1
+   FROM "public"."patients" "p"
+  WHERE ("p"."id" = "encounters"."patient_id")))));
+CREATE POLICY "encounters: doctor cierra" ON "public"."encounters" FOR UPDATE TO "authenticated" USING (((( SELECT "public"."get_my_role"() AS "get_my_role") = 'doctor'::"public"."user_role") AND (EXISTS ( SELECT 1
+   FROM "public"."patients" "p"
+  WHERE ("p"."id" = "encounters"."patient_id"))))) WITH CHECK (((( SELECT "public"."get_my_role"() AS "get_my_role") = 'doctor'::"public"."user_role") AND (EXISTS ( SELECT 1
+   FROM "public"."patients" "p"
+  WHERE ("p"."id" = "encounters"."patient_id")))));
+CREATE POLICY "encounters: ver" ON "public"."encounters" FOR SELECT TO "authenticated" USING (((( SELECT "public"."get_my_role"() AS "get_my_role") = ANY (ARRAY['admin'::"public"."user_role", 'recepcion'::"public"."user_role", 'doctor'::"public"."user_role", 'enfermeria'::"public"."user_role"])) AND (EXISTS ( SELECT 1
+   FROM "public"."patients" "p"
+  WHERE ("p"."id" = "encounters"."patient_id")))));
 CREATE POLICY "medical_history: actualizar" ON "public"."patient_medical_history" FOR UPDATE TO "authenticated" USING (((( SELECT "public"."get_my_role"() AS "get_my_role") = ANY (ARRAY['admin'::"public"."user_role", 'recepcion'::"public"."user_role", 'doctor'::"public"."user_role", 'enfermeria'::"public"."user_role"])) AND (EXISTS ( SELECT 1
    FROM "public"."patients" "p"
   WHERE ("p"."id" = "patient_medical_history"."patient_id"))))) WITH CHECK (((( SELECT "public"."get_my_role"() AS "get_my_role") = ANY (ARRAY['admin'::"public"."user_role", 'recepcion'::"public"."user_role", 'doctor'::"public"."user_role", 'enfermeria'::"public"."user_role"])) AND (EXISTS ( SELECT 1
@@ -1858,6 +1995,8 @@ REVOKE ALL ON FUNCTION "public"."audit_row"() FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."audit_row"() TO "service_role";
 REVOKE ALL ON FUNCTION "public"."block_truncate"() FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."block_truncate"() TO "service_role";
+REVOKE ALL ON FUNCTION "public"."check_encounter_link"() FROM PUBLIC;
+GRANT ALL ON FUNCTION "public"."check_encounter_link"() TO "service_role";
 REVOKE ALL ON FUNCTION "public"."create_prescription"("p_patient_id" "uuid", "p_items" "jsonb", "p_indications" "text", "p_appointment_id" "uuid") FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."create_prescription"("p_patient_id" "uuid", "p_items" "jsonb", "p_indications" "text", "p_appointment_id" "uuid") TO "service_role";
 GRANT ALL ON FUNCTION "public"."create_prescription"("p_patient_id" "uuid", "p_items" "jsonb", "p_indications" "text", "p_appointment_id" "uuid") TO "authenticated";
@@ -1918,6 +2057,8 @@ REVOKE ALL ON FUNCTION "public"."stamp_doctor_schedule"() FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."stamp_doctor_schedule"() TO "service_role";
 REVOKE ALL ON FUNCTION "public"."stamp_doctor_time_off"() FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."stamp_doctor_time_off"() TO "service_role";
+REVOKE ALL ON FUNCTION "public"."stamp_encounter"() FROM PUBLIC;
+GRANT ALL ON FUNCTION "public"."stamp_encounter"() TO "service_role";
 REVOKE ALL ON FUNCTION "public"."stamp_medical_history"() FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."stamp_medical_history"() TO "service_role";
 REVOKE ALL ON FUNCTION "public"."stamp_odontogram_entry"() FROM PUBLIC;
@@ -1958,6 +2099,8 @@ GRANT ALL ON TABLE "public"."doctor_schedules" TO "service_role";
 GRANT SELECT,INSERT,UPDATE ON TABLE "public"."doctor_schedules" TO "authenticated";
 GRANT ALL ON TABLE "public"."doctor_time_off" TO "service_role";
 GRANT SELECT,INSERT,UPDATE ON TABLE "public"."doctor_time_off" TO "authenticated";
+GRANT ALL ON TABLE "public"."encounters" TO "service_role";
+GRANT SELECT,INSERT,UPDATE ON TABLE "public"."encounters" TO "authenticated";
 GRANT ALL ON TABLE "public"."odontogram_entries" TO "service_role";
 GRANT SELECT,INSERT ON TABLE "public"."odontogram_entries" TO "authenticated";
 GRANT ALL ON TABLE "public"."patient_medical_history" TO "service_role";
