@@ -405,10 +405,10 @@ Entrega: rama nueva + PR. Antes de terminar, `npm run lint`, `npm test` y `npm r
 
 ## Parte F · Procedimientos realizados
 
-### C8 · Registrar procedimientos en la consulta (después de C6 y de aplicar la 037 en producción)
+### C8 · Registrar procedimientos en la consulta (después de C6 y de aplicar la 038 en producción)
 ```
 Lee CLAUDE.md, AGENTS.md, supabase/MAPA.md, .claude/rules/plan-tratamiento.md,
-.claude/rules/odontograma.md y supabase/migrations/037_procedimientos_realizados.sql antes de empezar.
+.claude/rules/odontograma.md y supabase/migrations/038_procedimientos_realizados.sql antes de empezar.
 
 Contexto: `procedures_performed` guarda lo que el doctor hizo en una consulta abierta. Se registra con
 `supabase.rpc("register_procedure", {...})`, que en un paso: crea el hallazgo del odontograma (si se

@@ -876,14 +876,17 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            "ai_consent_active":
+            "ai_accept_draft":
+{ Args: { "p_draft_id": string,"p_edited"?: Json }; Returns: string
+                           },
+"ai_consent_active":
 { Args: { "p_patient": string,"p_scope": Database["public"]['Enums']["ai_consent_scope"] }; Returns: boolean
                            },
 "appointment_range":
 { Args: { "p_duration_minutes": number,"p_starts_at": string }; Returns: unknown
                            },
 "create_prescription":
-{ Args: { "p_appointment_id"?: string,"p_indications"?: string,"p_items": Json,"p_patient_id": string }; Returns: string
+{ Args: { "p_appointment_id"?: string,"p_encounter_id"?: string,"p_indications"?: string,"p_items": Json,"p_patient_id": string }; Returns: string
                            },
 "ensure_profile_for_user":
 { Args: { "p_user": unknown }; Returns: undefined

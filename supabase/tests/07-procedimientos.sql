@@ -13,10 +13,10 @@ select (select id from auth.users where email = 'doctor@e2e.test'),
 
 set local session_replication_role = replica;
 insert into public.patients (id, full_name, record_number, clinic_id)
-select patient_a, 'Paciente prueba 037 A', 937001,
+select patient_a, 'Paciente prueba 038 A', 938001,
        (select clinic_id from public.profiles where id = (select doctor_a from df_ids)) from df_ids;
 insert into public.patients (id, full_name, record_number, clinic_id)
-select patient_b, 'Paciente prueba 037 B', 937002,
+select patient_b, 'Paciente prueba 038 B', 938002,
        (select clinic_id from public.profiles where id = (select doctor_a from df_ids)) from df_ids;
 -- El doctor ve a ambos pacientes por tener cita con ellos.
 insert into public.appointments (patient_id, doctor_id, starts_at, clinic_id)

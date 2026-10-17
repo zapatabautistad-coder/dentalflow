@@ -26,13 +26,21 @@ Micrófono (Web Speech API `es-DO`/`en-US`) → texto en el navegador → server
 - Sesiones largas: compaction (beta `compact-2026-01-12`).
 - Límite por clínica (consultas/día y tokens/mes) en la base; corte duro al pasarlo.
 
-## Migración 036 (escrita: `supabase/migrations/036_ia_ambiental.sql`, pruebas `05-ia.sql`; pendiente de aplicar)
+## Migración 036 (`supabase/migrations/036_ia_ambiental.sql`, pruebas `05-ia.sql`; aplicada el 2026-10-17)
 - `ai_consents`: paciente, alcance (`dictado`, `procesamiento_ia`), otorgado/revocado (revocar = fila nueva), autor y fecha por trigger. Sin consentimiento vigente la IA no corre para ese paciente (Ley 172-13 [CONFIRMAR con abogado]).
 - `ai_sessions`: consulta, usuario, modelo, tokens entrada/salida/caché, costo estimado, inicio/fin. Solo INSERT + cierre.
 - `ai_drafts`: sesión, `encounter_id`, paciente, tipo, `payload jsonb` validado, estado (`propuesto`/`aceptado`/`rechazado`), `accepted_record_id`, decidido por/fecha (trigger). Sin DELETE; solo cambia el estado una vez.
 - Columna `source` (`manual`/`ia_confirmada`, default `manual`) en `clinical_entries`, `odontogram_entries`, `vital_signs`.
 - Todas: RLS por clínica y rol (doctor/enfermeria), `audit_row`, `block_truncate`, GRANT a `authenticated`, pruebas `05-ia.sql`.
 - No se guarda texto del prompt completo ni respuestas crudas con datos del paciente fuera de `ai_drafts`.
+
+## Migración 037 (`supabase/migrations/037_ia_endurecimiento.sql`, pruebas `06-ia-endurecimiento.sql`; pendiente de aplicar)
+- `ai_accept_draft(p_draft_id, p_edited jsonb default null)`: crea el registro (odontograma, nota, signos o ítem del plan) con `encounter_id` y `source = 'ia_confirmada'` y acepta el borrador, todo o nada. `p_edited` = versión corregida (mismo formato que `payload`); el borrador conserva lo propuesto y queda con nota "Editado antes de aceptar". Pregunta: devuelve null.
+- Aceptar solo por esa función; un INSERT a mano con `source = 'ia_confirmada'` se rechaza (marca de transacción `dentalflow.ia_confirmada`).
+- La consulta no se cierra con borradores en `propuesto`.
+- Índices únicos: `ai_drafts.accepted_record_id`, `vital_signs.corrects_entry_id`.
+- `create_prescription(..., p_encounter_id)`: receta enlazada a la consulta.
+- **Cambio en la app (rama `claude/busy-dijkstra-5jl1s0`):** `acceptDraft` en `src/app/(app)/patients/[id]/ia/actions.ts` debe llamar a `supabase.rpc("ai_accept_draft", { p_draft_id, p_edited })` en vez de insertar el registro y luego actualizar el borrador. Con la 037 aplicada, el camino en dos pasos falla. Seguir validando con `validateDraft` antes de llamar (errores claros).
 
 ## Calidad
 - Evals antes de producción: 50+ dictados reales anonimizados (es/en, jerga dominicana) con resultado esperado; métrica: hallazgos correctos, cero dientes inventados, preguntas cuando hay duda.

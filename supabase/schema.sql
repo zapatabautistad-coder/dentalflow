@@ -87,6 +87,87 @@ CREATE TYPE "public"."user_role" AS ENUM (
     'admin',
     'enfermeria'
 );
+CREATE OR REPLACE FUNCTION "public"."ai_accept_draft"("p_draft_id" "uuid", "p_edited" "jsonb" DEFAULT NULL::"jsonb") RETURNS "uuid"
+    LANGUAGE "plpgsql"
+    SET "search_path" TO ''
+    AS $$
+declare
+  v_kind public.ai_draft_kind;
+  v_status public.ai_draft_status;
+  v_patient uuid;
+  v_encounter uuid;
+  v_payload jsonb;
+  v_role public.user_role := (select public.get_my_role());
+  v_record uuid;
+begin
+  select d.kind, d.status, d.patient_id, d.encounter_id, coalesce(p_edited, d.payload)
+    into v_kind, v_status, v_patient, v_encounter, v_payload
+    from public.ai_drafts d where d.id = p_draft_id
+    for update;
+  if not found then
+    raise exception 'No se encontró el borrador.';
+  end if;
+  if v_status <> 'propuesto' then
+    raise exception 'El borrador ya fue decidido y no se modifica.';
+  end if;
+  if v_role is distinct from 'doctor' and not (v_role = 'enfermeria' and v_kind = 'signos') then
+    raise exception 'Solo el doctor decide este borrador.';
+  end if;
+  if jsonb_typeof(v_payload) is distinct from 'object' then
+    raise exception 'El contenido del borrador no es válido.';
+  end if;
+  perform set_config('dentalflow.ia_confirmada', 'on', true);
+  case v_kind
+    when 'odontograma' then
+      insert into public.odontogram_entries (patient_id, tooth, surfaces, condition, note, encounter_id, source)
+      values (
+        v_patient,
+        (v_payload ->> 'tooth')::smallint,
+        case when jsonb_typeof(v_payload -> 'surfaces') = 'array' and jsonb_array_length(v_payload -> 'surfaces') > 0
+             then array(select jsonb_array_elements_text(v_payload -> 'surfaces')) end,
+        (v_payload ->> 'condition')::public.odontogram_condition,
+        nullif(trim(v_payload ->> 'note'), ''),
+        v_encounter, 'ia_confirmada')
+      returning id into v_record;
+    when 'nota' then
+      insert into public.clinical_entries (patient_id, kind, body, encounter_id, source)
+      values (v_patient, 'nota', trim(v_payload ->> 'body'), v_encounter, 'ia_confirmada')
+      returning id into v_record;
+    when 'signos' then
+      insert into public.vital_signs
+        (patient_id, systolic, diastolic, heart_rate, glucose_mg_dl, oxygen_saturation, note, encounter_id, source)
+      values (
+        v_patient,
+        (v_payload ->> 'systolic')::smallint,
+        (v_payload ->> 'diastolic')::smallint,
+        (v_payload ->> 'heart_rate')::smallint,
+        (v_payload ->> 'glucose_mg_dl')::smallint,
+        (v_payload ->> 'oxygen_saturation')::smallint,
+        nullif(trim(v_payload ->> 'note'), ''),
+        v_encounter, 'ia_confirmada')
+      returning id into v_record;
+    when 'plan' then
+      insert into public.treatment_plan_items (patient_id, procedure, tooth, surfaces, note)
+      values (
+        v_patient,
+        trim(v_payload ->> 'procedure'),
+        (v_payload ->> 'tooth')::smallint,
+        case when jsonb_typeof(v_payload -> 'surfaces') = 'array' and jsonb_array_length(v_payload -> 'surfaces') > 0
+             then array(select jsonb_array_elements_text(v_payload -> 'surfaces')) end,
+        nullif(trim(v_payload ->> 'note'), ''))
+      returning id into v_record;
+    else
+      v_record := null;  -- pregunta: aceptar = leída por quien firma
+  end case;
+  update public.ai_drafts
+     set status = 'aceptado',
+         accepted_record_id = v_record,
+         decision_note = case when p_edited is not null then 'Editado antes de aceptar' end
+   where id = p_draft_id;
+  perform set_config('dentalflow.ia_confirmada', '', true);
+  return v_record;
+end;
+$$;
 CREATE OR REPLACE FUNCTION "public"."ai_consent_active"("p_patient" "uuid", "p_scope" "public"."ai_consent_scope") RETURNS boolean
     LANGUAGE "sql" STABLE
     SET "search_path" TO ''
@@ -213,7 +294,19 @@ begin
   return new;
 end;
 $$;
-CREATE OR REPLACE FUNCTION "public"."create_prescription"("p_patient_id" "uuid", "p_items" "jsonb", "p_indications" "text" DEFAULT NULL::"text", "p_appointment_id" "uuid" DEFAULT NULL::"uuid") RETURNS "uuid"
+CREATE OR REPLACE FUNCTION "public"."check_ia_source"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    SET "search_path" TO ''
+    AS $$
+begin
+  if new.source = 'ia_confirmada'
+     and coalesce(current_setting('dentalflow.ia_confirmada', true), '') <> 'on' then
+    raise exception 'Un registro de la IA solo se crea al aceptar su borrador.';
+  end if;
+  return new;
+end;
+$$;
+CREATE OR REPLACE FUNCTION "public"."create_prescription"("p_patient_id" "uuid", "p_items" "jsonb", "p_indications" "text" DEFAULT NULL::"text", "p_appointment_id" "uuid" DEFAULT NULL::"uuid", "p_encounter_id" "uuid" DEFAULT NULL::"uuid") RETURNS "uuid"
     LANGUAGE "plpgsql"
     SET "search_path" TO ''
     AS $$
@@ -228,8 +321,8 @@ begin
   if jsonb_array_length(p_items) > 20 then
     raise exception 'Una receta admite hasta 20 medicamentos.';
   end if;
-  insert into public.prescriptions (patient_id, appointment_id, indications)
-  values (p_patient_id, p_appointment_id, nullif(trim(p_indications), ''))
+  insert into public.prescriptions (patient_id, appointment_id, encounter_id, indications)
+  values (p_patient_id, p_appointment_id, p_encounter_id, nullif(trim(p_indications), ''))
   returning id into v_id;
   for v_item in select * from jsonb_array_elements(p_items) loop
     v_position := v_position + 1;
@@ -750,6 +843,10 @@ begin
      and not ((select public.get_my_role()) = 'enfermeria' and old.kind = 'signos') then
     raise exception 'Solo el doctor decide este borrador.';
   end if;
+  if new.status = 'aceptado'
+     and coalesce(current_setting('dentalflow.ia_confirmada', true), '') <> 'on' then
+    raise exception 'Un borrador se acepta con ai_accept_draft().';
+  end if;
   -- Aceptar exige el registro creado en la tabla clínica, de la misma consulta.
   if new.status = 'aceptado' and old.kind <> 'pregunta' then
     if new.accepted_record_id is null then
@@ -1067,6 +1164,9 @@ begin
      or new.opened_by_role is distinct from old.opened_by_role
      or new.opened_at is distinct from old.opened_at then
     raise exception 'Al cerrar una consulta solo se agrega la nota de cierre.';
+  end if;
+  if exists (select 1 from public.ai_drafts d where d.encounter_id = old.id and d.status = 'propuesto') then
+    raise exception 'La consulta tiene borradores de la IA sin decidir: acéptalos o recházalos antes de cerrarla.';
   end if;
   new.closed_by := auth.uid();
   new.closed_at := now();
@@ -1948,6 +2048,7 @@ CREATE INDEX "ai_consents_recorded_by_idx" ON "public"."ai_consents" USING "btre
 CREATE INDEX "ai_drafts_clinic_id_idx" ON "public"."ai_drafts" USING "btree" ("clinic_id");
 CREATE INDEX "ai_drafts_decided_by_idx" ON "public"."ai_drafts" USING "btree" ("decided_by");
 CREATE INDEX "ai_drafts_encounter_idx" ON "public"."ai_drafts" USING "btree" ("encounter_id", "status");
+CREATE UNIQUE INDEX "ai_drafts_one_per_record" ON "public"."ai_drafts" USING "btree" ("accepted_record_id") WHERE ("accepted_record_id" IS NOT NULL);
 CREATE INDEX "ai_drafts_patient_idx" ON "public"."ai_drafts" USING "btree" ("patient_id");
 CREATE INDEX "ai_drafts_session_idx" ON "public"."ai_drafts" USING "btree" ("session_id");
 CREATE INDEX "ai_sessions_clinic_started_idx" ON "public"."ai_sessions" USING "btree" ("clinic_id", "started_at");
@@ -2026,8 +2127,8 @@ CREATE INDEX "treatment_plan_items_patient_idx" ON "public"."treatment_plan_item
 CREATE INDEX "vital_signs_appointment_idx" ON "public"."vital_signs" USING "btree" ("appointment_id");
 CREATE INDEX "vital_signs_author_idx" ON "public"."vital_signs" USING "btree" ("author_id");
 CREATE INDEX "vital_signs_clinic_id_idx" ON "public"."vital_signs" USING "btree" ("clinic_id");
-CREATE INDEX "vital_signs_corrects_idx" ON "public"."vital_signs" USING "btree" ("corrects_entry_id");
 CREATE INDEX "vital_signs_encounter_idx" ON "public"."vital_signs" USING "btree" ("encounter_id");
+CREATE UNIQUE INDEX "vital_signs_one_correction" ON "public"."vital_signs" USING "btree" ("corrects_entry_id") WHERE ("corrects_entry_id" IS NOT NULL);
 CREATE INDEX "vital_signs_patient_idx" ON "public"."vital_signs" USING "btree" ("patient_id", "created_at");
 CREATE OR REPLACE TRIGGER "a0_set_clinic_id" BEFORE INSERT OR UPDATE ON "public"."ai_consents" FOR EACH ROW EXECUTE FUNCTION "public"."set_clinic_id"();
 CREATE OR REPLACE TRIGGER "a0_set_clinic_id" BEFORE INSERT OR UPDATE ON "public"."ai_drafts" FOR EACH ROW EXECUTE FUNCTION "public"."set_clinic_id"();
@@ -2095,6 +2196,9 @@ CREATE OR REPLACE TRIGGER "block_truncate" BEFORE TRUNCATE ON "public"."profiles
 CREATE OR REPLACE TRIGGER "block_truncate" BEFORE TRUNCATE ON "public"."queue" FOR EACH STATEMENT EXECUTE FUNCTION "public"."block_truncate"();
 CREATE OR REPLACE TRIGGER "block_truncate" BEFORE TRUNCATE ON "public"."treatment_plan_items" FOR EACH STATEMENT EXECUTE FUNCTION "public"."block_truncate"();
 CREATE OR REPLACE TRIGGER "block_truncate" BEFORE TRUNCATE ON "public"."vital_signs" FOR EACH STATEMENT EXECUTE FUNCTION "public"."block_truncate"();
+CREATE OR REPLACE TRIGGER "c_check_ia_source" BEFORE INSERT ON "public"."clinical_entries" FOR EACH ROW EXECUTE FUNCTION "public"."check_ia_source"();
+CREATE OR REPLACE TRIGGER "c_check_ia_source" BEFORE INSERT ON "public"."odontogram_entries" FOR EACH ROW EXECUTE FUNCTION "public"."check_ia_source"();
+CREATE OR REPLACE TRIGGER "c_check_ia_source" BEFORE INSERT ON "public"."vital_signs" FOR EACH ROW EXECUTE FUNCTION "public"."check_ia_source"();
 CREATE OR REPLACE TRIGGER "clinical_entries_audit" AFTER INSERT OR DELETE OR UPDATE ON "public"."clinical_entries" FOR EACH ROW EXECUTE FUNCTION "public"."audit_row"();
 CREATE OR REPLACE TRIGGER "clinical_entries_stamp" BEFORE INSERT ON "public"."clinical_entries" FOR EACH ROW EXECUTE FUNCTION "public"."stamp_clinical_entry"();
 CREATE OR REPLACE TRIGGER "clinics_audit" AFTER INSERT OR DELETE OR UPDATE ON "public"."clinics" FOR EACH ROW EXECUTE FUNCTION "public"."audit_row"();
@@ -2505,6 +2609,9 @@ GRANT USAGE ON SCHEMA "public" TO "postgres";
 GRANT USAGE ON SCHEMA "public" TO "anon";
 GRANT USAGE ON SCHEMA "public" TO "authenticated";
 GRANT USAGE ON SCHEMA "public" TO "service_role";
+REVOKE ALL ON FUNCTION "public"."ai_accept_draft"("p_draft_id" "uuid", "p_edited" "jsonb") FROM PUBLIC;
+GRANT ALL ON FUNCTION "public"."ai_accept_draft"("p_draft_id" "uuid", "p_edited" "jsonb") TO "service_role";
+GRANT ALL ON FUNCTION "public"."ai_accept_draft"("p_draft_id" "uuid", "p_edited" "jsonb") TO "authenticated";
 REVOKE ALL ON FUNCTION "public"."ai_consent_active"("p_patient" "uuid", "p_scope" "public"."ai_consent_scope") FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."ai_consent_active"("p_patient" "uuid", "p_scope" "public"."ai_consent_scope") TO "service_role";
 GRANT ALL ON FUNCTION "public"."ai_consent_active"("p_patient" "uuid", "p_scope" "public"."ai_consent_scope") TO "authenticated";
@@ -2523,9 +2630,11 @@ REVOKE ALL ON FUNCTION "public"."block_truncate"() FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."block_truncate"() TO "service_role";
 REVOKE ALL ON FUNCTION "public"."check_encounter_link"() FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."check_encounter_link"() TO "service_role";
-REVOKE ALL ON FUNCTION "public"."create_prescription"("p_patient_id" "uuid", "p_items" "jsonb", "p_indications" "text", "p_appointment_id" "uuid") FROM PUBLIC;
-GRANT ALL ON FUNCTION "public"."create_prescription"("p_patient_id" "uuid", "p_items" "jsonb", "p_indications" "text", "p_appointment_id" "uuid") TO "service_role";
-GRANT ALL ON FUNCTION "public"."create_prescription"("p_patient_id" "uuid", "p_items" "jsonb", "p_indications" "text", "p_appointment_id" "uuid") TO "authenticated";
+REVOKE ALL ON FUNCTION "public"."check_ia_source"() FROM PUBLIC;
+GRANT ALL ON FUNCTION "public"."check_ia_source"() TO "service_role";
+REVOKE ALL ON FUNCTION "public"."create_prescription"("p_patient_id" "uuid", "p_items" "jsonb", "p_indications" "text", "p_appointment_id" "uuid", "p_encounter_id" "uuid") FROM PUBLIC;
+GRANT ALL ON FUNCTION "public"."create_prescription"("p_patient_id" "uuid", "p_items" "jsonb", "p_indications" "text", "p_appointment_id" "uuid", "p_encounter_id" "uuid") TO "service_role";
+GRANT ALL ON FUNCTION "public"."create_prescription"("p_patient_id" "uuid", "p_items" "jsonb", "p_indications" "text", "p_appointment_id" "uuid", "p_encounter_id" "uuid") TO "authenticated";
 REVOKE ALL ON FUNCTION "public"."enforce_appointment_no_overlap"() FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."enforce_appointment_no_overlap"() TO "service_role";
 REVOKE ALL ON FUNCTION "public"."enforce_appointment_schedule"() FROM PUBLIC;

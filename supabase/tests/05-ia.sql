@@ -1,9 +1,9 @@
 begin;
 
-select plan(16);
+select plan(17);
 
 create temp table df_ids (doctor_a uuid, asistente_a uuid, recepcion_a uuid, admin_a uuid,
-  patient_a uuid, patient_b uuid, enc uuid, ses uuid, draft_nota uuid, draft_signos uuid, nota uuid);
+  patient_a uuid, patient_b uuid, enc uuid, ses uuid, draft_nota uuid, draft_signos uuid);
 grant select, update on df_ids to authenticated;
 insert into df_ids (doctor_a, asistente_a, recepcion_a, admin_a, patient_a, patient_b)
 select (select id from auth.users where email = 'doctor@e2e.test'),
@@ -102,19 +102,17 @@ select lives_ok(
 
 -- El doctor acepta solo con el registro clínico confirmado de la consulta.
 select pg_temp.df_as((select doctor_a from df_ids));
+-- (037) Se acepta solo con ai_accept_draft(): crea el registro y lo enlaza.
 select throws_ok(
   $$update public.ai_drafts set status = 'aceptado' where id = (select draft_nota from df_ids)$$,
-  'P0001', 'Para aceptar un borrador hay que indicar el registro creado.', 'aceptar exige registro');
-insert into public.clinical_entries (patient_id, kind, body, encounter_id, source)
-select patient_a, 'nota', 'Caries en 16 oclusal', enc, 'ia_confirmada' from df_ids;
-reset role;
-update df_ids set nota = (select id from public.clinical_entries where encounter_id = (select enc from df_ids));
-set local role authenticated;
-select pg_temp.df_as((select doctor_a from df_ids));
+  'P0001', 'Un borrador se acepta con ai_accept_draft().', 'aceptar solo con ai_accept_draft');
+select throws_ok(
+  $$insert into public.clinical_entries (patient_id, kind, body, encounter_id, source)
+    select patient_a, 'nota', 'Caries en 16 oclusal', enc, 'ia_confirmada' from df_ids$$,
+  'P0001', 'Un registro de la IA solo se crea al aceptar su borrador.', 'sin aceptar no hay registro ia_confirmada');
 select lives_ok(
-  $$update public.ai_drafts set status = 'aceptado', accepted_record_id = nota
-     from df_ids where ai_drafts.id = df_ids.draft_nota$$,
-  'el doctor acepta con el registro creado');
+  $$select public.ai_accept_draft(draft_nota) from df_ids$$,
+  'el doctor acepta: crea la nota y la enlaza');
 select throws_ok(
   $$update public.ai_drafts set status = 'rechazado', accepted_record_id = null where id = (select draft_nota from df_ids)$$,
   'P0001', 'El borrador ya fue decidido y no se modifica.', 'decidido no cambia');

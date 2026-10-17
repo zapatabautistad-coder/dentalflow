@@ -1,4 +1,4 @@
--- 037 · Procedimientos realizados: lo que el doctor hizo en una consulta.
+-- 038 · Procedimientos realizados: lo que el doctor hizo en una consulta.
 --
 -- Une plan, consulta y odontograma (hoja de ruta clínica, paso 2):
 -- - Un procedimiento realizado pertenece a una consulta abierta del mismo paciente.
