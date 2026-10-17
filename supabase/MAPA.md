@@ -20,18 +20,19 @@ Todas: RLS activo y aislamiento restrictivo por `clinic_id` (029), salvo `clinic
 | queue | Sala de espera | 001 | 002, 010, 014, 016, 024, 025, 029, 034 | sala-de-espera |
 | doctor_schedules | Bloques semanales del doctor | 022 | 024, 029, 034 | horarios |
 | doctor_time_off | Días libres del doctor | 022 | 024, 029, 034 | horarios |
-| encounters | Consulta: agrupa lo registrado en una visita; abre doctor/asistente, cierra el doctor; cerrada no cambia | 035 | — | — |
-| clinical_entries | Registro clínico (solo INSERT) | 012 | 023, 024, 029, 034–036 | — |
-| odontogram_entries | Odontograma (solo INSERT) | 018 | 024, 029, 034–036 | odontograma |
-| treatment_plan_items | Plan de tratamiento | 019 | 020, 024, 029, 034 | plan-tratamiento |
+| encounters | Consulta: agrupa lo registrado en una visita; abre doctor/asistente, cierra el doctor; cerrada no cambia | 035 | 037, 038 | — |
+| clinical_entries | Registro clínico (solo INSERT) | 012 | 023, 024, 029, 034–037 | — |
+| odontogram_entries | Odontograma (solo INSERT) | 018 | 024, 029, 034–038 | odontograma |
+| treatment_plan_items | Plan de tratamiento | 019 | 020, 024, 029, 034, 038 | plan-tratamiento |
+| procedures_performed | Procedimiento realizado en una consulta abierta; completa el ítem del plan; se anula con motivo (anula su hallazgo) | 038 | — | plan-tratamiento |
 | billing_charges | Cargos; se anulan | 020 | 021, 024, 025, 029, 034 | facturacion |
 | billing_payments | Pagos; se anulan | 020 | 024, 025, 029, 034 | facturacion |
-| vital_signs | Signos vitales (solo INSERT) | 026 | 029, 034–036 | signos-vitales |
-| prescriptions | Recetas; se anulan con motivo | 027 | 029, 033, 034, 035 | recetas |
+| vital_signs | Signos vitales (solo INSERT; una corrección por toma) | 026 | 029, 034–037 | signos-vitales |
+| prescriptions | Recetas; se anulan con motivo | 027 | 029, 033–035, 037 | recetas |
 | prescription_items | Medicamentos de la receta (solo INSERT) | 027 | 029, 033, 034 | recetas |
 | ai_consents | Consentimiento del paciente para IA (solo INSERT; revocar = fila nueva) | 036 | — | — |
 | ai_sessions | Uso de IA en una consulta: autor, modelo, consumo (solo sube) | 036 | — | — |
-| ai_drafts | Propuestas de la IA; el doctor acepta (con el registro creado) o rechaza una vez | 036 | — | — |
+| ai_drafts | Propuestas de la IA; se aceptan solo con `ai_accept_draft()` (un registro por borrador) o se rechazan, una vez | 036 | 037 | — |
 | audit_log | Auditoría de todo cambio | 009 | 014, 015, 024, 025, 029, 030, 034 | — |
 
 ## Funciones clave
@@ -45,9 +46,12 @@ Todas: RLS activo y aislamiento restrictivo por `clinic_id` (029), salvo `clinic
 | `audit_row()` | Escribe en `audit_log` | 029 |
 | `stamp_created()` | Autor y fecha de pacientes y citas | 034 |
 | `block_truncate()` | Bloquea TRUNCATE | 034 |
-| `stamp_encounter()` / `check_encounter_link()` | Ciclo de la consulta; enlace solo a consulta abierta del mismo paciente | 035 |
-| `ai_consent_active()` / `stamp_ai_*()` | Consentimiento vigente; ciclo de sesiones y borradores de IA | 036 |
-| `create_prescription()` | Crea receta con sus medicamentos | 027 |
+| `stamp_encounter()` / `check_encounter_link()` | Ciclo de la consulta (no cierra con borradores de IA sin decidir); enlace solo a consulta abierta del mismo paciente | 037 / 035 |
+| `ai_consent_active()` / `stamp_ai_*()` | Consentimiento vigente; ciclo de sesiones y borradores de IA | 036 (`stamp_ai_draft` 037) |
+| `ai_accept_draft()` / `check_ia_source()` | Acepta un borrador creando su registro, todo o nada; `source = 'ia_confirmada'` solo por esa vía | 037 |
+| `create_prescription()` | Crea receta con sus medicamentos (consulta opcional) | 037 |
+| `register_procedure()` | Hallazgo + procedimiento realizado + ítem del plan completado, en un paso | 038 |
+| `stamp_procedure_performed()` / `procedure_performed_effects()` | Autor, enlaces y anulación del procedimiento; completar ítem y anular hallazgo | 038 |
 | `platform_*()` | Alta y activación de clínicas | 030 |
 
 No ejecutar 005 ni 006. Pendientes de aplicar en producción: ver "Estado" en `CLAUDE.md`.
