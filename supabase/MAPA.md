@@ -72,4 +72,4 @@ Historial de aplicación:
 - 033 (el paciente de un registro no se puede cambiar) y 034 (endurecimiento tras la auditoría: MFA de plataforma, autor y fecha de pacientes y citas, TRUNCATE bloqueado, sin borrado en cascada, cobros del doctor solo de sus pacientes): 2026-10-16 desde el SQL Editor, verificadas.
 - 035 (consultas: `encounters` y `encounter_id` en notas, odontograma, signos vitales y recetas): 2026-10-16.
 - 036 (IA: `ai_consents`, `ai_sessions`, `ai_drafts`, `source`), 037 (IA: `ai_accept_draft()`, `ia_confirmada` solo por esa vía, consulta no cierra con borradores pendientes, `create_prescription` con consulta) y 038 (`procedures_performed`, `register_procedure()`): 2026-10-17, registradas y verificadas.
-- 039 (auditoría encadenada, `patient_guardians`, `data_subject_requests`): aplicada el 2026-10-17 desde el SQL Editor y verificada (tablas, triggers, RLS, sin DELETE). Lo siguiente va en una migración nueva (040).
+- 039 (auditoría encadenada, `patient_guardians`, `data_subject_requests`): aplicada el 2026-10-17 desde el SQL Editor, registrada y verificada (tablas, triggers, RLS, sin DELETE). Lo siguiente va en una migración nueva (040).
