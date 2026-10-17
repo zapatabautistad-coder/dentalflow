@@ -42,20 +42,35 @@ jobs:
       - run: npm run test:e2e:setup
 
       # Los tipos de la base deben coincidir con las migraciones (npm run db:types).
-      - name: Tipos de la base al día
+      # Genera tipos y foto del esquema desde las migraciones. Si no coinciden con
+      # lo subido, quedan como adjunto "tipos-y-esquema" para descargarlos y subirlos.
+      - name: Generar tipos y esquema
         run: |
           npm run db:types
+          npm run db:schema
+          mkdir -p generado
+          cp src/lib/supabase/database.types.ts supabase/schema.sql generado/
+
+      - name: Subir tipos y esquema generados
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tipos-y-esquema
+          path: generado/
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - name: Tipos de la base al día
+        run: |
           git diff --exit-code src/lib/supabase/database.types.ts || {
-            echo "::error::Los tipos no coinciden con las migraciones. Corre npm run test:e2e:setup y npm run db:types, y sube src/lib/supabase/database.types.ts."
+            echo "::error::Los tipos no coinciden con las migraciones. Descarga el adjunto tipos-y-esquema de esta ejecución y sube database.types.ts (o corre npm run test:e2e:setup y npm run db:types)."
             exit 1
           }
 
-      # La foto del esquema debe coincidir con las migraciones (npm run db:schema).
       - name: Esquema al día
         run: |
-          npm run db:schema
           git diff --exit-code supabase/schema.sql || {
-            echo "::error::supabase/schema.sql no coincide con las migraciones. Corre npm run test:e2e:setup y npm run db:schema, y súbelo."
+            echo "::error::supabase/schema.sql no coincide con las migraciones. Descarga el adjunto tipos-y-esquema de esta ejecución y súbelo (o corre npm run test:e2e:setup y npm run db:schema)."
             exit 1
           }
 
