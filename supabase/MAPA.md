@@ -33,9 +33,9 @@ Todas: RLS activo y aislamiento restrictivo por `clinic_id` (029), salvo `clinic
 | ai_consents | Consentimiento del paciente para IA (solo INSERT; revocar = fila nueva) | 036 | — | — |
 | ai_sessions | Uso de IA en una consulta: autor, modelo, consumo (solo sube) | 036 | — | — |
 | ai_drafts | Propuestas de la IA; se aceptan solo con `ai_accept_draft()` (un registro por borrador) o se rechazan, una vez | 036 | 037 | — |
-| audit_log | Auditoría de todo cambio; desde 039 encadenada por hash por clínica y sin UPDATE/DELETE | 009 | 014, 015, 024, 025, 029, 030, 034, 039* | — |
-| patient_guardians | Responsables del menor; se desactivan con motivo, no se editan | 039* | — | — |
-| data_subject_requests | Solicitudes de derechos del titular (Ley 172-13) y su respuesta | 039* | — | — |
+| audit_log | Auditoría de todo cambio; desde 039 encadenada por hash por clínica y sin UPDATE/DELETE | 009 | 014, 015, 024, 025, 029, 030, 034, 039 | — |
+| patient_guardians | Responsables del menor; se desactivan con motivo, no se editan | 039 | — | — |
+| data_subject_requests | Solicitudes de derechos del titular (Ley 172-13) y su respuesta | 039 | — | — |
 
 ## Funciones clave
 
@@ -55,13 +55,12 @@ Todas: RLS activo y aislamiento restrictivo por `clinic_id` (029), salvo `clinic
 | `register_procedure()` | Hallazgo + procedimiento realizado + ítem del plan completado, en un paso | 038 |
 | `stamp_procedure_performed()` / `procedure_performed_effects()` | Autor, enlaces y anulación del procedimiento; completar ítem y anular hallazgo | 038 |
 | `platform_*()` | Alta y activación de clínicas | 030 |
-| `audit_chain()` / `audit_verify_chain()` | Encadena cada evento de auditoría; verifica la cadena (admin o plataforma) | 039* |
+| `audit_chain()` / `audit_verify_chain()` | Encadena cada evento de auditoría; verifica la cadena (admin o plataforma) | 039 |
 
-\* 039 = migración agrupada **pendiente, no aplicada**: se edita en vez de crear 040.
 
 ## Estado en producción
 
-- Aplicadas: 001–004 y 007–038. **No ejecutar 005 ni 006** (ver aviso en cada archivo).
+- Aplicadas: 001–004 y 007–039. **No ejecutar 005 ni 006** (ver aviso en cada archivo).
 - Toda migración nueva viaja con su prueba en `supabase/tests/` y su línea aquí; lo comprueban el hook de commit y la CI (`scripts/check-migraciones.mjs`).
 - Mientras una migración agrupada no esté en producción, se edita en vez de crear otra.
 - Antes de escribir una migración, revisar además el esquema real de producción (solo lectura).
@@ -73,3 +72,4 @@ Historial de aplicación:
 - 033 (el paciente de un registro no se puede cambiar) y 034 (endurecimiento tras la auditoría: MFA de plataforma, autor y fecha de pacientes y citas, TRUNCATE bloqueado, sin borrado en cascada, cobros del doctor solo de sus pacientes): 2026-10-16 desde el SQL Editor, verificadas.
 - 035 (consultas: `encounters` y `encounter_id` en notas, odontograma, signos vitales y recetas): 2026-10-16.
 - 036 (IA: `ai_consents`, `ai_sessions`, `ai_drafts`, `source`), 037 (IA: `ai_accept_draft()`, `ia_confirmada` solo por esa vía, consulta no cierra con borradores pendientes, `create_prescription` con consulta) y 038 (`procedures_performed`, `register_procedure()`): 2026-10-17, registradas y verificadas.
+- 039 (auditoría encadenada, `patient_guardians`, `data_subject_requests`): aplicada el 2026-10-17 desde el SQL Editor y verificada (tablas, triggers, RLS, sin DELETE). Lo siguiente va en una migración nueva (040).
