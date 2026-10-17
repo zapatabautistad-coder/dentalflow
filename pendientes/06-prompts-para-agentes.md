@@ -403,7 +403,7 @@ Entrega: rama nueva + PR. Antes de terminar, `npm run lint`, `npm test` y `npm r
 
 ## Parte F · IA ambiental (`pendientes/18-ia-ambiental.md`)
 
-### C7 · Pantallas de la IA: consentimiento, dictado y tarjetas de borradores (después de C6, de aplicar la 036 y de cargar `ANTHROPIC_API_KEY` en Vercel)
+### C7 · Pantallas de la IA: consentimiento, dictado y tarjetas de borradores (después de C6 y de cargar `ANTHROPIC_API_KEY` en Vercel)
 ```
 Lee CLAUDE.md, AGENTS.md, pendientes/18-ia-ambiental.md, supabase/MAPA.md,
 supabase/migrations/036_ia_ambiental.sql y src/app/(app)/patients/[id]/ia/actions.ts antes de empezar.
