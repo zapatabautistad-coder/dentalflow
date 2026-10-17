@@ -54,4 +54,17 @@ Todas: RLS activo y aislamiento restrictivo por `clinic_id` (029), salvo `clinic
 | `stamp_procedure_performed()` / `procedure_performed_effects()` | Autor, enlaces y anulación del procedimiento; completar ítem y anular hallazgo | 038 |
 | `platform_*()` | Alta y activación de clínicas | 030 |
 
-No ejecutar 005 ni 006. Pendientes de aplicar en producción: ver "Estado" en `CLAUDE.md`.
+## Estado en producción
+
+- Aplicadas: 001–004 y 007–038. **No ejecutar 005 ni 006** (ver aviso en cada archivo).
+- Toda migración nueva viaja con su prueba en `supabase/tests/` y su línea aquí; lo comprueban el hook de commit y la CI (`scripts/check-migraciones.mjs`).
+- Mientras una migración agrupada no esté en producción, se edita en vez de crear otra.
+- Antes de escribir una migración, revisar además el esquema real de producción (solo lectura).
+
+Historial de aplicación:
+- 028 (`appointments_no_overlap`): aplicada el 2026-10-04 antes que 025; el archivo se agregó después.
+- 029 (multi-tenant) y 030 (plataforma): 2026-10-09 desde el SQL Editor, porque `apply_migration` se cuelga con operaciones destructivas.
+- 031 (MFA en la base) y 032 (huella/WebAuthn como segundo paso, sin efecto mientras no haya huellas): 2026-10-11.
+- 033 (el paciente de un registro no se puede cambiar) y 034 (endurecimiento tras la auditoría: MFA de plataforma, autor y fecha de pacientes y citas, TRUNCATE bloqueado, sin borrado en cascada, cobros del doctor solo de sus pacientes): 2026-10-16 desde el SQL Editor, verificadas.
+- 035 (consultas: `encounters` y `encounter_id` en notas, odontograma, signos vitales y recetas): 2026-10-16.
+- 036 (IA: `ai_consents`, `ai_sessions`, `ai_drafts`, `source`), 037 (IA: `ai_accept_draft()`, `ia_confirmada` solo por esa vía, consulta no cierra con borradores pendientes, `create_prescription` con consulta) y 038 (`procedures_performed`, `register_procedure()`): 2026-10-17, registradas y verificadas.

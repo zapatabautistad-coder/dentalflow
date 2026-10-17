@@ -6,6 +6,41 @@ Regla general para todas: se trabaja en una rama y se abre un Pull Request; **nu
 
 ---
 
+## Plantilla obligatoria (desde 2026-10-17)
+
+Todo prompt nuevo para Copilot u otro agente se escribe con esta plantilla. Sin criterios de aceptación ni bloques de aislamiento no se asigna.
+
+```
+Lee CLAUDE.md, AGENTS.md y .github/copilot-instructions.md antes de empezar.
+Regla del módulo: .claude/rules/<módulo>.md
+
+Objetivo: <una frase>
+
+Criterios de aceptación (Dado / Cuando / Entonces):
+- Dado <situación>, cuando <acción>, entonces <resultado verificable>.
+- Dado <usuario sin permiso u otra clínica>, cuando <acción>, entonces <se rechaza / no ve nada>.
+- Dado que no hay datos, cuando abre la pantalla, entonces ve un estado vacío honesto.
+
+Archivos permitidos (Write):
+- <ruta exacta o carpeta>
+
+Archivos de referencia (Read-only):
+- Módulo de referencia: recetas (src/app/(app)/patients/[id]/recetas/, src/lib/prescriptions.ts y su prueba, .claude/rules/recetas.md). Copia su estructura: validación, permisos, estados de carga/vacío/error, textos ES/EN.
+- <otros archivos que solo debe leer>
+
+Prohibiciones explícitas:
+- No tocar supabase/migrations/, políticas RLS, triggers, GRANT, autenticación ni cuentas.
+- No borrar ni editar registros clínicos; no agregar botones de borrar.
+- No inventar datos, métricas ni textos de ejemplo en pantalla.
+- No cambiar diseño (paleta, barra lateral, ícono).
+- No tocar archivos fuera de "Archivos permitidos". Si hace falta, dilo en el PR.
+
+Entrega: rama nueva + Pull Request con, por cada criterio, cómo se comprobó.
+Antes de terminar: npm run verify:fast en verde y npm run build sin errores.
+```
+
+---
+
 ## Parte A · Tareas para Copilot
 
 ### A1 · Pruebas para las utilidades sin cubrir

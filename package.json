@@ -7,12 +7,15 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:db": "bash e2e/test-db.sh",
     "test:e2e:setup": "bash e2e/setup-local.sh",
     "test:e2e": "playwright test",
     "db:types": "bash e2e/db-types.sh",
-    "db:schema": "bash e2e/db-schema.sh"
+    "db:schema": "bash e2e/db-schema.sh",
+    "verify:fast": "node scripts/verify.mjs fast",
+    "verify": "node scripts/verify.mjs full"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
