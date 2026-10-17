@@ -25,6 +25,7 @@ Gestión de clínicas dentales, producto real con pacientes reales. Next.js 16 (
 - Antes de commit: `npm run verify:fast` en verde. `npm run verify` (con build y pruebas de base) corre en la CI o con Supabase local.
 - Cada tarea con criterios Dado/Cuando/Entonces; en la base, la prueba se escribe antes y se ve fallar.
 - Reporte final: **Verificado** (con el comando que lo prueba) · **Inferido** · **Desconocido**. Nunca afirmar lo no ejecutado.
+- Todo lo que necesite una decisión o respuesta de Darys empieza con `*DUDA*:` (una pregunta concreta por línea). Lo que no requiere nada de él no se marca.
 
 ## Dónde está cada cosa
 - Esquema y estado de migraciones: `supabase/MAPA.md`, `supabase/schema.sql`.
