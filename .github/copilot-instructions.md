@@ -27,7 +27,9 @@ Sistema de gestión para clínicas (dentales y, más adelante, multiespecialidad
 - **Trabaja siempre en una rama y abre un Pull Request. Nunca hagas push directo a `main`.** `main` se publica solo en producción (Vercel).
 - **Nunca unas un PR** ni actives auto-merge, aunque la CI esté verde: solo Darys ordena unir.
 - Un PR pequeño por tarea. Describe qué cambiaste y cómo lo probaste.
-- Antes de decir que terminaste, ejecuta `npm run lint`, `npm test` y `npm run build`, corrige todo hasta que pasen sin errores. Luego haz commit.
+- Antes de decir que terminaste, ejecuta `npm run verify:fast` (lint, tipos y pruebas) y `npm run build`, corrige todo hasta que pasen sin errores. Luego haz commit.
+- Respeta los bloques de la tarea: solo escribe en "Archivos permitidos", solo lee los "de referencia" y cumple las "Prohibiciones". En el PR, di cómo comprobaste cada criterio Dado/Cuando/Entonces.
+- Si cambias una migración (solo con permiso explícito), debe llevar su prueba en `supabase/tests/` y su línea en `supabase/MAPA.md`: la CI lo exige.
 - No cambies código que no tenga que ver con la tarea.
 
 ## Tareas apropiadas para Copilot

@@ -74,8 +74,21 @@ function subeAMain(cmd) {
   return false;
 }
 
+// Migración sin prueba SQL o sin línea en MAPA.md: se frena el commit.
+// Misma regla y mismo script que la CI (scripts/check-migraciones.mjs).
+function revisarCommitMigracion() {
+  const script = path.join(projectDir, "scripts", "check-migraciones.mjs");
+  if (!existsSync(script)) return;
+  try {
+    execFileSync("node", [script, "--staged"], { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+  } catch (e) {
+    bloquear(`commit con migración incompleta.\n${String(e.stderr ?? "").trim()}`);
+  }
+}
+
 function revisarBash(cmdOriginal) {
   const cmd = sinHeredocs(cmdOriginal);
+  if (tramos(cmd).some((t) => /^git(\s+-C\s+\S+)?\s+commit\b/.test(t))) revisarCommitMigracion();
   if (subeAMain(cmd)) {
     bloquear("subir cambios a main. main solo recibe cambios por PR y solo Darys une.");
   }
@@ -155,7 +168,7 @@ function revisarMcp(nombre) {
 
 // Comandos de verificación cuya salida se recorta (ver salida-corta.mjs).
 const VERIFICACION =
-  /^(npm\s+(test|run\s+(test|lint|build)(:[\w-]+)?)|npx\s+(vitest\s+run|tsc\s+--noEmit|eslint|playwright\s+test))(\s+[^;&|<>`$()]*)?$/;
+  /^(npm\s+(test|run\s+(test|lint|build|typecheck|verify)(:[\w-]+)?)|npx\s+(vitest\s+run|tsc\s+--noEmit|eslint|playwright\s+test))(\s+[^;&|<>`$()]*)?$/;
 
 function recortarSalida(cmd) {
   const limpio = cmd.trim();

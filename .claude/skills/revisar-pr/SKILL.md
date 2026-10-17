@@ -11,6 +11,7 @@ Argumento: número del PR. Responder a Darys en español, corto.
 2. **Reglas de módulo**: por cada módulo que toque el PR, leer `.claude/rules/<módulo>.md`. Al revisar solo por diff no se cargan solas.
 3. **Revisar** con las "Review guidelines" de `AGENTS.md`, más:
    - Migración nueva: archivo nuevo (nunca edita una existente), RLS, GRANT a `authenticated`, trigger `audit_row` si es clínica, sin DELETE, `security definer` con `set search_path`. Antes de opinar, mirar el esquema real con Supabase (solo lectura).
+   - Si el PR viene de un prompt con la plantilla de `pendientes/06-prompts-para-agentes.md`: que solo toque "Archivos permitidos", cumpla las "Prohibiciones" y demuestre cada criterio Dado/Cuando/Entonces.
    - Textos en español e inglés; `data-i18n` solo en texto fijo.
    - Diseño congelado: sin cambios de paleta, barra lateral ni ícono.
    - Solo lo que pide la tarea: nada de cambios fuera de alcance.
