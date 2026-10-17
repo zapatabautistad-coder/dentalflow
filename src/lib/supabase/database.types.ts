@@ -154,14 +154,14 @@ isOneToOne: false
                   ]
                 },"audit_log": {
                   Row: {
-                    "action": string,"changed_at": string,"changed_by": string | null,"clinic_id": string,"id": number,"new_data": Json | null,"old_data": Json | null,"patient_id": string | null,"record_id": string,"table_name": string
+                    "action": string,"chain_seq": number | null,"changed_at": string,"changed_by": string | null,"clinic_id": string,"id": number,"new_data": Json | null,"old_data": Json | null,"patient_id": string | null,"prev_hash": string | null,"record_id": string,"row_hash": string | null,"table_name": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "action": string,"changed_at"?: string,"changed_by"?: string | null,"clinic_id": string,"id"?: never,"new_data"?: Json | null,"old_data"?: Json | null,"patient_id"?: string | null,"record_id": string,"table_name": string
+                    "action": string,"chain_seq"?: number | null,"changed_at"?: string,"changed_by"?: string | null,"clinic_id": string,"id"?: never,"new_data"?: Json | null,"old_data"?: Json | null,"patient_id"?: string | null,"prev_hash"?: string | null,"record_id": string,"row_hash"?: string | null,"table_name": string
                   }
                   Update: {
-                    "action"?: string,"changed_at"?: string,"changed_by"?: string | null,"clinic_id"?: string,"id"?: never,"new_data"?: Json | null,"old_data"?: Json | null,"patient_id"?: string | null,"record_id"?: string,"table_name"?: string
+                    "action"?: string,"chain_seq"?: number | null,"changed_at"?: string,"changed_by"?: string | null,"clinic_id"?: string,"id"?: never,"new_data"?: Json | null,"old_data"?: Json | null,"patient_id"?: string | null,"prev_hash"?: string | null,"record_id"?: string,"row_hash"?: string | null,"table_name"?: string
                   }
                   Relationships: [
                     {
@@ -338,6 +338,44 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"data_subject_requests": {
+                  Row: {
+                    "channel": string,"clinic_id": string,"details": string | null,"id": string,"patient_id": string,"received_at": string,"received_by": string | null,"request_type": string,"requested_by": string,"resolved_at": string | null,"resolved_by": string | null,"response_note": string | null,"status": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "channel": string,"clinic_id": string,"details"?: string | null,"id"?: string,"patient_id": string,"received_at"?: string,"received_by"?: string | null,"request_type": string,"requested_by": string,"resolved_at"?: string | null,"resolved_by"?: string | null,"response_note"?: string | null,"status"?: string
+                  }
+                  Update: {
+                    "channel"?: string,"clinic_id"?: string,"details"?: string | null,"id"?: string,"patient_id"?: string,"received_at"?: string,"received_by"?: string | null,"request_type"?: string,"requested_by"?: string,"resolved_at"?: string | null,"resolved_by"?: string | null,"response_note"?: string | null,"status"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "data_subject_requests_clinic_id_fkey"
+      columns: ["clinic_id"]
+isOneToOne: false
+      referencedRelation: "clinics"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "data_subject_requests_patient_id_fkey"
+      columns: ["patient_id"]
+isOneToOne: false
+      referencedRelation: "patients"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "data_subject_requests_received_by_fkey"
+      columns: ["received_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "data_subject_requests_resolved_by_fkey"
+      columns: ["resolved_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"doctor_schedules": {
                   Row: {
                     "active": boolean,"clinic_id": string,"created_at": string,"created_by": string | null,"deactivated_at": string | null,"deactivated_by": string | null,"doctor_id": string,"end_time": string,"id": string,"start_time": string,"weekday": number
@@ -499,6 +537,44 @@ isOneToOne: false
       columns: ["patient_id"]
 isOneToOne: false
       referencedRelation: "patients"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"patient_guardians": {
+                  Row: {
+                    "can_consent": boolean,"clinic_id": string,"ended_at": string | null,"ended_by": string | null,"ended_reason": string | null,"full_name": string,"id": string,"id_document": string | null,"is_active": boolean,"patient_id": string,"phone": string | null,"recorded_at": string,"recorded_by": string | null,"relationship": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "can_consent"?: boolean,"clinic_id": string,"ended_at"?: string | null,"ended_by"?: string | null,"ended_reason"?: string | null,"full_name": string,"id"?: string,"id_document"?: string | null,"is_active"?: boolean,"patient_id": string,"phone"?: string | null,"recorded_at"?: string,"recorded_by"?: string | null,"relationship": string
+                  }
+                  Update: {
+                    "can_consent"?: boolean,"clinic_id"?: string,"ended_at"?: string | null,"ended_by"?: string | null,"ended_reason"?: string | null,"full_name"?: string,"id"?: string,"id_document"?: string | null,"is_active"?: boolean,"patient_id"?: string,"phone"?: string | null,"recorded_at"?: string,"recorded_by"?: string | null,"relationship"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "patient_guardians_clinic_id_fkey"
+      columns: ["clinic_id"]
+isOneToOne: false
+      referencedRelation: "clinics"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "patient_guardians_ended_by_fkey"
+      columns: ["ended_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "patient_guardians_patient_id_fkey"
+      columns: ["patient_id"]
+isOneToOne: false
+      referencedRelation: "patients"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "patient_guardians_recorded_by_fkey"
+      columns: ["recorded_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
       referencedColumns: ["id"]
     }
                   ]
@@ -884,6 +960,14 @@ isOneToOne: false
                            },
 "appointment_range":
 { Args: { "p_duration_minutes": number,"p_starts_at": string }; Returns: unknown
+                           },
+"audit_row_digest_v1":
+{ Args: { "p_action": string,"p_at": string,"p_by": string,"p_clinic": string,"p_new": Json,"p_old": Json,"p_patient": string,"p_prev": string,"p_record": string,"p_seq": number,"p_table": string }; Returns: string
+                           },
+"audit_verify_chain":
+{ Args: { "p_clinic"?: string }; Returns: {
+              "checked": number,"first_broken_seq": number,"ok": boolean
+            }[]
                            },
 "create_prescription":
 { Args: { "p_appointment_id"?: string,"p_encounter_id"?: string,"p_indications"?: string,"p_items": Json,"p_patient_id": string }; Returns: string
