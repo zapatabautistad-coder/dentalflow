@@ -34,7 +34,7 @@ Micrófono (Web Speech API `es-DO`/`en-US`) → texto en el navegador → server
 - Todas: RLS por clínica y rol (doctor/enfermeria), `audit_row`, `block_truncate`, GRANT a `authenticated`, pruebas `05-ia.sql`.
 - No se guarda texto del prompt completo ni respuestas crudas con datos del paciente fuera de `ai_drafts`.
 
-## Migración 037 (`supabase/migrations/037_ia_endurecimiento.sql`, pruebas `06-ia-endurecimiento.sql`; pendiente de aplicar)
+## Migración 037 (`supabase/migrations/037_ia_endurecimiento.sql`, pruebas `06-ia-endurecimiento.sql`; aplicada el 2026-10-17)
 - `ai_accept_draft(p_draft_id, p_edited jsonb default null)`: crea el registro (odontograma, nota, signos o ítem del plan) con `encounter_id` y `source = 'ia_confirmada'` y acepta el borrador, todo o nada. `p_edited` = versión corregida (mismo formato que `payload`); el borrador conserva lo propuesto y queda con nota "Editado antes de aceptar". Pregunta: devuelve null.
 - Aceptar solo por esa función; un INSERT a mano con `source = 'ia_confirmada'` se rechaza (marca de transacción `dentalflow.ia_confirmada`).
 - La consulta no se cierra con borradores en `propuesto`.
