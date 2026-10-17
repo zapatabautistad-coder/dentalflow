@@ -33,7 +33,9 @@ Todas: RLS activo y aislamiento restrictivo por `clinic_id` (029), salvo `clinic
 | ai_consents | Consentimiento del paciente para IA (solo INSERT; revocar = fila nueva) | 036 | — | — |
 | ai_sessions | Uso de IA en una consulta: autor, modelo, consumo (solo sube) | 036 | — | — |
 | ai_drafts | Propuestas de la IA; se aceptan solo con `ai_accept_draft()` (un registro por borrador) o se rechazan, una vez | 036 | 037 | — |
-| audit_log | Auditoría de todo cambio | 009 | 014, 015, 024, 025, 029, 030, 034 | — |
+| audit_log | Auditoría de todo cambio; desde 039 encadenada por hash por clínica y sin UPDATE/DELETE | 009 | 014, 015, 024, 025, 029, 030, 034, 039* | — |
+| patient_guardians | Responsables del menor; se desactivan con motivo, no se editan | 039* | — | — |
+| data_subject_requests | Solicitudes de derechos del titular (Ley 172-13) y su respuesta | 039* | — | — |
 
 ## Funciones clave
 
@@ -53,5 +55,8 @@ Todas: RLS activo y aislamiento restrictivo por `clinic_id` (029), salvo `clinic
 | `register_procedure()` | Hallazgo + procedimiento realizado + ítem del plan completado, en un paso | 038 |
 | `stamp_procedure_performed()` / `procedure_performed_effects()` | Autor, enlaces y anulación del procedimiento; completar ítem y anular hallazgo | 038 |
 | `platform_*()` | Alta y activación de clínicas | 030 |
+| `audit_chain()` / `audit_verify_chain()` | Encadena cada evento de auditoría; verifica la cadena (admin o plataforma) | 039* |
+
+\* 039 = migración agrupada **pendiente, no aplicada**: se edita en vez de crear 040.
 
 No ejecutar 005 ni 006. Pendientes de aplicar en producción: ver "Estado" en `CLAUDE.md`.
