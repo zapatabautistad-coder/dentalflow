@@ -14,6 +14,9 @@ import {
 } from "@/lib/timezone";
 import { StatusChip } from "../../appointments/status-chip";
 import { addClinicalEntry, addVitalSigns, archivePatient, restorePatient, saveMedicalHistory } from "../actions";
+import { closeEncounter, openEncounter } from "./encounter-actions";
+import { EncountersSection, type AppointmentOption, type EncounterItem } from "./encounters-section";
+import { canCloseEncounter, canOpenEncounter } from "@/lib/encounters";
 import { ArchiveForm } from "./archive-form";
 import { ChangeLog, type AuditRow } from "./change-log";
 import { ClinicalRecord, type ClinicalEntry } from "./clinical-record";
@@ -52,6 +55,18 @@ type PatientAppointment = {
   reason: string | null;
   status: string;
   profiles: { full_name: string } | null;
+};
+
+type EncounterRow = {
+  id: string;
+  appointment_id: string | null;
+  status: "abierta" | "cerrada";
+  reason: string | null;
+  closure_note: string | null;
+  opened_at: string;
+  closed_at: string | null;
+  opener: { full_name: string } | null;
+  closer: { full_name: string } | null;
 };
 
 function ageFrom(birthDate: string | null): number | null {
@@ -161,8 +176,15 @@ function AppointmentList({ items, empty }: { items: PatientAppointment[]; empty:
   );
 }
 
-export default async function PatientChartPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function PatientChartPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ appointment?: string | string[] }>;
+}) {
   const { id } = await params;
+  const { appointment: appointmentParam } = await searchParams;
   const profile = await requireProfile();
   const supabase = await createClient();
 
@@ -177,7 +199,7 @@ export default async function PatientChartPage({ params }: { params: Promise<{ i
   if (!patient) notFound();
 
   const nowIso = new Date().toISOString();
-  const [historyResult, upcomingResult, pastResult, auditResult, entriesResult, vitalSignsResult] = await Promise.all([
+  const [historyResult, upcomingResult, pastResult, auditResult, entriesResult, vitalSignsResult, encountersResult] = await Promise.all([
     supabase
       .from("patient_medical_history")
       .select(
@@ -218,7 +240,39 @@ export default async function PatientChartPage({ params }: { params: Promise<{ i
       .limit(100)
       .returns<ClinicalEntry[]>(),
     loadVitalSigns(supabase, id),
+    supabase
+      .from("encounters")
+      .select(
+        "id, appointment_id, status, reason, closure_note, opened_at, closed_at, opener:profiles!encounters_opened_by_fkey(full_name), closer:profiles!encounters_closed_by_fkey(full_name)"
+      )
+      .eq("patient_id", id)
+      .order("opened_at", { ascending: false })
+      .limit(50)
+      .returns<EncounterRow[]>(),
   ]);
+
+  const encounterRows = encountersResult.data ?? [];
+  const takenAppointmentIds = new Set(encounterRows.map((row) => row.appointment_id).filter(Boolean));
+  const appointmentOptions: AppointmentOption[] = [...(upcomingResult.data ?? []), ...(pastResult.data ?? [])]
+    .filter((item) => item.status !== "cancelada" && !takenAppointmentIds.has(item.id))
+    .map((item) => ({
+      id: item.id,
+      label: `${formatShortDate(splitLocalDateTime(item.starts_at).dateKey)} · ${formatHour(item.starts_at)}${item.reason ? ` · ${item.reason}` : ""}`,
+    }));
+  const requestedAppointment = typeof appointmentParam === "string" ? appointmentParam : "";
+  const defaultAppointmentId = appointmentOptions.some((option) => option.id === requestedAppointment) ? requestedAppointment : "";
+  const encounterItems: EncounterItem[] = encounterRows.map((row) => ({
+    id: row.id,
+    status: row.status,
+    reason: row.reason,
+    closure_note: row.closure_note,
+    openedAtLabel: formatStamp(row.opened_at),
+    closedAtLabel: row.closed_at ? formatStamp(row.closed_at) : null,
+    openedByName: row.opener?.full_name ?? null,
+    closedByName: row.closer?.full_name ?? null,
+  }));
+  const openThisEncounter = openEncounter.bind(null, patient.id);
+  const closeThisEncounter = closeEncounter.bind(null, patient.id);
 
   const history = historyResult.data;
   const historyFailed = Boolean(historyResult.error);
@@ -397,6 +451,25 @@ export default async function PatientChartPage({ params }: { params: Promise<{ i
           </p>
         </section>
       )}
+
+      <section className="glass-card p-5 sm:p-6">
+        <h2 className="mb-3 text-lg font-bold text-[#0F172A]" data-i18n="encounters.title">Consultas</h2>
+        {encountersResult.error ? (
+          <p role="alert" className="text-[15px] text-rose-700" data-i18n="encounters.loadError">
+            No se pudieron cargar las consultas. Recarga la página.
+          </p>
+        ) : (
+          <EncountersSection
+            encounters={encounterItems}
+            appointments={appointmentOptions}
+            defaultAppointmentId={defaultAppointmentId}
+            canOpen={canOpenEncounter(profile.role) && !patient.archived_at}
+            canClose={canCloseEncounter(profile.role)}
+            openAction={openThisEncounter}
+            closeAction={closeThisEncounter}
+          />
+        )}
+      </section>
 
       <section className="glass-card p-5 sm:p-6">
         <h2 className="text-lg font-bold text-[#0F172A]" data-i18n="chart.clinical">Registro clínico</h2>

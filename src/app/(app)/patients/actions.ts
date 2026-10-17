@@ -9,6 +9,7 @@ import { combineDateTime, isValidDateKey } from "@/lib/timezone";
 import { cleanDocumentIdDigits, cleanPhoneDigits } from "@/lib/phone";
 import { matchingMedicationAllergy, type MedicationAllergyHistory } from "@/lib/medication-allergy";
 import { parseVitalSignsInput, type VitalSignsInput } from "@/lib/vital-signs";
+import { getOpenEncounterId } from "@/lib/encounters";
 import type { Database } from "@/lib/supabase/types";
 
 export type PatientFormState = { error: string } | undefined;
@@ -419,7 +420,8 @@ export async function addClinicalEntry(
     return { error: "El texto admite hasta 4000 caracteres." };
   }
 
-  const { error } = await supabase.from("clinical_entries").insert(values);
+  const encounterId = await getOpenEncounterId(supabase, patientId);
+  const { error } = await supabase.from("clinical_entries").insert(encounterId ? { ...values, encounter_id: encounterId } : values);
 
   if (error) {
     if (error.code === "23505") {
@@ -510,9 +512,11 @@ export async function addVitalSigns(
     if (existingCorrection) return { errorKey: "vitalSigns.error.alreadyCorrected" };
   }
 
+  const encounterId = await getOpenEncounterId(supabase, patientId);
   const { error } = await supabase.from("vital_signs").insert({
     patient_id: patientId,
     ...parsed.values,
+    ...(encounterId ? { encounter_id: encounterId } : {}),
     corrects_entry_id: correctsEntryId,
     correction_reason: correctsEntryId ? correctionReason : null,
   });

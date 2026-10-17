@@ -78,7 +78,7 @@
       {
         "matcher": "Bash|Edit|Write|MultiEdit|NotebookEdit|mcp__.*",
         "hooks": [
-          { "type": "command", "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/guardian.mjs", "timeout": 15 }
+          { "type": "command", "command": "node .claude/hooks/guardian.mjs", "timeout": 15 }
         ]
       }
     ],
@@ -86,7 +86,7 @@
       {
         "matcher": "Edit|Write|MultiEdit",
         "hooks": [
-          { "type": "command", "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/revisor.mjs", "timeout": 15 }
+          { "type": "command", "command": "node .claude/hooks/revisor.mjs", "timeout": 15 }
         ]
       }
     ]

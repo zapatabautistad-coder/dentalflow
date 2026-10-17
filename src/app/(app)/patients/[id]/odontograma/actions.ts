@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { canWriteOdontogram, requireProfile } from "@/lib/auth";
+import { getOpenEncounterId } from "@/lib/encounters";
 import {
   isSurfaceCondition,
   isValidTooth,
@@ -37,12 +38,14 @@ export async function addOdontogramEntry(
   if (note.length > 500) return { error: "La nota admite hasta 500 caracteres." };
 
   const supabase = await createClient();
+  const encounterId = await getOpenEncounterId(supabase, patientId);
   const { error } = await supabase.from("odontogram_entries").insert({
     patient_id: patientId,
     tooth,
     condition,
     surfaces: isSurfaceCondition(condition) ? [...new Set(surfaces)] : null,
     note: note || null,
+    ...(encounterId ? { encounter_id: encounterId } : {}),
   });
 
   if (error) return { error: "No se pudo guardar. Recarga la página e inténtalo de nuevo." };
