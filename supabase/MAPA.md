@@ -20,10 +20,11 @@ Todas: RLS activo y aislamiento restrictivo por `clinic_id` (029), salvo `clinic
 | queue | Sala de espera | 001 | 002, 010, 014, 016, 024, 025, 029, 034 | sala-de-espera |
 | doctor_schedules | Bloques semanales del doctor | 022 | 024, 029, 034 | horarios |
 | doctor_time_off | Días libres del doctor | 022 | 024, 029, 034 | horarios |
-| encounters | Consulta: agrupa lo registrado en una visita; abre doctor/asistente, cierra el doctor; cerrada no cambia | 035 | — | — |
+| encounters | Consulta: agrupa lo registrado en una visita; abre doctor/asistente, cierra el doctor; cerrada no cambia | 035 | 037 | — |
 | clinical_entries | Registro clínico (solo INSERT) | 012 | 023, 024, 029, 034–036 | — |
-| odontogram_entries | Odontograma (solo INSERT) | 018 | 024, 029, 034–036 | odontograma |
-| treatment_plan_items | Plan de tratamiento | 019 | 020, 024, 029, 034 | plan-tratamiento |
+| odontogram_entries | Odontograma (solo INSERT) | 018 | 024, 029, 034–037 | odontograma |
+| treatment_plan_items | Plan de tratamiento | 019 | 020, 024, 029, 034, 037 | plan-tratamiento |
+| procedures_performed | Procedimiento realizado en una consulta abierta; completa el ítem del plan; se anula con motivo (anula su hallazgo) | 037 | — | plan-tratamiento |
 | billing_charges | Cargos; se anulan | 020 | 021, 024, 025, 029, 034 | facturacion |
 | billing_payments | Pagos; se anulan | 020 | 024, 025, 029, 034 | facturacion |
 | vital_signs | Signos vitales (solo INSERT) | 026 | 029, 034–036 | signos-vitales |
@@ -48,6 +49,8 @@ Todas: RLS activo y aislamiento restrictivo por `clinic_id` (029), salvo `clinic
 | `stamp_encounter()` / `check_encounter_link()` | Ciclo de la consulta; enlace solo a consulta abierta del mismo paciente | 035 |
 | `ai_consent_active()` / `stamp_ai_*()` | Consentimiento vigente; ciclo de sesiones y borradores de IA | 036 |
 | `create_prescription()` | Crea receta con sus medicamentos | 027 |
+| `register_procedure()` | Hallazgo + procedimiento realizado + ítem del plan completado, en un paso | 037 |
+| `stamp_procedure_performed()` / `procedure_performed_effects()` | Autor, enlaces y anulación del procedimiento; completar ítem y anular hallazgo | 037 |
 | `platform_*()` | Alta y activación de clínicas | 030 |
 
 No ejecutar 005 ni 006. Pendientes de aplicar en producción: ver "Estado" en `CLAUDE.md`.

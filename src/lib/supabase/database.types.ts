@@ -662,6 +662,62 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"procedures_performed": {
+                  Row: {
+                    "clinic_id": string,"encounter_id": string,"id": string,"note": string | null,"odontogram_entry_id": string | null,"patient_id": string,"performed_at": string,"performed_by": string | null,"procedure": string,"surfaces": (string)[] | null,"tooth": number | null,"treatment_plan_item_id": string | null,"void_reason": string | null,"voided_at": string | null,"voided_by": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "clinic_id": string,"encounter_id": string,"id"?: string,"note"?: string | null,"odontogram_entry_id"?: string | null,"patient_id": string,"performed_at"?: string,"performed_by"?: string | null,"procedure": string,"surfaces"?: (string)[] | null,"tooth"?: number | null,"treatment_plan_item_id"?: string | null,"void_reason"?: string | null,"voided_at"?: string | null,"voided_by"?: string | null
+                  }
+                  Update: {
+                    "clinic_id"?: string,"encounter_id"?: string,"id"?: string,"note"?: string | null,"odontogram_entry_id"?: string | null,"patient_id"?: string,"performed_at"?: string,"performed_by"?: string | null,"procedure"?: string,"surfaces"?: (string)[] | null,"tooth"?: number | null,"treatment_plan_item_id"?: string | null,"void_reason"?: string | null,"voided_at"?: string | null,"voided_by"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "procedures_performed_clinic_id_fkey"
+      columns: ["clinic_id"]
+isOneToOne: false
+      referencedRelation: "clinics"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "procedures_performed_encounter_id_fkey"
+      columns: ["encounter_id"]
+isOneToOne: false
+      referencedRelation: "encounters"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "procedures_performed_odontogram_entry_id_fkey"
+      columns: ["odontogram_entry_id"]
+isOneToOne: true
+      referencedRelation: "odontogram_entries"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "procedures_performed_patient_id_fkey"
+      columns: ["patient_id"]
+isOneToOne: false
+      referencedRelation: "patients"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "procedures_performed_performed_by_fkey"
+      columns: ["performed_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "procedures_performed_treatment_plan_item_id_fkey"
+      columns: ["treatment_plan_item_id"]
+isOneToOne: false
+      referencedRelation: "treatment_plan_items"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "procedures_performed_voided_by_fkey"
+      columns: ["voided_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"profiles": {
                   Row: {
                     "active": boolean,"clinic_id": string,"created_at": string,"deactivated_at": string | null,"deactivated_by": string | null,"deactivated_reason": string | null,"exequatur": string | null,"full_name": string,"id": string,"role": Database["public"]['Enums']["user_role"],"updated_at": string
@@ -865,6 +921,9 @@ isOneToOne: false
                            },
 "platform_set_clinic_active":
 { Args: { "p_active": boolean,"p_clinic": string }; Returns: undefined
+                           },
+"register_procedure":
+{ Args: { "p_encounter_id": string,"p_note"?: string,"p_odontogram_condition"?: Database["public"]['Enums']["odontogram_condition"],"p_procedure"?: string,"p_surfaces"?: (string)[],"p_tooth"?: number,"p_treatment_plan_item_id"?: string }; Returns: string
                            }
           }
           Enums: {

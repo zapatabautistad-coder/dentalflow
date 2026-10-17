@@ -22,7 +22,7 @@ select is(
        'odontogram_entries', 'vital_signs', 'prescriptions',
        'prescription_items', 'treatment_plan_items', 'billing_charges',
        'billing_payments', 'patient_medical_history', 'doctor_schedules',
-       'doctor_time_off', 'encounters'
+       'doctor_time_off', 'encounters', 'procedures_performed'
      ]) as clinical(table_name)
     where has_table_privilege('authenticated', 'public.' || table_name, 'DELETE')),
   0,
@@ -36,7 +36,7 @@ select is(
        'odontogram_entries', 'vital_signs', 'prescriptions',
        'prescription_items', 'treatment_plan_items', 'billing_charges',
        'billing_payments', 'patient_medical_history', 'doctor_schedules',
-       'doctor_time_off', 'encounters'
+       'doctor_time_off', 'encounters', 'procedures_performed'
      ]) as clinical(table_name)
     where has_table_privilege('anon', 'public.' || table_name, 'DELETE')),
   0,
@@ -50,7 +50,7 @@ select is(
        'odontogram_entries', 'vital_signs', 'prescriptions',
        'prescription_items', 'treatment_plan_items', 'billing_charges',
        'billing_payments', 'patient_medical_history', 'doctor_schedules',
-       'doctor_time_off', 'encounters'
+       'doctor_time_off', 'encounters', 'procedures_performed'
      ]) as clinical(table_name)
     where not exists (
       select 1
@@ -72,7 +72,7 @@ select is(
        'odontogram_entries', 'vital_signs', 'prescriptions',
        'prescription_items', 'treatment_plan_items', 'billing_charges',
        'billing_payments', 'patient_medical_history', 'doctor_schedules',
-       'doctor_time_off', 'encounters'
+       'doctor_time_off', 'encounters', 'procedures_performed'
      ]) as clinical(table_name)
     where not exists (
       select 1
