@@ -12,14 +12,18 @@
     "test:e2e:setup": "bash e2e/setup-local.sh",
     "test:e2e": "playwright test",
     "db:types": "bash e2e/db-types.sh",
-    "db:schema": "bash e2e/db-schema.sh"
+    "db:schema": "bash e2e/db-schema.sh",
+    "ia:mapa": "node scripts/ia-mapa.mjs",
+    "ia:mapa:check": "node scripts/ia-mapa.mjs --check"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.135.0",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.117.2",
     "next": "16.3.8",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "server-only": "^0.0.1"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",

@@ -1,12 +1,12 @@
 # IA ambiental (harness sobre la API de Claude)
 
-Diseño al 2026-10-16. Estado: diseño aprobado y 036 escrita; falta aplicarla, la clave de la API y el consentimiento revisado por abogado.
+Diseño al 2026-10-16. Estado (2026-10-17): 036 unida a `main` (PR #63) pero **no aplicada en producción**; núcleo del harness escrito (`src/lib/ia/`, acciones en `src/app/(app)/patients/[id]/ia/actions.ts`); pantallas = prompt C7. Falta: aplicar la 036, la clave de la API y el consentimiento revisado por abogado.
 
 ## Principio
 "Vida propia" = agente con herramientas, memoria y mapa del dominio dentro de un harness. No escribe datos clínicos por su cuenta: **la IA propone, el doctor firma**. Toda lectura y escritura pasa por RLS y triggers como el usuario logueado.
 
 ## Capas
-1. **Mapa del dominio (prompt de sistema compilado).** Script `npm run ia:mapa` genera `src/lib/ia/mapa.generated.md` desde `supabase/MAPA.md`, `.claude/rules/*`, roles, vocabulario FDI (dientes 11–48, 51–85), superficies M/D/O/V/L, condiciones del odontograma, reglas clínicas (solo INSERT, correcciones, recetas solo doctor). CI falla si está desactualizado (igual que `schema.sql`). Va primero y fijo → caché de prompt.
+1. **Mapa del dominio (prompt de sistema compilado).** Script `npm run ia:mapa` genera `src/lib/ia/mapa.generated.ts` (constante `MAPA_DOMINIO`) desde `supabase/MAPA.md`, `.claude/rules/*`, roles, vocabulario FDI (dientes 11–48, 51–85), superficies M/D/O/V/L, condiciones del odontograma, reglas clínicas (solo INSERT, correcciones, recetas solo doctor). CI falla si está desactualizado (igual que `schema.sql`). Va primero y fijo → caché de prompt.
 2. **Contexto del paciente** (por sesión, después del prefijo fijo): resumen, alergias y antecedentes, odontograma vigente, plan, últimos signos vitales, consulta abierta. Lo arma el servidor con columnas explícitas.
 3. **Herramientas** (`strict: true`, `tool_choice: auto`; esquemas Zod + `betaZodTool`):
    - Lectura: `leer_paciente`, `leer_odontograma`, `leer_historial`, `leer_signos`, `leer_plan`, `leer_recetas`.
@@ -45,6 +45,13 @@ Consulta típica: ~15k tokens de entrada (mayoría en caché) + ~2k de salida en
 1. OK al diseño y a la migración 036.
 2. Crear cuenta y `ANTHROPIC_API_KEY` en console.anthropic.com; cargarla en Vercel (Claude no la ve).
 3. Texto de consentimiento revisado por abogado.
+
+## Núcleo escrito (2026-10-17)
+- `scripts/ia-mapa.mjs` → `mapa.generated.ts`; CI: `npm run ia:mapa:check`.
+- `drafts.ts` (validación + quién firma, con pruebas), `cost.ts` (costo estimado, con pruebas), `tools.ts` (6 lecturas + 5 propuestas, atadas al paciente de la sesión; no envían nombre, cédula ni contacto), `harness.ts` (bucle manual: Opus 5.5, `fallbacks: "default"`, máx. 8 turnos, consumo guardado tras cada respuesta).
+- Acciones: `dictateToEncounter`, `acceptDraft`, `rejectDraft`, `recordAiConsent`.
+- Pendiente técnico: (a) límite por clínica en la base (hoy en la app: 200 sesiones/24 h); (b) aceptar no es atómico (registro + borrador en dos pasos): pasar a una función de la base en una migración nueva; (c) Haiku para limpiar transcripción y compaction: no hacen falta en fase 1; (d) evals antes de producción.
+- **Aviso de privacidad:** la Web Speech API de Chrome envía el audio a los servidores de Google para transcribirlo, salvo reconocimiento en el dispositivo. Por eso el dictado por voz exige el consentimiento `dictado` aparte y el texto siempre se puede escribir. Decidir con el abogado.
 
 ## Después
 Claude: migración 036 + pruebas + `mapa.generated` + núcleo del harness (`src/lib/ia/`). Copilot: pantallas (botón de dictado, tarjetas teal de borradores, consentimiento) con prompt C7 en `06-prompts-para-agentes.md`.

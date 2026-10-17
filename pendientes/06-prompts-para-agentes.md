@@ -400,3 +400,56 @@ recepción no ve "Abrir consulta").
 No unas el PR ni actives auto-merge.
 Entrega: rama nueva + PR. Antes de terminar, `npm run lint`, `npm test` y `npm run build` deben pasar.
 ```
+
+## Parte F · IA ambiental (`pendientes/18-ia-ambiental.md`)
+
+### C7 · Pantallas de la IA: consentimiento, dictado y tarjetas de borradores (después de C6, de aplicar la 036 y de cargar `ANTHROPIC_API_KEY` en Vercel)
+```
+Lee CLAUDE.md, AGENTS.md, pendientes/18-ia-ambiental.md, supabase/MAPA.md,
+supabase/migrations/036_ia_ambiental.sql y src/app/(app)/patients/[id]/ia/actions.ts antes de empezar.
+
+Contexto: el núcleo de la IA ya existe en el servidor (src/lib/ia/ y las server actions de
+src/app/(app)/patients/[id]/ia/actions.ts). La IA solo propone borradores (tabla ai_drafts); el doctor
+firma. Tú solo construyes pantallas que llaman a esas acciones. No toques src/lib/ia/, las acciones,
+migraciones ni la base. No importes @anthropic-ai/sdk en el navegador ni uses ANTHROPIC_API_KEY.
+
+Objetivo, en la ficha del paciente (/patients/[id]), dentro de la consulta abierta (pantalla de C6):
+1. Consentimiento de IA (admin, recepción, doctor y asistente dental): estado vigente de cada alcance
+   ("Procesamiento con IA" y "Dictado por voz") leído de ai_consents (el último por alcance manda).
+   Botones "Registrar consentimiento" y "Revocar" → recordAiConsent(patientId, scope, granted, note),
+   con confirmación y nota opcional (máx. 500). Lista de cambios con fecha y quién lo registró.
+   Texto del consentimiento: marcador "[Texto pendiente de revisión legal]"; no inventes texto legal.
+2. Dictado (solo doctor y asistente dental, solo con consulta abierta y consentimiento de
+   procesamiento vigente; si falta, mensaje claro y sin botón):
+   - Área de texto (máx. 8000) + botón "Enviar a la IA" → dictateToEncounter(..., "texto").
+   - Botón de micrófono solo si el navegador tiene SpeechRecognition y hay consentimiento de dictado:
+     transcribe en vivo al área de texto (lang "es-DO" o "en-US" según el idioma de la app); el doctor
+     revisa el texto y lo envía con origin "voz". El audio no se guarda.
+   - Estado de carga mientras responde (puede tardar decenas de segundos) y resumen (`summary`) al final.
+     Si stop es "refusal", "max_tokens" o "turn_limit", aviso de que la propuesta puede estar incompleta.
+3. Tarjetas de borradores (ai_drafts con status "propuesto" de la consulta abierta; columnas
+   explícitas): una tarjeta por borrador según `kind` (odontograma, nota, signos, plan, pregunta) con su
+   contenido legible (diente FDI, superficies, condición con CONDITION_LABELS; valores de signos; etc.).
+   - "Aceptar" → acceptDraft(patientId, draftId); "Editar y aceptar" abre el formulario normal de ese
+     tipo precargado y envía `edited` con la misma forma del payload; "Rechazar" → rejectDraft con
+     motivo opcional. Las preguntas solo tienen "Entendido" (acceptDraft sin edited).
+   - Botones solo para quien puede firmar (canDecideDraft en src/lib/ia/drafts.ts: doctor todo;
+     asistente dental solo signos). Si errorKey es "ia.error.draftNotLinked", recargar y no reintentar.
+   - Historial: borradores decididos de la consulta, en gris, con estado y quién decidió.
+4. Los registros aceptados ya aparecen en sus secciones; muéstrales una marca "Confirmado desde IA"
+   cuando `source = 'ia_confirmada'` (registro clínico, odontograma y signos vitales).
+5. Color teal SOLO en lo de IA (tarjetas, botón de dictado, marca "Confirmado desde IA"), claramente
+   más verde que el azul de la app. Resto del diseño sin cambios.
+6. Textos fijos en español e inglés con data-i18n en language-bridge.tsx, incluidas todas las claves
+   IaErrorKey de actions.ts. Nunca data-i18n en datos de Supabase ni en el texto de la IA.
+   Nunca dangerouslySetInnerHTML con texto de la IA (React ya escapa).
+
+Reglas: columnas explícitas (nunca select("*")); sin botones de borrar; errores en la URL solo como
+errorKey; recepción y admin no ven borradores ni el dictado; nada de botones que no hagan nada.
+Pruebas: unitarias si agregas utilidades. E2E en e2e/ sin llamar a la API de Anthropic: consentimiento
+(registrar y revocar), sin consentimiento no aparece el dictado, recepción no ve borradores, y tarjetas
+con borradores sembrados en la base local (doctor acepta uno → aparece con la marca; asistente no ve
+"Aceptar" en una nota).
+No unas el PR ni actives auto-merge.
+Entrega: rama nueva + PR. Antes de terminar, `npm run lint`, `npm test` y `npm run build` deben pasar.
+```

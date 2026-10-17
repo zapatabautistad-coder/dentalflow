@@ -29,6 +29,9 @@ jobs:
 
       - run: npm run lint
 
+      # Prompt de sistema de la IA al día con el esquema y las reglas (npm run ia:mapa).
+      - run: npm run ia:mapa:check
+
       - run: npm test
 
       # Supabase local en Docker (nunca producción); escribe .env.e2e.
