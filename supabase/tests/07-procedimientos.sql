@@ -1,6 +1,6 @@
 begin;
 
-select plan(22);
+select plan(23);
 
 create temp table df_ids (doctor_a uuid, asistente_a uuid, recepcion_a uuid, patient_a uuid, patient_b uuid,
   enc uuid, plan_resina uuid, plan_corona uuid, plan_cancelado uuid, plan_otro uuid, proc_resina uuid, hallazgo uuid);
@@ -159,6 +159,11 @@ select is(
   3, 'recepción ve los procedimientos realizados');
 
 reset role;
+select is(
+  (select count(*)::integer from pg_policy
+    where polname = 'procedures_performed: doctor anula el suyo'
+      and pg_get_expr(polqual, polrelid) like '%performed_by = ( SELECT auth.uid()%'),
+  1, 'solo quien registró el procedimiento lo anula');
 select throws_ok('truncate public.procedures_performed', 'P0001', null, 'TRUNCATE bloqueado en procedures_performed');
 
 select * from finish();

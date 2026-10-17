@@ -2566,9 +2566,9 @@ CREATE POLICY "prescriptions: ver" ON "public"."prescriptions" FOR SELECT TO "au
    FROM "public"."patients" "p"
   WHERE ("p"."id" = "prescriptions"."patient_id")))));
 ALTER TABLE "public"."procedures_performed" ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "procedures_performed: doctor anula" ON "public"."procedures_performed" FOR UPDATE TO "authenticated" USING (((( SELECT "public"."get_my_role"() AS "get_my_role") = 'doctor'::"public"."user_role") AND (EXISTS ( SELECT 1
+CREATE POLICY "procedures_performed: doctor anula el suyo" ON "public"."procedures_performed" FOR UPDATE TO "authenticated" USING (((( SELECT "public"."get_my_role"() AS "get_my_role") = 'doctor'::"public"."user_role") AND ("performed_by" = ( SELECT "auth"."uid"() AS "uid")) AND (EXISTS ( SELECT 1
    FROM "public"."patients" "p"
-  WHERE ("p"."id" = "procedures_performed"."patient_id"))))) WITH CHECK (((( SELECT "public"."get_my_role"() AS "get_my_role") = 'doctor'::"public"."user_role") AND (EXISTS ( SELECT 1
+  WHERE ("p"."id" = "procedures_performed"."patient_id"))))) WITH CHECK (((( SELECT "public"."get_my_role"() AS "get_my_role") = 'doctor'::"public"."user_role") AND ("performed_by" = ( SELECT "auth"."uid"() AS "uid")) AND (EXISTS ( SELECT 1
    FROM "public"."patients" "p"
   WHERE ("p"."id" = "procedures_performed"."patient_id")))));
 CREATE POLICY "procedures_performed: doctor registra" ON "public"."procedures_performed" FOR INSERT TO "authenticated" WITH CHECK (((( SELECT "public"."get_my_role"() AS "get_my_role") = 'doctor'::"public"."user_role") AND (EXISTS ( SELECT 1

@@ -9,7 +9,8 @@
 -- - No se edita: se anula con motivo. Al anularlo se anula también el hallazgo que
 --   creó (salvo que ya tenga corrección). El ítem del plan sigue completado y admite
 --   registrar el procedimiento de nuevo.
--- - Registra y anula solo el doctor; todos los roles clínicos y recepción leen.
+-- - Registra el doctor y anula solo quien lo registró (como las recetas); todos los
+--   roles clínicos y recepción leen.
 --   Sin DELETE. Autor y fechas los pone la base.
 -- - La nota va en el propio registro: no se duplica en clinical_entries.
 
@@ -189,13 +190,15 @@ create policy "procedures_performed: doctor registra" on public.procedures_perfo
     and exists (select 1 from public.patients p where p.id = procedures_performed.patient_id)
   );
 
-create policy "procedures_performed: doctor anula" on public.procedures_performed for update to authenticated
+create policy "procedures_performed: doctor anula el suyo" on public.procedures_performed for update to authenticated
   using (
     (select public.get_my_role()) = 'doctor'
+    and performed_by = (select auth.uid())
     and exists (select 1 from public.patients p where p.id = procedures_performed.patient_id)
   )
   with check (
     (select public.get_my_role()) = 'doctor'
+    and performed_by = (select auth.uid())
     and exists (select 1 from public.patients p where p.id = procedures_performed.patient_id)
   );
 

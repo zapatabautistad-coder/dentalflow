@@ -415,7 +415,7 @@ Contexto: `procedures_performed` guarda lo que el doctor hizo en una consulta ab
 indica condición), guarda el procedimiento y completa el ítem del plan (si viene del plan). La base
 pone autor y fechas y rechaza: consulta cerrada, ítem cancelado o de otro paciente, diente distinto al
 del plan, segundo procedimiento vigente del mismo ítem, condición de superficie sin superficies.
-No se edita: se anula con motivo (mín. 5); anular anula también el hallazgo que creó; el ítem del plan
+No se edita: lo anula solo quien lo registró, con motivo (mín. 5); anular anula también el hallazgo que creó; el ítem del plan
 sigue completado y admite registrarlo de nuevo.
 
 Objetivo:
@@ -427,7 +427,7 @@ Objetivo:
    la base como mensaje claro.
 2. Lista "Procedimientos realizados" en la consulta y en la ficha del paciente: fecha, procedimiento,
    diente y superficies, quién lo hizo, nota; los anulados tachados con motivo. Estado vacío honesto.
-3. Botón "Anular" (solo doctor, solo vigentes): motivo obligatorio y confirmación
+3. Botón "Anular" (solo el doctor que lo registró, solo vigentes): motivo obligatorio y confirmación
    (update voided_at + void_reason; la base pone quién y cuándo).
 4. Plan de tratamiento: si el paciente tiene una consulta abierta, "Completar" usa register_procedure
    con el ítem (en vez de cambiar el estado directo); sin consulta abierta queda como hoy.
