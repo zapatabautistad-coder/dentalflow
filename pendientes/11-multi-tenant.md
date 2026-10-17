@@ -20,9 +20,7 @@ Multi-tenant: **terminado**. MFA: fase 1 (app) unida en el PR #41; fase 2 (base)
 
 ## Pendiente aparte
 - ✅ Respaldo diario (`supabase/RESPALDO.md`): activo desde el 2026-10-09 y verificado el 2026-10-10 (la llave privada abre el respaldo).
-## IA nº 1 — Dictado por voz → odontograma (EN PAUSA desde 2026-10-09)
-- **En pausa por decisión del fundador:** se retoma cuando exista la primera clínica real, porque la
-  API de Claude tiene costo aparte. No crear clave ni código que la llame hasta entonces.
+## IA nº 1 — Dictado por voz → odontograma (REACTIVADA el 2026-10-16: ver `18-ia-ambiental.md`)
 - Hecho: `src/lib/dictation.ts` (+ pruebas) revisa la propuesta de la IA: diente FDI válido,
   superficies M/D/O/V/L, condición permitida; lo dudoso se vuelve pregunta al doctor, nunca se adivina.
 - Falta: (a) dictado en el navegador (Web Speech API, es-DO); (b) server action que manda el
